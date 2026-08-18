@@ -51,7 +51,7 @@ export function createState(seed, { name, number, group, nation = 'TW', origin =
   const pot = {};
   shuffled.forEach((k, i) => {
     const [lo, hi] = BAND[Math.min(i, BAND.length - 1)];
-    pot[k] = clamp(Math.round(rng.int(lo, hi) + talent * 20 + nat.dev + buildPot(k)), 25, MAX_ABIL);
+    pot[k] = clamp(Math.round(rng.int(lo, hi) + talent * 24 + nat.dev + buildPot(k)), 25, MAX_ABIL);
   });
   pot[shuffled[0]] = clamp(pot[shuffled[0]] + org.potTop, 35, MAX_ABIL);
 
@@ -180,6 +180,11 @@ export function abCost(p, k) {
 
   let c = gk ? (cur >= 94 ? 5 : cur >= 87 ? 4 : cur >= 78 ? 2 : 1)
              : (cur >= 94 ? 4 : cur >= 87 ? 3 : cur >= 78 ? 2 : 1);
+  // 離天花板越遠成長越快：有天賦的人爬得上去，沒天賦的人早早卡住。
+  // 這條是「頂尖能不能摸到 90」的關鍵 —— 直接加點數會讓所有人一起變強。
+  const head = cap - cur;
+  if (head >= 32) c *= 0.55;
+  else if (head >= 20) c *= 0.8;
   // 超過潛力上限：越推越貴，而且是加速的。
   // 這條線是天賦差距的守門員 —— 太便宜的話，低天賦球員照樣爬到頂，
   // 天賦分布再寬也會被抹平（實測曾經平均突破 8 分、P95 突破 22 分）。
