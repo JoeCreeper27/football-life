@@ -2,7 +2,7 @@ import { clamp } from './rng.js';
 import {
   LV, CLUBS, YOUTH_CLUBS, TIER, DPOS, EVENTS, TRAITS, ABIL, CONF, POS_GROUP,
   NATIONS, ORIGINS, REGION, MAX_TIER, leaguesAt,
-  ARCHETYPE, ARCH_SWITCH, ROLE_RANK, SQUAD, LATE_GROWABLE, LATE_LOCK_AGE, growthPhase,
+  ARCHETYPE, ARCH_SWITCH, ROLE_RANK, SQUAD, PHYSICAL_LOCK_AGE, growthPhase,
 } from './data.js';
 import {
   rngOf, syncCursor, addAb, subAb, abCost, ovr, defaultPos, posQualified, squadGap,
@@ -126,8 +126,8 @@ STEPS.PRE_DICE = (s, ctx, input) => {
     if (locked.length && !s._lockedNoted) {
       s._lockedNoted = true;
       card(ctx, 'info', '身體不聽話了',
-        `${LATE_LOCK_AGE} 歲之後，${locked.map(k => ABIL[k]).join('、')} 再怎麼練都回不去了。<br>` +
-        `剩下能長的只有腦子裡的東西。`);
+        `${PHYSICAL_LOCK_AGE} 歲之後，${locked.map(k => ABIL[k]).join('、')} 再怎麼練都回不去了。<br>` +
+        `但傳球、視野這些東西還在長 —— 用腦子踢球的日子開始了。`);
     }
     return ask(s, {
       type: 'alloc', title: `季前特訓（${spec.phase}）：分配訓練骰`,
@@ -468,7 +468,7 @@ STEPS.MID_SEASON = (s, ctx) => {
   s.career.seasons.push(st);
   s.career.clubTally[c.club] = (s.career.clubTally[c.club] || 0) + 1;
   // 表現直接回饋到看台上：踢得好聲望漲，踢得爛掉得更快。養成階段還沒有球迷。
-  if (isPro(s)) addFanRep(s, st.rating >= 7.2 ? 6 : st.rating >= 6.8 ? 3 : st.rating >= 6.4 ? 0 : -6);
+  if (isPro(s)) addFanRep(s, st.rating >= 7.3 ? 6 : st.rating >= 6.9 ? 3 : st.rating >= 6.5 ? 0 : -6);
 
   const line = p.group === 'GK'
     ? `${st.apps} 場｜零封 ${hl(st.cs)}｜評分 ${hl(st.rating)}`
@@ -572,7 +572,7 @@ function cureTraits(s, ctx) {
   if (!L || !isPro(s)) return;
   const n = s.career.counters;
 
-  n.goodRating = L.rating >= 7.0 ? (n.goodRating || 0) + 1 : 0;
+  n.goodRating = L.rating >= 7.2 ? (n.goodRating || 0) + 1 : 0;
   n.starterRun = ROLE_RANK[c.role] >= 3 ? (n.starterRun || 0) + 1 : 0;
   n.noDive = (n.noDive || 0) + 1;
 

@@ -1,6 +1,6 @@
 import { randomSeed } from './engine/rng.js';
 import {
-  createState, ovr, abCost, addAb, defaultPos, isAbroad, synergyOf, SCHEMA_VERSION,
+  createState, ovr, abCost, addAb, defaultPos, isAbroad, SCHEMA_VERSION,
 } from './engine/state.js';
 import { run, answer } from './engine/flow.js';
 import {
@@ -203,10 +203,8 @@ function renderAlloc({ title, dice, pool, locked = [], major = [] }) {
       const cost = abCost(draft, k), carry = draft.carry[k] || 0;
       const r = document.createElement('div');
       r.className = 'abrow' + (cap ? ' capped' : '') + (major.includes(k) ? ' major' : '');
-      const link = isLocked ? [] : synergyOf(draft, k);
       r.innerHTML =
-        `<span class="nm">${ABIL[k]}${isLocked ? '<small>鎖</small>' : ''}` +
-        (link.length ? `<small>→${link.map(j => ABIL[j]).join('')}</small>` : '') + `</span>` +
+        `<span class="nm">${ABIL[k]}${isLocked ? '<small>鎖</small>' : ''}</span>` +
         `<span class="bar"><i style="width:${v / MAX_ABIL * 100}%"></i><em style="left:${pk / MAX_ABIL * 100}%"></em></span>` +
         // 蓄力槽只要有值就顯示：連帶成長常常只加半點，不顯示玩家會以為沒作用
         `<span class="val">${v}<small>/${pk}</small>` +

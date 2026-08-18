@@ -2,7 +2,7 @@ import { Rng, clamp } from './rng.js';
 import {
   GROUP_ABIL, YOUTH_CLUBS, CONF, DPOS, POS_WEIGHT, LV, TIER,
   NATIONS, NATION_ORDER, ORIGINS, ARCHETYPE, SYNERGY, SYNERGY_GK, MAX_ABIL,
-  growthPhase, LATE_GROWABLE, LATE_LOCK_AGE,
+  growthPhase, PHYSICAL, PHYSICAL_HARD_AGE, PHYSICAL_LOCK_AGE,
 } from './data.js';
 
 export const SCHEMA_VERSION = '0.4.0';
@@ -30,17 +30,19 @@ export function createState(seed, { name, number, group, nation = 'TW', origin =
    * 2. 分項洗牌 —— 決定這個人的強項落在哪，並且偏向他這個位置真正吃重的能力
    *    （前鋒的頂尖潛力落在射門而不是防守，才對得起 FIFA 式的直覺）。
    */
+  // 注意 rng.gauss(1) 的實際標準差約 0.58（四次均勻取樣近似），不是 1，
+  // 所以倍率要放大才拉得開差距 —— 這裡的散布直接決定「天才與庸才的距離」
   const talent = rng.gauss(1);
   const w = POS_WEIGHT[defaultPos(group)];
   const shuffled = weightedOrder(rng, keys, w);
 
   const BAND = group === 'GK'
-    ? [[85, 93], [81, 89], [75, 85], [69, 81]]
-    : [[85, 93], [81, 89], [77, 85], [71, 81], [65, 77]];
+    ? [[84, 93], [78, 88], [71, 82], [63, 76]]
+    : [[84, 93], [78, 88], [72, 83], [64, 77], [56, 70]];
   const pot = {};
   shuffled.forEach((k, i) => {
     const [lo, hi] = BAND[Math.min(i, BAND.length - 1)];
-    pot[k] = clamp(Math.round(rng.int(lo, hi) + talent * 8 + nat.dev), 35, MAX_ABIL);
+    pot[k] = clamp(Math.round(rng.int(lo, hi) + talent * 20 + nat.dev), 25, MAX_ABIL);
   });
   pot[shuffled[0]] = clamp(pot[shuffled[0]] + org.potTop, 35, MAX_ABIL);
 
@@ -170,13 +172,15 @@ export function abCost(p, k) {
   // 超過潛力上限：貴，但沒有封死。主修便宜一些，讓長生涯還能緩慢往上推。
   if (cur >= cap) c *= major ? (gk ? 2.5 : 2) : (gk ? 3.5 : 3);
   c *= growthPhase(p.age).cost;
+  // 26 歲之後體能類練得動但很吃力，技術類不受影響
+  if (p.age >= PHYSICAL_HARD_AGE && PHYSICAL.includes(k)) c *= 2;
   if (arch) c *= major ? 0.7 : 1.3;
   return Math.max(1, Math.ceil(c));
 }
 
-/** 29 歲後只有技術類能力還練得動 */
+/** 體能類 33 歲後練不動；技術類一輩子都還能練 */
 export function isGrowable(p, k) {
-  return p.age < LATE_LOCK_AGE || LATE_GROWABLE.includes(k);
+  return !PHYSICAL.includes(k) || p.age < PHYSICAL_LOCK_AGE;
 }
 
 /** 球迷聲望：0–100，負面事件扣得比正面加得兇 */
@@ -261,7 +265,7 @@ export function posQualified(p, dpos, lv, age) {
 export function squadGap(s) {
   const { player, club } = s;
   const L = LV[club.lv];
-  const competition = 3; // 同位置隊內競爭的固定成本
+  const competition = 2; // 同位置隊內競爭的固定成本
   let gap = ovr(player) - (L.par + TIER[club.tier].bonus + competition);
   if (player.traits.captain) gap += 4;
   if (player.traits.onetool) gap -= 5;
