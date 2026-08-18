@@ -1,7 +1,12 @@
 import { randomSeed } from './engine/rng.js';
-import { createState, ovr, abCost, addAb, defaultPos } from './engine/state.js';
+import {
+  createState, ovr, abCost, addAb, defaultPos, isAbroad, SCHEMA_VERSION,
+} from './engine/state.js';
 import { run, answer } from './engine/flow.js';
-import { ABIL, GROUP_ABIL, POS_GROUP, DPOS, LV, TIER, SQUAD } from './engine/data.js';
+import {
+  ABIL, GROUP_ABIL, POS_GROUP, DPOS, LV, TIER, SQUAD,
+  NATIONS, NATION_ORDER, ORIGINS, REGION,
+} from './engine/data.js';
 import { fmtMoney } from './engine/sim.js';
 
 const $ = id => document.getElementById(id);
@@ -15,29 +20,63 @@ const MAX_YEARS = 40;
 /* ---------------- 開場 ---------------- */
 const SEED = new URLSearchParams(location.search).get('seed') || randomSeed();
 let pickedGroup = 'FW';
+let pickedNation = 'TW';
+let pickedOrigin = 'local';
 
-function setup() {
-  const row = $('pos-row');
+/** 選單列：一排按鈕，選中的加 .sel */
+function pickRow(id, entries, current, onPick) {
+  const row = $(id);
   row.innerHTML = '';
-  Object.entries(POS_GROUP).forEach(([k, n]) => {
+  entries.forEach(([k, label, sub]) => {
     const b = document.createElement('button');
-    b.className = 'btn' + (k === pickedGroup ? ' sel' : '');
-    b.textContent = n;
-    b.onclick = () => { pickedGroup = k; setup(); };
+    b.className = 'btn' + (k === current ? ' sel' : '');
+    b.innerHTML = label + (sub ? `<small>${sub}</small>` : '');
+    b.onclick = () => { onPick(k); setup(); };
     row.appendChild(b);
   });
+}
+
+/** 出身國家決定起點聯賽與國家隊實力，開場就把這件事講清楚 */
+function nationNote() {
+  const nat = NATIONS[pickedNation];
+  const org = ORIGINS[pickedOrigin];
+  const tiers = Object.keys(nat.home).map(Number).sort((a, b) => a - b);
+  const entry = LV[nat.home[tiers[0]]];
+  const ceiling = LV[nat.home[tiers[tiers.length - 1]]];
+  return `<b>${nat.n}</b>（${REGION[nat.region]}）　青訓水準 ${nat.dev > 0 ? '+' + nat.dev : nat.dev}｜代表隊實力 ${nat.natl}<br>` +
+    `國內起點：${entry.n}　國內天花板：${ceiling.n}${tiers[tiers.length - 1] < 7 ? '（要踢五大聯賽必須旅外）' : ''}<br>` +
+    `${nat.uni ? '有大學足球這條升學路線' : '沒有大學足球，高中之後只能走職業'}<br>` +
+    `<b>${org.n}</b>：${org.fx}`;
+}
+
+function setup() {
+  pickRow('pos-row', Object.entries(POS_GROUP).map(([k, n]) => [k, n]), pickedGroup, k => (pickedGroup = k));
+  pickRow('nation-row', NATION_ORDER.map(k => [k, NATIONS[k].n]), pickedNation, k => (pickedNation = k));
+  pickRow('origin-row', Object.entries(ORIGINS).map(([k, o]) => [k, o.n, o.d]), pickedOrigin, k => (pickedOrigin = k));
+  $('setup-note').innerHTML = nationNote();
+  $('btn-start').onclick = start;
+}
+
+/** 只在開場跑一次：重跑 setup() 會蓋掉玩家正在輸入的內容 */
+function initSetup() {
   const pref = JSON.parse(localStorage.getItem(PREF_KEY) || '{}');
   if (pref.name) $('in-name').value = pref.name;
   if (pref.number) $('in-number').value = pref.number;
+  if (pref.nation && NATIONS[pref.nation]) pickedNation = pref.nation;
+  if (pref.origin && ORIGINS[pref.origin]) pickedOrigin = pref.origin;
   $('seed-line').textContent = `世界種子：${SEED}　相同種子＋相同選擇＝相同人生`;
-  $('btn-start').onclick = start;
+  setup();
 }
 
 function start() {
   const name = ($('in-name').value || '無名').slice(0, 10);
   const number = parseInt($('in-number').value, 10) || 10;
-  localStorage.setItem(PREF_KEY, JSON.stringify({ name, number }));
-  S = createState(SEED, { name, number, group: pickedGroup });
+  localStorage.setItem(PREF_KEY, JSON.stringify({
+    name, number, nation: pickedNation, origin: pickedOrigin,
+  }));
+  S = createState(SEED, {
+    name, number, group: pickedGroup, nation: pickedNation, origin: pickedOrigin,
+  });
   S.step = 'YEAR_START';
   $('setup').hidden = true;
   $('board').hidden = false;
@@ -85,14 +124,17 @@ function board() {
   $('bd-name').innerHTML = `${p.name}<small>#${p.number}</small>`;
   const roleName = (SQUAD.find(r => r.k === c.role) || {}).n || '';
   $('bd-sub').textContent =
-    `${p.dpos ? DPOS[p.dpos].n : POS_GROUP[p.group]}` +
+    `${NATIONS[p.nation].n}・${p.dpos ? DPOS[p.dpos].n : POS_GROUP[p.group]}` +
     (c.stage === 'PRO' ? `・${roleName}・出場率 ${Math.round(c.minutes * 100)}%` : '');
   const tier = c.stage === 'PRO' ? `（${TIER[c.tier].n}）` : '';
-  $('bd-club').textContent = `${c.club}${tier}`;
+  const away = c.stage === 'PRO' && isAbroad(S) ? ' ✈' : '';
+  $('bd-club').textContent = `${c.club}${tier}${away}　${LV[c.lv].n}`;
   $('bd-age').textContent = p.age;
   $('bd-year').textContent = S.career.year;
   $('bd-ovr').textContent = ovr(p);
   $('bd-sal').textContent = Math.round(S.career.salaryTotal).toLocaleString('zh-TW');
+  document.body.dataset.stage =
+    c.stage === 'PRO' ? `PRO_${LV[c.lv].region || 'ASIA'}` : c.stage;
   const idx = { PRESEASON: 0, MIDSEASON: 1, SEASON_END: 2 }[S.phase] ?? 0;
   document.querySelectorAll('#phase div').forEach((d, i) => d.classList.toggle('on', i === idx));
 }
@@ -193,12 +235,15 @@ function settlement() {
   const r = S.result;
   const a = $('act');
   const rows = S.career.seasons.map(x =>
-    `<tr><td>${x.year}</td><td>${x.club}</td><td>${x.apps}</td>` +
+    `<tr><td>${x.year}</td><td>${x.club}${x.abroad ? ' ✈' : ''}` +
+    `<br><small style="opacity:.5">${x.lvName}</small></td><td>${x.apps}</td>` +
     `<td>${S.player.group === 'GK' ? x.cs : x.goals}</td><td>${x.assists}</td><td>${x.rating || '—'}</td></tr>`
   ).join('');
   renderCard({
     tone: 'gold', title: `生涯結算 — ${r.rank}`,
     html:
+      `<div>${r.nation}出身・${r.origin}｜代表 ${r.natlTeam} 出賽` +
+      `${r.abroadSeasons ? `｜旅外 ${r.abroadSeasons} 季` : '｜從未旅外'}</div>` +
       `<div>傳奇評分 <b class="hl">${r.legacy}</b>｜共 ${r.seasons} 個賽季</div>` +
       `<div>生涯 ${r.sum.apps} 場｜進球 ${r.sum.goals}｜助攻 ${r.sum.assists}｜零封 ${r.sum.cs}</div>` +
       `<div>國家隊 ${r.caps} 場、進球 ${r.intlGoals}` +
@@ -237,6 +282,11 @@ function tryResume() {
   try {
     const saved = JSON.parse(raw);
     if (saved.done) return false;
+    // 規則改版後聯賽 id 與欄位都會變，舊存檔直接丟掉比讀進來壞掉好
+    if (saved.v !== SCHEMA_VERSION) {
+      localStorage.removeItem(SAVE_KEY);
+      return false;
+    }
     const a = $('act');
     a.innerHTML = '<div class="title">偵測到未完成的生涯</div>';
     const cont = document.createElement('button');
@@ -259,5 +309,5 @@ function tryResume() {
   } catch (e) { return false; }
 }
 
-setup();
+initSetup();
 tryResume();

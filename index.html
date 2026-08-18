@@ -11,10 +11,22 @@
   --bg:#0b1a10; --panel:#12281a; --line:#1e4029; --ink:#e8f0e6; --dim:#8fae95;
   --amber:#f5c451; --up:#67d98a; --dn:#e8746a; --gold:#f0d078;
 }
+/* 生涯階段換底色：養成期各有自己的色調，職業期則跟著所在地區走，
+   讓「我現在在哪裡」不用讀文字也看得出來。 */
+body[data-stage="JHS"]     {--bg:#0d1524;--panel:#142033;--line:#25344d;--dim:#8fa0c0}
+body[data-stage="HS"]      {--bg:#0b1a10;--panel:#12281a;--line:#1e4029;--dim:#8fae95}
+body[data-stage="ACADEMY"] {--bg:#150f1e;--panel:#211832;--line:#372654;--dim:#a794c4}
+body[data-stage="UNI"]     {--bg:#1a1408;--panel:#261d0e;--line:#3f3119;--dim:#bda882}
+body[data-stage="PRO_ASIA"]{--bg:#08140b;--panel:#0f2214;--line:#1c3b26;--dim:#87b394}
+body[data-stage="PRO_EUR"] {--bg:#0a1520;--panel:#10222f;--line:#1d3b4f;--dim:#8bacc4}
+body[data-stage="PRO_SAM"] {--bg:#1a1206;--panel:#27200c;--line:#42351a;--dim:#c2ab7c}
+body[data-stage="PRO_NAM"] {--bg:#130d1c;--panel:#1d1630;--line:#34264e;--dim:#a396c6}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+html{margin:0;padding:0}
+/* 背景只掛在 body：html 若也有底色會蓋掉 body[data-stage] 的階段配色 */
+body{margin:0;padding:0;min-height:100vh;background:var(--bg);color:var(--ink);
   font-family:"Noto Sans TC","PingFang TC","Helvetica Neue",system-ui,sans-serif;
-  font-size:15px;line-height:1.6}
+  font-size:15px;line-height:1.6;transition:background-color .6s ease}
 #app{max-width:560px;margin:0 auto;padding:0 12px env(safe-area-inset-bottom) 12px}
 
 /* 頂部狀態列 */
@@ -25,12 +37,12 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
 #bd-sub{font-size:12px;color:var(--dim);margin-top:2px}
 #bd-club{font-weight:800;color:var(--amber);margin-top:4px;font-size:14px}
 #bd-stats{display:flex;gap:10px;margin-top:8px}
-.st{flex:1;text-align:center;background:#0c1f13;border:1px solid var(--line);
+.st{flex:1;text-align:center;background:rgba(0,0,0,.3);border:1px solid var(--line);
   border-radius:8px;padding:5px 2px}
 .st b{display:block;font-size:17px;line-height:1.2}
 .st span{font-size:10px;color:var(--dim)}
 #phase{display:flex;gap:4px;margin-top:8px;font-size:10px;color:var(--dim)}
-#phase div{flex:1;text-align:center;padding:3px;border-radius:5px;background:#0c1f13}
+#phase div{flex:1;text-align:center;padding:3px;border-radius:5px;background:rgba(0,0,0,.3)}
 #phase div.on{background:var(--amber);color:#0b1a10;font-weight:900}
 
 /* 記錄流 */
@@ -43,7 +55,7 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
 .card h4{margin:0 0 4px;font-size:13px;letter-spacing:.5px}
 .card.good{border-left-color:var(--up)}
 .card.bad{border-left-color:var(--dn)}
-.card.gold{border-left-color:var(--gold);background:#1b2416}
+.card.gold{border-left-color:var(--gold);box-shadow:inset 4px 0 16px -8px var(--gold)}
 .card.info{border-left-color:#5aa0d0}
 .hl{color:var(--amber)} .up{color:var(--up)} .dn{color:var(--dn)}
 
@@ -61,7 +73,7 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
 
 /* 加點介面 */
 #dice{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
-.die{width:34px;height:34px;border-radius:7px;background:#0c1f13;border:1px solid var(--line);
+.die{width:34px;height:34px;border-radius:7px;background:rgba(0,0,0,.3);border:1px solid var(--line);
   display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px}
 .die.active{border-color:var(--amber);color:var(--amber)}
 .die.used{opacity:.28}
@@ -70,7 +82,7 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
   background:var(--panel);border:1px solid var(--line);border-radius:8px;cursor:pointer}
 .abrow.capped{opacity:.4}
 .nm{width:56px;font-size:13px;flex:none}
-.bar{flex:1;height:7px;background:#0c1f13;border-radius:4px;position:relative;overflow:hidden}
+.bar{flex:1;height:7px;background:rgba(0,0,0,.3);border-radius:4px;position:relative;overflow:hidden}
 .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--amber)}
 .bar em{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--dn)}
 .val{width:56px;text-align:right;font-size:13px;font-weight:700;flex:none}
@@ -86,6 +98,11 @@ input{width:100%;background:var(--panel);border:1px solid var(--line);border-rad
 .row{display:flex;gap:8px;flex-wrap:wrap}
 .row .btn{width:auto;flex:1;text-align:center;min-width:70px}
 .row .btn.sel{border-color:var(--amber);color:var(--amber)}
+.row.grid .btn{flex:0 1 auto;min-width:60px;padding:8px 10px;margin:0;font-size:14px}
+.row.stack{flex-direction:column;gap:0}
+.row.stack .btn{width:100%;text-align:left}
+#setup-note{font-size:12px;color:var(--dim);margin-top:8px;line-height:1.5;
+  border-left:2px solid var(--line);padding-left:10px}
 #seed-line{font-size:11px;color:var(--dim);margin-top:14px;word-break:break-all}
 table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
 th,td{padding:3px 4px;border-bottom:1px solid var(--line);text-align:right}
@@ -97,15 +114,20 @@ th{color:var(--dim);font-weight:400}
 <div id="app">
   <div id="setup">
     <h1>FootballLife</h1>
-    <div class="sub">足球人生模擬器 — 從高中球隊到五大聯賽，每一個決定都算數。</div>
+    <div class="sub">足球人生模擬器 — 從國中球隊到五大聯賽，每一個決定都算數。</div>
     <label>球員名稱</label>
     <input id="in-name" maxlength="10" placeholder="輸入名字">
     <label>背號</label>
     <input id="in-number" maxlength="2" inputmode="numeric" placeholder="10">
     <label>位置</label>
     <div class="row" id="pos-row"></div>
+    <label>出身國家</label>
+    <div class="row grid" id="nation-row"></div>
+    <label>出身背景</label>
+    <div class="row stack" id="origin-row"></div>
+    <div id="setup-note"></div>
     <div style="height:16px"></div>
-    <button class="btn main" id="btn-start" style="text-align:center">開始生涯 ▸ 高一</button>
+    <button class="btn main" id="btn-start" style="text-align:center">開始生涯 ▸ 國一</button>
     <div id="seed-line"></div>
   </div>
 

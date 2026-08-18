@@ -1,6 +1,6 @@
 import { clamp } from './rng.js';
 import { LV, TIER, SQUAD, POS_WEIGHT, POS_OUTPUT, DPOS, CONF } from './data.js';
-import { ovr, squadGap, defaultPos } from './state.js';
+import { ovr, squadGap, defaultPos, isAbroad } from './state.js';
 
 /* ---------------- 陣中地位與出場時間 ---------------- */
 
@@ -59,6 +59,7 @@ export function simSeason(s, rng) {
     apps, goals, assists, cs, rating, d: +d.toFixed(1),
     minutes: +(c.minutes * 100).toFixed(0),
     loanFrom: c.loanFrom,
+    abroad: isAbroad(s),
   };
 }
 
