@@ -3,6 +3,7 @@ import {
   LV, CLUBS, YOUTH_CLUBS, TIER, DPOS, EVENTS, TRAITS, ABIL, CONF, POS_GROUP,
   NATIONS, ORIGINS, REGION, MAX_TIER, leaguesAt,
   ARCHETYPE, ARCH_SWITCH, ROLE_RANK, SQUAD, PHYSICAL, PHYSICAL_LOCK_AGE, growthPhase, STAGE_TRAIN,
+  BUILD,
   trainingTable, trainingFor,
 } from './data.js';
 import {
@@ -64,6 +65,11 @@ const STAGE_LABEL = {
 
 STEPS.YEAR_START = (s, ctx) => {
   const c = s.club;
+  if (!s._bornNoted) {
+    s._bornNoted = true;
+    const b = BUILD[s.player.build];
+    if (b) card(ctx, 'info', `體型：${b.n}`, `${b.d}。<br>這是你拿到的身體，不是你挑的。`);
+  }
   const stage = STAGE_LABEL[c.stage] ? STAGE_LABEL[c.stage](c.stageYear) : LV[c.lv].n;
   const where = isPro(s) && isAbroad(s) ? ' · 旅外' : '';
   ctx.cards.push({ divider: `${s.career.year} 年 · ${s.player.age} 歲 · ${stage}${where}` });
@@ -162,17 +168,29 @@ STEPS.PRE_DICE = (s, ctx, input) => {
     const options = trainingFor(p.group).map(key => {
       const t = TT[key];
       const feeds = Object.keys(t.ab).filter(k => k in p.ab);
+      // 主修判定看「權重佔比」而不是「有沒有沾到」：
+      // 射門練習只餵 0.1 的射門也算主修的話，一半以上的項目都會標黃框
+      const total = feeds.reduce((a, k) => a + t.ab[k], 0);
+      const mine = feeds.reduce((a, k) => a + (majors.includes(k) ? t.ab[k] : 0), 0);
       return {
         v: key, t: t.n,
         s: feeds.map(k => `${ABIL[k]}${'▲'.repeat(Math.max(1, Math.round(t.ab[k] * 2)))}`).join(' '),
         dead: feeds.every(k => !isGrowable(p, k)),
-        major: feeds.some(k => majors.includes(k)),
+        major: total > 0 && mine / total >= 0.5,
       };
     });
+
+    // 主修相關的訓練排前面，玩家一眼就看到該練什麼
+    options.sort((a, b) => (b.major ? 1 : 0) - (a.major ? 1 : 0));
+    const arch = ARCHETYPE[p.arch];
 
     return ask(s, {
       type: 'train',
       title: `季前訓練（${spec.phase}）`,
+      note: arch
+        ? `<b class="hl">黃框</b>是 ${arch.n} 的主修訓練（${arch.major.map(k => ABIL[k]).join('、')}）` +
+          `：成長成本 ×0.7，其餘能力 ×1.3。`
+        : '18 歲確立原型後，主修訓練會標成黃框。',
       dice: free, fixed, options,
       // 自主加練：多一次訓練，代價是受傷風險與身體負荷
       extra: isPro(s) || s.club.stage === 'HS' || s.club.stage === 'UNI',
@@ -395,12 +413,14 @@ STEPS.MID_EVENTS = (s, ctx, input) => {
       }, 'MID_EVENTS');
     }
     const odds = evOdds(p);
+    // acts = [保守, 照常, 全力] 的自訂文案；沒寫就用通用的
+    const [aSafe, aNorm, aBold] = ev.acts || ['保守應對', '照常執行', '全力一搏'];
     return ask(s, {
       type: 'choice', title: `事件｜${ev.n} — 你要怎麼應對？`,
       options: [
-        { v: 'bold', t: '全力一搏', warn: true, s: `成功率 ${odds.bold}%｜幅度 ±3` },
-        { v: 'norm', t: '照常執行', main: true, s: `成功率 ${odds.norm}%｜幅度 ±2` },
-        { v: 'safe', t: '保守應對', s: `成功率 ${odds.safe}%｜幅度 ±1` },
+        { v: 'bold', t: aBold, warn: true, s: `成功率 ${odds.bold}%｜幅度 ±3` },
+        { v: 'norm', t: aNorm, main: true, s: `成功率 ${odds.norm}%｜幅度 ±2` },
+        { v: 'safe', t: aSafe, s: `成功率 ${odds.safe}%｜幅度 ±1` },
       ],
     }, 'MID_EVENTS');
   }
