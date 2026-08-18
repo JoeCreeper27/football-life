@@ -80,6 +80,7 @@ function start() {
   S.step = 'YEAR_START';
   $('setup').hidden = true;
   $('board').hidden = false;
+  $('abils').onclick = () => { detailOpen = !detailOpen; renderAbilDetail(); };
   push(run(S));
 }
 
@@ -148,8 +149,7 @@ function renderAbils() {
   const p = S.player;
   const keys = GROUP_ABIL[p.group];
   const n = keys.length;
-  const R = 40, CX = 62, CY = 58;            // viewBox 124×116，釘在狀態列裡要夠小
-  // 從正上方開始，順時針平均分佈
+  const R = 46, CX = 78, CY = 70;            // viewBox 156×140
   const pt = (i, r) => {
     const a = (i / n) * Math.PI * 2 - Math.PI / 2;
     return [CX + Math.cos(a) * r, CY + Math.sin(a) * r];
@@ -163,22 +163,39 @@ function renderAbils() {
     const [x, y] = pt(i, R);
     return `<line x1="${CX}" y1="${CY}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--line)" stroke-width="1"/>`;
   }).join('');
-  // 小圖上用單字縮寫，全名會擠成一團
+  // 縮寫 + 數值；潛力上限不畫在圖上，改到展開的細項裡看
   const labels = keys.map((k, i) => {
-    const [x, y] = pt(i, R + 11);
-    return `<text x="${x.toFixed(1)}" y="${(y + 3).toFixed(1)}" text-anchor="middle"
-      font-size="9" fill="var(--dim)">${ABIL_SHORT[k] || ABIL[k]}</text>`;
+    const [x, y] = pt(i, R + 13);
+    return `<text x="${x.toFixed(1)}" y="${(y + 3).toFixed(1)}" text-anchor="middle" font-size="9"
+      fill="var(--dim)">${ABIL_SHORT[k] || ABIL[k]}<tspan fill="var(--ink)" font-weight="700">${p.ab[k]}</tspan></text>`;
   }).join('');
 
   box.innerHTML =
-    `<svg viewBox="0 0 124 116" role="img" aria-label="能力雷達圖">` +
+    `<svg viewBox="0 0 156 140" role="img" aria-label="能力雷達圖（點擊看細項）">` +
       rings + spokes +
-      `<polygon points="${poly(k => p.pot[k] ?? 70)}" fill="none"
-        stroke="var(--dn)" stroke-width="1" stroke-dasharray="3 3" opacity=".8"/>` +
       `<polygon points="${poly(k => p.ab[k])}" fill="var(--amber)" fill-opacity=".22"
         stroke="var(--amber)" stroke-width="2"/>` +
       labels +
     `</svg>`;
+  renderAbilDetail();
+}
+
+/** 點雷達圖展開的能力細項：長條圖看得到與潛力上限的距離 */
+let detailOpen = false;
+
+function renderAbilDetail() {
+  const box = $('abils-detail');
+  box.hidden = !detailOpen;
+  if (!detailOpen) return;
+  const p = S.player;
+  box.innerHTML = GROUP_ABIL[p.group].map(k => {
+    const v = p.ab[k], pk = p.pot[k] ?? 70;
+    return `<div class="abrow">` +
+      `<span class="nm">${ABIL[k]}</span>` +
+      `<span class="bar"><i style="width:${v / MAX_ABIL * 100}%"></i>` +
+      `<em style="left:${pk / MAX_ABIL * 100}%"></em></span>` +
+      `<span class="val">${v}<small>/${pk}</small></span></div>`;
+  }).join('') + `<div class="radar-key">紅線 = 潛力上限（再往上成本大增）</div>`;
 }
 
 function scrollBottom() {
@@ -220,9 +237,14 @@ function renderTrain({ title, note, dice, fixed, options, extra }) {
       // 訓練項目排成方格，一行放得下好幾個
       const grid = document.createElement('div');
       grid.className = 'row grid trainset';
+      const used = {};
+      picks.forEach(pk => (used[pk.key] = (used[pk.key] || 0) + 1));
+      fixed.forEach(f => (used[f.key] = (used[f.key] || 0) + 1));
       options.forEach(o => {
         const b = document.createElement('button');
-        b.className = 'btn' + (o.major ? ' main' : '');
+        // 選過的加深底色，一顆骰加深一級
+        const lv = Math.min(used[o.v] || 0, 3);
+        b.className = 'btn' + (o.major ? ' main' : '') + (lv ? ' picked p' + lv : '');
         b.disabled = !!o.dead;
         b.textContent = o.t;
         b.onclick = () => {
@@ -443,6 +465,7 @@ function tryResume() {
     cont.onclick = () => {
       S = saved;
       $('setup').hidden = true; $('board').hidden = false; a.innerHTML = '';
+      $('abils').onclick = () => { detailOpen = !detailOpen; renderAbilDetail(); };
           // 存檔沒有保留畫面歷史，直接從當前決策點續玩
       divider(`${S.career.year} 年 · ${S.player.age} 歲（讀取存檔）`);
       push(run(S));
