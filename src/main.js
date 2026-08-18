@@ -5,7 +5,7 @@ import {
 import { run, answer } from './engine/flow.js';
 import {
   ABIL, GROUP_ABIL, POS_GROUP, DPOS, LV, TIER, SQUAD,
-  NATIONS, NATION_ORDER, ORIGINS, REGION,
+  NATIONS, NATION_ORDER, ORIGINS, REGION, ARCHETYPE,
 } from './engine/data.js';
 import { fmtMoney } from './engine/sim.js';
 
@@ -123,8 +123,9 @@ function board() {
   const p = S.player, c = S.club;
   $('bd-name').innerHTML = `${p.name}<small>#${p.number}</small>`;
   const roleName = (SQUAD.find(r => r.k === c.role) || {}).n || '';
+  const archName = ARCHETYPE[p.arch]?.n;
   $('bd-sub').textContent =
-    `${NATIONS[p.nation].n}・${p.dpos ? DPOS[p.dpos].n : POS_GROUP[p.group]}` +
+    `${NATIONS[p.nation].n}・${archName || (p.dpos ? DPOS[p.dpos].n : POS_GROUP[p.group])}` +
     (c.stage === 'PRO' ? `・${roleName}・出場率 ${Math.round(c.minutes * 100)}%` : '');
   const tier = c.stage === 'PRO' ? `（${TIER[c.tier].n}）` : '';
   const away = c.stage === 'PRO' && isAbroad(S) ? ' ✈' : '';
@@ -132,6 +133,7 @@ function board() {
   $('bd-age').textContent = p.age;
   $('bd-year').textContent = S.career.year;
   $('bd-ovr').textContent = ovr(p);
+  $('bd-fan').textContent = Math.round(S.career.fanRep);
   $('bd-sal').textContent = Math.round(S.career.salaryTotal).toLocaleString('zh-TW');
   document.body.dataset.stage =
     c.stage === 'PRO' ? `PRO_${LV[c.lv].region || 'ASIA'}` : c.stage;
@@ -162,15 +164,27 @@ function renderChoice({ title, options }) {
   scrollBottom();
 }
 
-function renderAlloc({ title, dice, pool }) {
+function renderAlloc({ title, dice, pool, locked = [], major = [] }) {
   const a = $('act');
   const p = S.player;
-  const keys = GROUP_ABIL[p.group];
+  // 主修置頂，鎖住的沉底；其餘折疊起來，讓玩家一眼看到該練哪三個
+  const all = GROUP_ABIL[p.group];
+  const keys = [
+    ...all.filter(k => major.includes(k) && !locked.includes(k)),
+    ...all.filter(k => !major.includes(k) && !locked.includes(k)),
+    ...all.filter(k => locked.includes(k)),
+  ];
+  const folded = major.length ? keys.filter(k => !major.includes(k)) : [];
+  let showAll = !folded.length;
   let idx = 0, left = pool || 0;
   const spent = {};
   const hist = [];
-  // 在暫存副本上加點，確認前不動真正的狀態
-  const draft = { group: p.group, ab: { ...p.ab }, pot: p.pot, carry: { ...p.carry } };
+  // 在暫存副本上加點，確認前不動真正的狀態。
+  // age / arch 一定要帶上：abCost 依生涯階段與原型加成計算成本。
+  const draft = {
+    group: p.group, age: p.age, arch: p.arch,
+    ab: { ...p.ab }, pot: p.pot, carry: { ...p.carry },
+  };
 
   const remaining = () => (dice ? dice.length - idx : left);
 
@@ -181,15 +195,18 @@ function renderAlloc({ title, dice, pool }) {
         `<div class="die ${i < idx ? 'used' : ''} ${i === idx ? 'active' : ''} ${v === 6 ? 'six' : ''}">${v}</div>`
       ).join('')}</div>`;
     }
-    keys.forEach(k => {
-      const v = draft.ab[k], cap = v >= 80, pk = draft.pot[k] ?? 62;
+    const visible = showAll ? keys : keys.filter(k => major.includes(k));
+    visible.forEach(k => {
+      const v = draft.ab[k], pk = draft.pot[k] ?? 62;
+      const isLocked = locked.includes(k);
+      const cap = v >= 80 || isLocked;
       const cost = abCost(draft, k), carry = draft.carry[k] || 0;
       const r = document.createElement('div');
-      r.className = 'abrow' + (cap ? ' capped' : '');
+      r.className = 'abrow' + (cap ? ' capped' : '') + (major.includes(k) ? ' major' : '');
       r.innerHTML =
-        `<span class="nm">${ABIL[k]}</span>` +
+        `<span class="nm">${ABIL[k]}${isLocked ? '<small>鎖</small>' : ''}</span>` +
         `<span class="bar"><i style="width:${v / 80 * 100}%"></i><em style="left:${pk / 80 * 100}%"></em></span>` +
-        `<span class="val">${v}<small>/${pk}</small>${cost > 1 ? `<br><small>${carry}/${cost}</small>` : ''}</span>`;
+        `<span class="val">${v}<small>/${pk}</small>${cost > 1 && !isLocked ? `<br><small>${carry}/${cost}</small>` : ''}</span>`;
       if (!cap && remaining() > 0) {
         r.onclick = () => {
           const amt = dice ? dice[idx] : 1;
@@ -203,6 +220,14 @@ function renderAlloc({ title, dice, pool }) {
       }
       a.appendChild(r);
     });
+    if (folded.length) {
+      const t = document.createElement('button');
+      t.className = 'btn';
+      t.style.textAlign = 'center';
+      t.innerHTML = showAll ? '▲ 只看主修' : `▼ 其他能力（${folded.length}）`;
+      t.onclick = () => { showAll = !showAll; render(); };
+      a.appendChild(t);
+    }
     const undo = document.createElement('button');
     undo.className = 'btn';
     undo.style.textAlign = 'center';
@@ -244,12 +269,16 @@ function settlement() {
     html:
       `<div>${r.nation}出身・${r.origin}｜代表 ${r.natlTeam} 出賽` +
       `${r.abroadSeasons ? `｜旅外 ${r.abroadSeasons} 季` : '｜從未旅外'}</div>` +
-      `<div>傳奇評分 <b class="hl">${r.legacy}</b>｜共 ${r.seasons} 個賽季</div>` +
+      (r.arch ? `<div>原型 <b class="hl">${r.arch}</b>${r.archEvolved ? `　→　<b class="hl">${r.archEvolved}</b>` : ''}</div>` : '') +
+      `<div>傳奇評分 <b class="hl">${r.legacy}</b>｜共 ${r.seasons} 個賽季｜球迷聲望 <b class="hl">${r.fanRep}</b></div>` +
       `<div>生涯 ${r.sum.apps} 場｜進球 ${r.sum.goals}｜助攻 ${r.sum.assists}｜零封 ${r.sum.cs}</div>` +
       `<div>國家隊 ${r.caps} 場、進球 ${r.intlGoals}` +
       `${r.worldCups.length ? `｜<b class="hl">世界盃 ${r.worldCups.join('、')}</b>` : ''}</div>` +
       `<div>生涯薪資 <b class="hl">${fmtMoney(r.salary)}</b></div>` +
+      (r.shirtRetired ? `<div style="margin-top:6px;color:var(--gold)">★ 球衣退休・球場外立像 ★</div>` : '') +
+      (r.legends?.length ? `<div style="margin-top:6px">這些球場永遠記得你：${r.legends.join('、')}</div>` : '') +
       (r.traits.length ? `<div style="margin-top:6px">特性：${r.traits.join('、')}</div>` : '') +
+      (r.removed?.length ? `<div style="opacity:.55"><s>${r.removed.join('、')}</s></div>` : '') +
       (r.honors.length ? `<div style="margin-top:6px;color:var(--gold)">${r.honors.join('<br>')}</div>` : '') +
       `<table><tr><th>年</th><th>球會</th><th>場</th><th>${S.player.group === 'GK' ? '零封' : '球'}</th><th>助</th><th>評分</th></tr>${rows}</table>`,
   });

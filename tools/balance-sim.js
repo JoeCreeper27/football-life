@@ -10,7 +10,7 @@
  */
 import { createState, ovr } from '../src/engine/state.js';
 import { run, answer } from '../src/engine/flow.js';
-import { POS_WEIGHT, LV, NATIONS, NATION_ORDER } from '../src/engine/data.js';
+import { POS_WEIGHT, LV, NATIONS, NATION_ORDER, ARCHETYPE } from '../src/engine/data.js';
 import { randomSeed } from '../src/engine/rng.js';
 
 const N = parseInt(process.argv[2], 10) || 2000;
@@ -28,19 +28,25 @@ const TARGETS = {
   '25 歲前退出': [10, 22],
   '生涯至少一次重傷': [40, 65],
   '進足球學校': [0, 100],
+  '確立原型': [0, 100],
+  '球迷聲望 ≥80': [0, 100],
 };
 
 function botAlloc(state, pending) {
   const p = state.player;
   const dp = p.dpos || { GK: 'GK', DF: 'CB', MF: 'CM', FW: 'ST' }[p.group];
   const w = POS_WEIGHT[dp];
-  // 依位置權重排序，優先把點數灌進最有價值又還沒到潛力上限的能力
-  const order = Object.keys(p.ab).sort((a, b) => {
+  const locked = pending.locked || [];
+  const major = pending.major || [];
+  // 依位置權重排序，優先把點數灌進最有價值又還沒到潛力上限的能力；
+  // 原型主修加權，並排除 29 歲後鎖住的能力
+  const order = Object.keys(p.ab).filter(k => !locked.includes(k)).sort((a, b) => {
     const room = k => (p.pot[k] - p.ab[k]);
-    const score = k => (w[k] || 0.02) * 100 + Math.min(room(k), 10);
+    const score = k => (w[k] || 0.02) * 100 + Math.min(room(k), 10) + (major.includes(k) ? 25 : 0);
     return score(b) - score(a);
   });
   const out = {};
+  if (!order.length) return out;
   const units = pending.dice ? pending.dice : Array(pending.pool).fill(1);
   units.forEach((v, i) => {
     const k = order[i % Math.min(3, order.length)];
@@ -63,6 +69,16 @@ function botChoice(state, pending) {
   if (has('surgery')) return STRAT === 'aggressive' ? 'gamble' : 'surgery';
   // 國中畢業：積極派進足球學校，保守派留校隊
   if (has('academy')) return STRAT === 'safe' ? 'hs' : 'academy';
+  // 分岔型事件卡：積極派挑第二條路
+  if (has('opt0')) return STRAT === 'aggressive' && has('opt1') ? 'opt1' : 'opt0';
+  // 兵役：能免則免
+  if (has('sub')) return 'sub';
+  if (has('defer')) return 'defer';
+  if (has('serve') && vals.length === 1) return 'serve';
+  // 原型轉型：一律接受，拒絕等於提早退休
+  if (has('switch')) return 'switch';
+  // 原型選擇：契合度最高的排在第一個
+  if (vals.some(v => ARCHETYPE[v])) return vals.find(v => ARCHETYPE[v]);
   // 國籍抉擇（混血）：選國家隊實力較強的一邊
   if (vals.length === 2 && vals.every(v => NATIONS[v])) {
     return vals.slice().sort((a, b) => NATIONS[b].natl - NATIONS[a].natl)[0];
@@ -135,6 +151,8 @@ for (let i = 0; i < N; i++) {
   if (s.player.age < 25) bump('25 歲前退出');
   if (s.player.injury.bigCount + s.player.injury.aclCount > 0) bump('生涯至少一次重傷');
   if (s.career.fromAcademy) bump('進足球學校');
+  if (s.player.arch) bump('確立原型');
+  if (s.career.fanRep >= 80) bump('球迷聲望 ≥80');
   bump('_total');
 }
 

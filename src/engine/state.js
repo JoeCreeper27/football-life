@@ -1,10 +1,11 @@
 import { Rng, clamp } from './rng.js';
 import {
   GROUP_ABIL, YOUTH_CLUBS, CONF, DPOS, POS_WEIGHT, LV, TIER,
-  NATIONS, NATION_ORDER, ORIGINS,
+  NATIONS, NATION_ORDER, ORIGINS, ARCHETYPE,
+  growthPhase, LATE_GROWABLE, LATE_LOCK_AGE,
 } from './data.js';
 
-export const SCHEMA_VERSION = '0.2.0';
+export const SCHEMA_VERSION = '0.3.0';
 
 /**
  * 建立一局新生涯。所有隨機都吃 rng，因此同種子同設定必得同一個開局。
@@ -61,8 +62,10 @@ export function createState(seed, { name, number, group, nation = 'TW', origin =
       name, number, group, dpos: null,
       nation, origin, altNation, natlPick: nation, natlPicked: false,
       age: CONF.startAge, ab, pot, carry,
+      arch: null, archEvolved: null, archSwitched: false,
       traits: {}, removed: [],
       injury: { load: 0, aclCount: 0, bigCount: 0, nextRisk: 0, rehab: 0, seasonFactor: 1 },
+      service: 0,
       style: '標準',
     },
 
@@ -82,7 +85,14 @@ export function createState(seed, { name, number, group, nation = 'TW', origin =
       clubTally: {},
       pool: 0,
       fromAcademy: false,
-      counters: { six: 0, bold: 0, boldWin: 0, benchStreak: 0, ironStreak: 0 },
+      fanRep: CONF.fanRepStart,
+      seenEvents: [],
+      clubHistory: [],
+      legends: [],
+      counters: {
+        six: 0, bold: 0, boldWin: 0, benchStreak: 0, ironStreak: 0,
+        clutch: 0, goodRating: 0, cleanSeasons: 0,
+      },
     },
   };
 }
@@ -122,13 +132,32 @@ export function ageWindow(p, lvId) {
 
 /* ---------------- 能力成長 ---------------- */
 
-/** 目前這一級要花幾點 */
+/**
+ * 目前這一級要花幾點。
+ * 三層修正：能力現值 → 生涯階段（巔峰期 ×1.5、維持期 ×2）→ 原型（主修 ×0.7、非主修 ×1.3）。
+ * 階段乘數是「總量控制在 24 歲前」的主要手段，改這裡等於改整條成長曲線。
+ */
 export function abCost(p, k) {
   const cur = p.ab[k], cap = p.pot[k] ?? 62, gk = p.group === 'GK';
-  let c = gk ? (cur >= 75 ? 7 : cur >= 70 ? 5 : cur >= 60 ? 3 : cur >= 48 ? 2 : 1)
-             : (cur >= 75 ? 6 : cur >= 70 ? 4 : cur >= 60 ? 3 : cur >= 48 ? 2 : 1);
+  let c = gk ? (cur >= 76 ? 5 : cur >= 71 ? 4 : cur >= 63 ? 2 : 1)
+             : (cur >= 76 ? 4 : cur >= 71 ? 3 : cur >= 63 ? 2 : 1);
   if (cur >= cap) c *= gk ? 4 : 3; // 超過潛力上限，成本暴增但不封死
-  return c;
+  c *= growthPhase(p.age).cost;
+  const arch = ARCHETYPE[p.arch];
+  if (arch) c *= arch.major.includes(k) ? 0.7 : 1.3;
+  return Math.max(1, Math.ceil(c));
+}
+
+/** 29 歲後只有技術類能力還練得動 */
+export function isGrowable(p, k) {
+  return p.age < LATE_LOCK_AGE || LATE_GROWABLE.includes(k);
+}
+
+/** 球迷聲望：0–100，負面事件扣得比正面加得兇 */
+export function addFanRep(s, v) {
+  const before = s.career.fanRep;
+  s.career.fanRep = clamp(before + v, 0, 100);
+  return s.career.fanRep - before;
 }
 
 /** 加點：未滿一級的餘數進蓄力槽，不蒸發 */
