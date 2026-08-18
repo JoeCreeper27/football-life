@@ -43,8 +43,16 @@ body{margin:0;padding:0;min-height:100vh;background:var(--bg);color:var(--ink);
   border-radius:8px;padding:3px 2px}
 .st b{display:block;font-size:16px;line-height:1.15}
 .st span{font-size:9px;color:var(--dim)}
-#abils{flex:none;width:132px}
+#abils{flex:none;width:164px;cursor:pointer}
 #abils svg{display:block;width:100%}
+#abils-detail{margin:8px 0 0}
+#abils-detail .abrow{cursor:default;padding:4px 8px;margin:2px 0}
+.radar-key{text-align:center;font-size:10px;color:var(--dim);margin-top:4px}
+/* 已指派的訓練項目：飽和度逐級加深 */
+.btn.picked{color:#0b1a10}
+.btn.p1{background:#f5c45166;border-color:var(--amber)}
+.btn.p2{background:#f5c451aa;border-color:var(--amber)}
+.btn.p3{background:var(--amber);border-color:var(--amber)}
 .train-note{font-size:11px;color:var(--dim);margin:0 0 8px;line-height:1.5}
 
 /* 記錄流 */
@@ -154,9 +162,10 @@ th{color:var(--dim);font-weight:400}
         <div class="st"><b id="bd-year">—</b><span>年份</span></div>
         <div class="st"><b id="bd-phase">季前</b><span>賽季階段</span></div>
       </div>
-      <div id="abils"></div>
+      <div id="abils" title="點擊看能力細項"></div>
     </div>
   </div>
+  <div id="abils-detail" hidden></div>
 
   <div id="log"></div>
   <div id="act"></div>

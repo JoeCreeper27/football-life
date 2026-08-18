@@ -189,7 +189,7 @@ STEPS.PRE_DICE = (s, ctx, input) => {
       title: `季前訓練（${spec.phase}）`,
       note: arch
         ? `<b class="hl">黃框</b>是 ${arch.n} 的主修訓練（${arch.major.map(k => ABIL[k]).join('、')}）` +
-          `：成長成本 ×0.7，其餘能力 ×1.3。`
+          `：成長成本 ×0.7，其餘維持原價。`
         : '18 歲確立原型後，主修訓練會標成黃框。',
       dice: free, fixed, options,
       // 自主加練：多一次訓練，代價是受傷風險與身體負荷

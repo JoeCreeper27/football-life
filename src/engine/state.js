@@ -190,7 +190,7 @@ export function abCost(p, k) {
   c *= growthPhase(p.age).cost;
   // 26 歲之後體能類練得動但很吃力，技術類不受影響
   if (p.age >= PHYSICAL_HARD_AGE && PHYSICAL.includes(k)) c *= 2;
-  if (arch) c *= major ? 0.7 : 1.3;
+  if (arch && major) c *= 0.7;   // 主修便宜，非主修維持原價（不再加罰）
   return Math.max(1, Math.ceil(c));
 }
 
