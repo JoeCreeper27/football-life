@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>FootballLife — 足球人生模擬器</title>
+<meta name="description" content="從台灣高中足球隊到五大聯賽，一場種子化的足球員生涯模擬。">
+<meta name="theme-color" content="#0b1a10">
+<style>
+:root{
+  --bg:#0b1a10; --panel:#12281a; --line:#1e4029; --ink:#e8f0e6; --dim:#8fae95;
+  --amber:#f5c451; --up:#67d98a; --dn:#e8746a; --gold:#f0d078;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+  font-family:"Noto Sans TC","PingFang TC","Helvetica Neue",system-ui,sans-serif;
+  font-size:15px;line-height:1.6}
+#app{max-width:560px;margin:0 auto;padding:0 12px env(safe-area-inset-bottom) 12px}
+
+/* 頂部狀態列 */
+#board{position:sticky;top:0;z-index:10;background:var(--panel);
+  border:1px solid var(--line);border-radius:0 0 12px 12px;padding:10px 12px;margin-bottom:10px}
+#bd-name{font-weight:900;font-size:17px;letter-spacing:.5px}
+#bd-name small{font-weight:400;opacity:.55;margin-left:6px}
+#bd-sub{font-size:12px;color:var(--dim);margin-top:2px}
+#bd-club{font-weight:800;color:var(--amber);margin-top:4px;font-size:14px}
+#bd-stats{display:flex;gap:10px;margin-top:8px}
+.st{flex:1;text-align:center;background:#0c1f13;border:1px solid var(--line);
+  border-radius:8px;padding:5px 2px}
+.st b{display:block;font-size:17px;line-height:1.2}
+.st span{font-size:10px;color:var(--dim)}
+#phase{display:flex;gap:4px;margin-top:8px;font-size:10px;color:var(--dim)}
+#phase div{flex:1;text-align:center;padding:3px;border-radius:5px;background:#0c1f13}
+#phase div.on{background:var(--amber);color:#0b1a10;font-weight:900}
+
+/* 記錄流 */
+.yr-block{margin:14px 0}
+.yr-head{font-weight:900;color:var(--amber);font-size:13px;letter-spacing:1px;
+  padding:6px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.yr-block.collapsed .yr-body{display:none}
+.card{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--line);
+  border-radius:8px;padding:10px 12px;margin:8px 0;font-size:14px}
+.card h4{margin:0 0 4px;font-size:13px;letter-spacing:.5px}
+.card.good{border-left-color:var(--up)}
+.card.bad{border-left-color:var(--dn)}
+.card.gold{border-left-color:var(--gold);background:#1b2416}
+.card.info{border-left-color:#5aa0d0}
+.hl{color:var(--amber)} .up{color:var(--up)} .dn{color:var(--dn)}
+
+/* 選項 */
+#act{margin:14px 0 30px}
+#act .title{font-size:13px;color:var(--dim);margin-bottom:6px}
+.btn{display:block;width:100%;text-align:left;background:var(--panel);color:var(--ink);
+  border:1px solid var(--line);border-radius:10px;padding:11px 14px;margin:6px 0;
+  font-size:15px;font-weight:700;font-family:inherit;cursor:pointer}
+.btn small{display:block;font-weight:400;font-size:12px;color:var(--dim);margin-top:2px}
+.btn.main{border-color:var(--amber)}
+.btn.warn{border-color:var(--dn)}
+.btn:disabled{opacity:.35}
+.btn:active{transform:scale(.99)}
+
+/* 加點介面 */
+#dice{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.die{width:34px;height:34px;border-radius:7px;background:#0c1f13;border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px}
+.die.active{border-color:var(--amber);color:var(--amber)}
+.die.used{opacity:.28}
+.die.six{color:var(--gold)}
+.abrow{display:flex;align-items:center;gap:8px;padding:6px 8px;margin:3px 0;
+  background:var(--panel);border:1px solid var(--line);border-radius:8px;cursor:pointer}
+.abrow.capped{opacity:.4}
+.nm{width:56px;font-size:13px;flex:none}
+.bar{flex:1;height:7px;background:#0c1f13;border-radius:4px;position:relative;overflow:hidden}
+.bar i{position:absolute;left:0;top:0;bottom:0;background:var(--amber)}
+.bar em{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--dn)}
+.val{width:56px;text-align:right;font-size:13px;font-weight:700;flex:none}
+.val small{opacity:.5;font-weight:400}
+
+/* 開場 / 結算 */
+#setup{padding:24px 0}
+h1{font-size:26px;margin:0 0 4px;letter-spacing:1px}
+.sub{color:var(--dim);font-size:13px;margin-bottom:20px}
+label{display:block;font-size:12px;color:var(--dim);margin:12px 0 4px}
+input{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:8px;
+  color:var(--ink);padding:10px 12px;font-size:15px;font-family:inherit}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row .btn{width:auto;flex:1;text-align:center;min-width:70px}
+.row .btn.sel{border-color:var(--amber);color:var(--amber)}
+#seed-line{font-size:11px;color:var(--dim);margin-top:14px;word-break:break-all}
+table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
+th,td{padding:3px 4px;border-bottom:1px solid var(--line);text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--dim);font-weight:400}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="setup">
+    <h1>FootballLife</h1>
+    <div class="sub">足球人生模擬器 — 從高中球隊到五大聯賽，每一個決定都算數。</div>
+    <label>球員名稱</label>
+    <input id="in-name" maxlength="10" placeholder="輸入名字">
+    <label>背號</label>
+    <input id="in-number" maxlength="2" inputmode="numeric" placeholder="10">
+    <label>位置</label>
+    <div class="row" id="pos-row"></div>
+    <div style="height:16px"></div>
+    <button class="btn main" id="btn-start" style="text-align:center">開始生涯 ▸ 高一</button>
+    <div id="seed-line"></div>
+  </div>
+
+  <div id="board" hidden>
+    <div id="bd-name"></div>
+    <div id="bd-sub"></div>
+    <div id="bd-club"></div>
+    <div id="bd-stats">
+      <div class="st"><b id="bd-age">—</b><span>年齡</span></div>
+      <div class="st"><b id="bd-year">—</b><span>年份</span></div>
+      <div class="st"><b id="bd-ovr">—</b><span>綜合</span></div>
+      <div class="st"><b id="bd-sal">0</b><span>生涯薪(萬)</span></div>
+    </div>
+    <div id="phase"><div data-p="0">季前</div><div data-p="1">賽季中</div><div data-p="2">季末</div></div>
+  </div>
+
+  <div id="log"></div>
+  <div id="act"></div>
+</div>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
