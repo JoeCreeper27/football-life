@@ -28,7 +28,7 @@ export function createState(seed, { name, number, group, nation = 'TW', origin =
 
   // 12 歲起步，起始值低；國家青訓水準與出身直接反映在這裡
   const ab = {};
-  keys.forEach(k => (ab[k] = clamp(rng.int(20, 32) + nat.dev + org.ab + buildAb(k), 12, 46)));
+  keys.forEach(k => (ab[k] = clamp(rng.int(15, 27) + nat.dev + org.ab + buildAb(k), 8, 42)));
 
   /**
    * 潛力天花板。兩層結構：
@@ -185,7 +185,7 @@ export function abCost(p, k) {
   // 天賦分布再寬也會被抹平（實測曾經平均突破 8 分、P95 突破 22 分）。
   if (cur >= cap) {
     const over = cur - cap;
-    c *= (major ? 2.5 : 4) + over * 0.7;
+    c *= (major ? 4 : 6) + over * 1.3;
   }
   c *= growthPhase(p.age).cost;
   // 26 歲之後體能類練得動但很吃力，技術類不受影響

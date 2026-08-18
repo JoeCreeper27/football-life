@@ -183,27 +183,27 @@ export const LV = {
   BRA_B:  { n: '巴西乙級聯賽',     tier: 3, region: 'SAM',  par: 66, min: 72, g: 38, base: 380, coef: 135 },
 
   /* --- T4 洲際頂級 --- */
-  J1:     { n: 'J1 聯賽',              tier: 4, region: 'ASIA', par: 71, min: 82, g: 38, base: 1100, coef: 420, top: 'TOP' },
-  K1:     { n: 'K1 聯賽',              tier: 4, region: 'ASIA', par: 71, min: 82, g: 38, base: 1000, coef: 400, top: 'TOP' },
-  MLS:    { n: '美國職業足球大聯盟',   tier: 4, region: 'NAM',  par: 71, min: 82, g: 34, base: 1500, coef: 520, top: 'TOP' },
-  BRA_A:  { n: '巴西甲級聯賽',         tier: 4, region: 'SAM',  par: 71, min: 82, g: 38, base: 900,  coef: 360, top: 'TOP' },
-  ARG_A:  { n: '阿根廷甲級聯賽',       tier: 4, region: 'SAM',  par: 71, min: 82, g: 30, base: 800,  coef: 330, top: 'TOP' },
+  J1:     { n: 'J1 聯賽',              tier: 4, region: 'ASIA', par: 71, min: 79, g: 38, base: 1100, coef: 420, top: 'TOP' },
+  K1:     { n: 'K1 聯賽',              tier: 4, region: 'ASIA', par: 71, min: 79, g: 38, base: 1000, coef: 400, top: 'TOP' },
+  MLS:    { n: '美國職業足球大聯盟',   tier: 4, region: 'NAM',  par: 71, min: 79, g: 34, base: 1500, coef: 520, top: 'TOP' },
+  BRA_A:  { n: '巴西甲級聯賽',         tier: 4, region: 'SAM',  par: 71, min: 79, g: 38, base: 900,  coef: 360, top: 'TOP' },
+  ARG_A:  { n: '阿根廷甲級聯賽',       tier: 4, region: 'SAM',  par: 71, min: 79, g: 30, base: 800,  coef: 330, top: 'TOP' },
 
   /* --- T5 歐洲跳板 --- */
-  POR:     { n: '葡萄牙超級聯賽',   tier: 5, region: 'EUR', par: 75, min: 83, g: 34, base: 1800, coef: 720, top: 'EUR2' },
-  NED:     { n: '荷蘭甲級聯賽',     tier: 5, region: 'EUR', par: 75, min: 83, g: 34, base: 1900, coef: 760, top: 'EUR2' },
-  EUR_SPR: { n: '歐洲跳板聯賽',     tier: 5, region: 'EUR', par: 75, min: 83, g: 34, base: 1600, coef: 700, top: 'EUR2' },
+  POR:     { n: '葡萄牙超級聯賽',   tier: 5, region: 'EUR', par: 75, min: 81, g: 34, base: 1800, coef: 720, top: 'EUR2' },
+  NED:     { n: '荷蘭甲級聯賽',     tier: 5, region: 'EUR', par: 75, min: 81, g: 34, base: 1900, coef: 760, top: 'EUR2' },
+  EUR_SPR: { n: '歐洲跳板聯賽',     tier: 5, region: 'EUR', par: 75, min: 81, g: 34, base: 1600, coef: 700, top: 'EUR2' },
 
   /* --- T6 五大次級 --- */
-  CHAMP: { n: '英式次級聯賽',   tier: 6, region: 'EUR', par: 77, min: 84, g: 46, base: 2600, coef: 900, top: 'EUR2' },
-  EU_D2: { n: '歐陸次級聯賽',   tier: 6, region: 'EUR', par: 77, min: 84, g: 38, base: 2300, coef: 850, top: 'EUR2' },
+  CHAMP: { n: '英式次級聯賽',   tier: 6, region: 'EUR', par: 77, min: 83, g: 46, base: 2600, coef: 900, top: 'EUR2' },
+  EU_D2: { n: '歐陸次級聯賽',   tier: 6, region: 'EUR', par: 77, min: 83, g: 38, base: 2300, coef: 850, top: 'EUR2' },
 
   /* --- T7 五大聯賽 --- */
-  ENG: { n: '英格蘭超級聯賽', tier: 7, region: 'EUR', par: 80, min: 88, g: 38, base: 4600, coef: 3200, top: 'BIG5' },
-  ESP: { n: '西班牙甲級聯賽', tier: 7, region: 'EUR', par: 80, min: 88, g: 38, base: 4400, coef: 3100, top: 'BIG5' },
-  GER: { n: '德國甲級聯賽',   tier: 7, region: 'EUR', par: 80, min: 88, g: 34, base: 4200, coef: 3000, top: 'BIG5' },
-  ITA: { n: '義大利甲級聯賽', tier: 7, region: 'EUR', par: 80, min: 88, g: 38, base: 3900, coef: 2900, top: 'BIG5' },
-  FRA: { n: '法國甲級聯賽',   tier: 7, region: 'EUR', par: 80, min: 88, g: 34, base: 3800, coef: 2800, top: 'BIG5' },
+  ENG: { n: '英格蘭超級聯賽', tier: 7, region: 'EUR', par: 80, min: 85, g: 38, base: 4600, coef: 3200, top: 'BIG5' },
+  ESP: { n: '西班牙甲級聯賽', tier: 7, region: 'EUR', par: 80, min: 85, g: 38, base: 4400, coef: 3100, top: 'BIG5' },
+  GER: { n: '德國甲級聯賽',   tier: 7, region: 'EUR', par: 80, min: 85, g: 34, base: 4200, coef: 3000, top: 'BIG5' },
+  ITA: { n: '義大利甲級聯賽', tier: 7, region: 'EUR', par: 80, min: 85, g: 38, base: 3900, coef: 2900, top: 'BIG5' },
+  FRA: { n: '法國甲級聯賽',   tier: 7, region: 'EUR', par: 80, min: 85, g: 34, base: 3800, coef: 2800, top: 'BIG5' },
 };
 
 export const MAX_TIER = 7;
@@ -343,9 +343,9 @@ export const ROLE_RANK = { KEY: 4, STARTER: 3, ROTATION: 2, BENCH: 1, STAND: 0 }
  */
 export const GROWTH = [
   { until: 18, n: 3, lo: 3, hi: 11, cost: 1.0, n2: '潛力期' },
-  { until: 25, n: 3, lo: 2, hi: 8,  cost: 1.0, n2: '成長期' },
-  { until: 31, n: 2, lo: 1, hi: 6,  cost: 1.4, n2: '巔峰期' },
-  { until: 99, n: 1, lo: 1, hi: 5,  cost: 1.9, n2: '維持期' },
+  { until: 25, n: 3, lo: 2, hi: 8,  cost: 1.25, n2: '成長期' },
+  { until: 31, n: 2, lo: 1, hi: 6,  cost: 2.0, n2: '巔峰期' },
+  { until: 99, n: 1, lo: 1, hi: 5,  cost: 2.6, n2: '維持期' },
 ];
 
 export const growthPhase = age => GROWTH.find(g => age <= g.until);
