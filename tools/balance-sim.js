@@ -10,7 +10,7 @@
  */
 import { createState, ovr } from '../src/engine/state.js';
 import { run, answer } from '../src/engine/flow.js';
-import { POS_WEIGHT, LV, NATIONS, NATION_ORDER, ARCHETYPE } from '../src/engine/data.js';
+import { POS_WEIGHT, LV, NATIONS, NATION_ORDER, ARCHETYPE, trainingTable } from '../src/engine/data.js';
 import { randomSeed } from '../src/engine/rng.js';
 
 const N = parseInt(process.argv[2], 10) || 2000;
@@ -55,6 +55,21 @@ function botAlloc(state, pending) {
     out[k] = (out[k] || 0) + v;
   });
   return out;
+}
+
+/** 依位置權重替訓練項目打分，挑最能提升本位置的課表 */
+function botTrain(state, pending) {
+  const p = state.player;
+  const dp = p.dpos || { GK: 'GK', DF: 'CB', MF: 'CM', FW: 'ST' }[p.group];
+  const w = POS_WEIGHT[dp];
+  const TT = trainingTable(p.group);
+  const score = key => Object.entries(TT[key].ab)
+    .reduce((sum, [k, wt]) => sum + wt * (w[k] || 0.02) * (p.pot[k] > p.ab[k] ? 1 : 0.2), 0);
+  const ranked = pending.options.filter(o => !o.dead).sort((a, b) => score(b.v) - score(a.v));
+  const picks = pending.dice.map((die, i) => ({ key: ranked[i % Math.min(2, ranked.length)].v, die }));
+  // 保守派不加練、激進派每季加練、平衡派約一半的季度加練
+  const wantExtra = STRAT === 'aggressive' || (STRAT === 'balanced' && Math.random() < 0.5);
+  return { fixed: pending.fixed, picks, extra: wantExtra ? ranked[0]?.v : null };
 }
 
 function botChoice(state, pending) {
@@ -124,7 +139,9 @@ function playOne(seed) {
   let r = run(s);
   let guard = 0;
   while (!s.done && guard++ < 400) {
-    const value = r.pending.type === 'alloc' ? botAlloc(s, r.pending) : botChoice(s, r.pending);
+    const value = r.pending.type === 'alloc' ? botAlloc(s, r.pending)
+      : r.pending.type === 'train' ? botTrain(s, r.pending)
+      : botChoice(s, r.pending);
     r = answer(s, value);
   }
   return s;

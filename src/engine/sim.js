@@ -1,5 +1,5 @@
 import { clamp } from './rng.js';
-import { LV, TIER, SQUAD, POS_WEIGHT, POS_OUTPUT, DPOS, CONF, ARCHETYPE } from './data.js';
+import { LV, TIER, SQUAD, POS_WEIGHT, POS_OUTPUT, DPOS, CONF, ARCHETYPE, DECLINE, TECHNICAL, MAX_ABIL } from './data.js';
 import { ovr, squadGap, defaultPos, isAbroad } from './state.js';
 
 /* ---------------- 陣中地位與出場時間 ---------------- */
@@ -57,15 +57,15 @@ export function simSeason(s, rng) {
   const minutes = clamp(c.minutes + (arch?.minutes || 0), 0, 0.98);
   const apps = Math.round(L.g * minutes * p.injury.seasonFactor);
   const share = apps / 38;
-  const perf = clamp(0.80 + d * 0.026, 0.30, 1.60) * st.out * decay;
+  const perf = clamp(0.80 + d * 0.030, 0.30, 1.70) * st.out * decay;
 
   const bonus = s._bonusGoals || 0;
   const goals = Math.max(0, Math.round(out.g * share * perf + rng.gauss(1.4))) + bonus;
   const assists = Math.max(0, Math.round(out.a * share * perf + rng.gauss(1.2)));
   const cs = out.cs > 0
-    ? Math.max(0, Math.round(out.cs * share * clamp(0.7 + d * 0.037, 0.2, 1.8) + rng.gauss(1.0)))
+    ? Math.max(0, Math.round(out.cs * share * clamp(0.7 + d * 0.042, 0.2, 1.8) + rng.gauss(1.0)))
     : 0;
-  const rating = +clamp(6.30 + d * 0.033 + rng.gauss(0.12), 5.20, 8.60).toFixed(2);
+  const rating = +clamp(6.05 + d * 0.085 + rng.gauss(0.14), 5.20, 9.20).toFixed(2);
 
   return {
     year: s.career.year, age: p.age, lv: c.lv, lvName: L.n,
@@ -81,8 +81,8 @@ export function simSeason(s, rng) {
 
 export function injuryRisk(s) {
   const p = s.player, c = s.club;
-  let risk = CONF.baseInjury + p.injury.nextRisk;
-  risk += c.minutes * 8;
+  let risk = CONF.baseInjury + p.injury.nextRisk + (s._extraRisk || 0);
+  risk += c.minutes * 6;
   if (p.age >= 33) risk += 10; else if (p.age >= 30) risk += 5;
   if (p.style === '全場壓迫') risk += 4;
   if (p.traits.glass) risk = Math.max(risk, 40);
@@ -95,7 +95,7 @@ export function accrueLoad(s) {
   const p = s.player, c = s.club;
   const st = STYLE[p.style] || STYLE['標準'];
   // 除數要跟著能力尺度走，否則能力一通膨，韌帶量表就爆得特別快
-  const explosive = ((p.ab.pac ?? 40) + (p.ab.phy ?? 40)) / 38;
+  const explosive = ((p.ab.pac ?? 40) + (p.ab.phy ?? 40)) / 46;
   const scar = p.injury.aclCount >= 2 ? 1.4 : p.injury.aclCount >= 1 ? 1.18 : 1;
   const archLoad = ARCHETYPE[p.arch]?.load || 1;
   const gain = explosive * st.load * clamp(0.4 + c.minutes, 0.4, 1.4) * scar * archLoad;
@@ -127,22 +127,27 @@ export function annualSalary(s) {
  */
 export function applyDecline(s) {
   const p = s.player;
-  if (p.age < CONF.declineAge) return null;
-  const severe = p.age >= 35;
-  const stepBig = severe ? 5 + (p.age - 35) : 4;
-  const stepSmall = severe ? 3 : 1;
+  const band = DECLINE.filter(d => p.age >= d.from).pop();
+  if (!band) return null;
+
+  // 體能越好，衰退越慢（0.55 ~ 1.45 倍）。
+  // 保養身體因此變成一個真的有回報的長期投資，而且體能本身也在掉 ——
+  // 疏於保養的球員會越掉越快，這個正回饋就是「斷崖式衰退」的來源。
+  const fit = clamp(1.35 - ((p.ab.sta ?? 60) - 50) / 60, 0.55, 1.45);
+
+  p.decay = p.decay || {};
   const changes = {};
-  const hit = (k, v) => {
-    if (!(k in p.ab)) return;
+  for (const [k, v] of Object.entries(band)) {
+    if (k === 'from' || !(k in p.ab)) continue;
+    if (p.traits.tempo && TECHNICAL.includes(k)) continue; // 節奏大師：技術類免疫
+    p.decay[k] = (p.decay[k] || 0) + v * fit;
+    const drop = Math.floor(p.decay[k]);
+    if (drop <= 0) continue;
+    p.decay[k] -= drop;
     const before = p.ab[k];
-    p.ab[k] = clamp(p.ab[k] - v, 1, 80);
+    p.ab[k] = clamp(p.ab[k] - drop, 1, MAX_ABIL);
     if (p.ab[k] !== before) changes[k] = p.ab[k] - before;
-  };
-  hit('pac', stepBig);
-  hit('sta', stepBig);
-  hit('phy', stepSmall);
-  hit('ref', stepSmall);
-  if (!p.traits.tempo) { hit('vis', severe ? 1 : 0); hit('pas', severe ? 1 : 0); }
+  }
   return changes;
 }
 

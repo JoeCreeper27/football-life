@@ -2,7 +2,8 @@ import { clamp } from './rng.js';
 import {
   LV, CLUBS, YOUTH_CLUBS, TIER, DPOS, EVENTS, TRAITS, ABIL, CONF, POS_GROUP,
   NATIONS, ORIGINS, REGION, MAX_TIER, leaguesAt,
-  ARCHETYPE, ARCH_SWITCH, ROLE_RANK, SQUAD, LATE_GROWABLE, LATE_LOCK_AGE, growthPhase,
+  ARCHETYPE, ARCH_SWITCH, ROLE_RANK, SQUAD, PHYSICAL, PHYSICAL_LOCK_AGE, growthPhase, STAGE_TRAIN,
+  trainingTable, trainingFor,
 } from './data.js';
 import {
   rngOf, syncCursor, addAb, subAb, abCost, ovr, defaultPos, posQualified, squadGap,
@@ -103,55 +104,121 @@ STEPS.PRE_DECLINE = (s, ctx) => {
  * 這是「總量控制住、重壓在 24 歲前」的實作點，動這裡等於動整條成長曲線。
  */
 function diceSpec(s, rng) {
-  const p = s.player, st = s.club.stage;
+  const p = s.player;
   const g = growthPhase(p.age);
-  let n = g.n;
-  if (st === 'ACADEMY') n += 1;               // 足球學校：整天都在練
-  else if (st === 'JHS') n -= 1;              // 國中：一週練三次
+  const env = STAGE_TRAIN[s.club.stage] || STAGE_TRAIN.PRO;
+  let n = g.n + env.dice;
+
+  // 上場時間與表現直接換成成長：坐板凳的人練不起來，這是出場率的第二層意義
+  const last = s.career.seasons[s.career.seasons.length - 1];
+  if (last && last.apps > 0) {
+    if (last.minutes >= 70) n += 1;
+    else if (last.minutes < 30) n -= 1;
+    if (last.rating >= 7.2) n += 1;
+  }
+
   if (p.injury.rehab > 0 || p.injury.seasonFactor === 0) n = Math.min(n, 1);
   if (p.traits.benched) n -= 1;
   if (p.origin === 'immigrant' && p.age <= 15) n -= 1;   // 適應期
   if (s._diceDebuff) { n -= s._diceDebuff; s._diceDebuff = undefined; }
-  return { n: Math.max(1, n), lo: p.traits.golden ? Math.max(g.lo, 4) : g.lo, hi: g.hi, phase: g.n2 };
+  return {
+    n: Math.max(1, n),
+    lo: p.traits.golden ? Math.max(g.lo, 4) : g.lo,
+    hi: g.hi,
+    phase: g.n2,
+  };
+}
+
+/** 訓練環境讓不同類型的能力練起來效率不同 */
+function trainBoost(s, k) {
+  const env = STAGE_TRAIN[s.club.stage] || STAGE_TRAIN.PRO;
+  return PHYSICAL.includes(k) ? env.phy : env.tec;
 }
 
 STEPS.PRE_DICE = (s, ctx, input) => {
   const p = s.player;
+  const env = STAGE_TRAIN[s.club.stage] || STAGE_TRAIN.PRO;
+
   if (input === undefined) {
     const spec = diceSpec(s, ctx.rng);
     const dice = Array.from({ length: spec.n }, () => ctx.rng.int(spec.lo, spec.hi));
     dice.forEach(d => { if (d >= 6) s.career.counters.six++; });
     if (!p.traits.golden && s.career.counters.six >= 5 && p.age <= 22) unlock(s, ctx, 'golden');
-    const locked = Object.keys(p.ab).filter(k => !isGrowable(p, k));
-    if (locked.length && !s._lockedNoted) {
-      s._lockedNoted = true;
-      card(ctx, 'info', '身體不聽話了',
-        `${LATE_LOCK_AGE} 歲之後，${locked.map(k => ABIL[k]).join('、')} 再怎麼練都回不去了。<br>` +
-        `剩下能長的只有腦子裡的東西。`);
+
+    if (env.d && s._envNoted !== s.club.stage) {
+      s._envNoted = s.club.stage;
+      card(ctx, 'info', '訓練環境', `${env.d}<br>` +
+        `體能類效率 ×${env.phy.toFixed(2)}、技術類效率 ×${env.tec.toFixed(2)}。`);
     }
+
+    // 學院有必修課：前幾顆骰被固定課表吃掉，剩下的才由玩家安排
+    // 帶上顯示名稱，UI 層就不必認得訓練表
+    const fixed = env.fixed.slice(0, Math.max(0, dice.length - 1))
+      .map((key, i) => ({ key, die: dice[i], n: trainingTable(p.group)[key]?.n || key }));
+    const free = dice.slice(fixed.length);
+
+    const majors = ARCHETYPE[p.arch]?.major || [];
+    const TT = trainingTable(p.group);
+    const options = trainingFor(p.group).map(key => {
+      const t = TT[key];
+      const feeds = Object.keys(t.ab).filter(k => k in p.ab);
+      return {
+        v: key, t: t.n,
+        s: feeds.map(k => `${ABIL[k]}${'▲'.repeat(Math.max(1, Math.round(t.ab[k] * 2)))}`).join(' '),
+        dead: feeds.every(k => !isGrowable(p, k)),
+        major: feeds.some(k => majors.includes(k)),
+      };
+    });
+
     return ask(s, {
-      type: 'alloc', title: `季前特訓（${spec.phase}）：分配訓練骰`,
-      dice, locked, major: ARCHETYPE[p.arch]?.major || [],
+      type: 'train',
+      title: `季前訓練（${spec.phase}）`,
+      dice: free, fixed, options,
+      // 自主加練：多一次訓練，代價是受傷風險與身體負荷
+      extra: isPro(s) || s.club.stage === 'HS' || s.club.stage === 'UNI',
     }, 'PRE_DICE');
   }
-  // input: { 能力key: 點數 }
+
+  // input: { picks: [訓練key（對應每顆骰）], extra: 訓練key | null }
   const before = { ...p.ab };
-  for (const [k, v] of Object.entries(input)) {
-    if (!isGrowable(p, k)) continue;
-    addAb(p, k, v);
+  const spent = [];
+  // 權重先正規化：一顆骰的總產出固定，差別在「分給哪幾項能力」，
+  // 不然項目餵的能力越多就越強，玩家只會一直選同一項
+  const TT = trainingTable(p.group);
+  const apply = (key, amount) => {
+    const t = TT[key];
+    if (!t) return;
+    const total = Object.values(t.ab).reduce((a, b) => a + b, 0);
+    for (const [k, w] of Object.entries(t.ab)) {
+      if (!(k in p.ab) || !isGrowable(p, k)) continue;
+      addAb(p, k, amount * (w / total) * trainBoost(s, k));
+    }
+    spent.push(t.n);
+  };
+
+  s._extraRisk = 0;
+  (input.fixed || []).forEach(f => apply(f.key, f.die));
+  (input.picks || []).forEach(pk => apply(pk.key, pk.die));
+
+  if (input.extra) {
+    const amt = ctx.rng.int(2, 5);
+    apply(input.extra, amt);
+    // 代價只算在這一季：nextRisk 會跨季累積，年年加練會滾成必然受傷
+    s._extraRisk = 6;
+    p.injury.load += 1.5;
+    card(ctx, 'info', '自主加練',
+      `所有人都走了，你留下來多練了 ${hl(TT[input.extra]?.n || '')}。` +
+      `<br>身體不會忘記這些時間，但也不會忘記你沒有休息。（受傷率 ${up(4)}）`);
   }
-  // 帶動成長的能力也要列出來，否則玩家不知道點數跑去哪了
-  const direct = [], linked = [];
-  for (const k of Object.keys(p.ab)) {
-    const d = p.ab[k] - before[k];
-    if (d <= 0) continue;
-    (k in input ? direct : linked).push(`${ABIL[k]} ${up(d)}`);
-  }
-  if (direct.length || linked.length) {
-    card(ctx, '', '季前特訓成果',
-      (direct.join('、') || '沒有直接升級') +
-      (linked.length ? `<br><small>連帶成長：${linked.join('、')}</small>` : ''));
-  }
+
+  const gains = Object.keys(p.ab)
+    .map(k => [k, p.ab[k] - before[k]])
+    .filter(([, d]) => d > 0)
+    .sort((a, b) => b[1] - a[1])
+    .map(([k, d]) => `${ABIL[k]} ${up(d)}`);
+  card(ctx, '', '季前訓練成果',
+    `課表：${spent.join('、') || '無'}<br>` + (gains.join('、') || '這一季沒有明顯進步'));
+
   s.step = isPro(s) ? 'PRE_STYLE' : 'PRE_SQUAD';
 };
 
@@ -468,7 +535,7 @@ STEPS.MID_SEASON = (s, ctx) => {
   s.career.seasons.push(st);
   s.career.clubTally[c.club] = (s.career.clubTally[c.club] || 0) + 1;
   // 表現直接回饋到看台上：踢得好聲望漲，踢得爛掉得更快。養成階段還沒有球迷。
-  if (isPro(s)) addFanRep(s, st.rating >= 7.2 ? 6 : st.rating >= 6.8 ? 3 : st.rating >= 6.4 ? 0 : -6);
+  if (isPro(s)) addFanRep(s, st.rating >= 7.3 ? 6 : st.rating >= 6.9 ? 3 : st.rating >= 6.5 ? 0 : -6);
 
   const line = p.group === 'GK'
     ? `${st.apps} 場｜零封 ${hl(st.cs)}｜評分 ${hl(st.rating)}`
@@ -572,7 +639,7 @@ function cureTraits(s, ctx) {
   if (!L || !isPro(s)) return;
   const n = s.career.counters;
 
-  n.goodRating = L.rating >= 7.0 ? (n.goodRating || 0) + 1 : 0;
+  n.goodRating = L.rating >= 7.2 ? (n.goodRating || 0) + 1 : 0;
   n.starterRun = ROLE_RANK[c.role] >= 3 ? (n.starterRun || 0) + 1 : 0;
   n.noDive = (n.noDive || 0) + 1;
 
