@@ -1,7 +1,7 @@
 import { Rng, clamp } from './rng.js';
 import {
   GROUP_ABIL, YOUTH_CLUBS, CONF, DPOS, POS_WEIGHT, LV, TIER,
-  NATIONS, NATION_ORDER, ORIGINS, ARCHETYPE, SYNERGY, MAX_ABIL,
+  NATIONS, NATION_ORDER, ORIGINS, ARCHETYPE, SYNERGY, SYNERGY_GK, MAX_ABIL,
   growthPhase, LATE_GROWABLE, LATE_LOCK_AGE,
 } from './data.js';
 
@@ -146,7 +146,7 @@ export function isAbroad(s) { return !isHomeLeague(s.player, s.club.lv); }
 export function ageWindow(p, lvId) {
   const L = LV[lvId];
   if (!L || L.amateur) return true;
-  let cap = L.tier >= 7 ? 27 : L.tier >= 5 ? 29 : 33;
+  let cap = L.tier >= 7 ? 30 : L.tier >= 5 ? 31 : 33;
   if (regionOf(p) === L.region) cap += 3;
   cap += ORIGINS[p.origin]?.windowAdj || 0;
   if (p.altNation && NATIONS[p.altNation]?.region === L.region) cap += 2;
@@ -205,16 +205,19 @@ export function addAb(p, k, points, spill = true) {
 
   // 連帶成長只把相關能力帶到天賦上限為止；要突破天賦，得靠專門訓練
   if (spill && points > 0) {
-    for (const [j, ratio] of Object.entries(SYNERGY[k] || {})) {
+    for (const [j, ratio] of Object.entries(synergyTable(p)[k] || {})) {
       if (j in p.ab && p.ab[j] < (p.pot[j] ?? 62)) addAb(p, j, points * ratio, false);
     }
   }
   return p.ab[k] - before;
 }
 
+/** 門將與外場的能力組不同，連帶成長各走各的表 */
+const synergyTable = p => (p.group === 'GK' ? SYNERGY_GK : SYNERGY);
+
 /** 這一項會帶動哪些能力（UI 用來提示玩家） */
 export function synergyOf(p, k) {
-  return Object.keys(SYNERGY[k] || {}).filter(j => j in p.ab);
+  return Object.keys(synergyTable(p)[k] || {}).filter(j => j in p.ab);
 }
 
 /** 扣值 1:1 立即生效（跌比練快） */

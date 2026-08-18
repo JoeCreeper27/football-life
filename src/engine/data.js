@@ -171,11 +171,11 @@ export const LV = {
   EU_D2: { n: '歐陸次級聯賽',   tier: 6, region: 'EUR', par: 88, min: 86, g: 38, base: 2300, coef: 850, top: 'EUR2' },
 
   /* --- T7 五大聯賽 --- */
-  ENG: { n: '英格蘭超級聯賽', tier: 7, region: 'EUR', par: 90, min: 87, g: 38, base: 4600, coef: 3200, top: 'BIG5' },
-  ESP: { n: '西班牙甲級聯賽', tier: 7, region: 'EUR', par: 90, min: 87, g: 38, base: 4400, coef: 3100, top: 'BIG5' },
-  GER: { n: '德國甲級聯賽',   tier: 7, region: 'EUR', par: 90, min: 87, g: 34, base: 4200, coef: 3000, top: 'BIG5' },
-  ITA: { n: '義大利甲級聯賽', tier: 7, region: 'EUR', par: 90, min: 87, g: 38, base: 3900, coef: 2900, top: 'BIG5' },
-  FRA: { n: '法國甲級聯賽',   tier: 7, region: 'EUR', par: 90, min: 87, g: 34, base: 3800, coef: 2800, top: 'BIG5' },
+  ENG: { n: '英格蘭超級聯賽', tier: 7, region: 'EUR', par: 91, min: 88, g: 38, base: 4600, coef: 3200, top: 'BIG5' },
+  ESP: { n: '西班牙甲級聯賽', tier: 7, region: 'EUR', par: 91, min: 88, g: 38, base: 4400, coef: 3100, top: 'BIG5' },
+  GER: { n: '德國甲級聯賽',   tier: 7, region: 'EUR', par: 91, min: 88, g: 34, base: 4200, coef: 3000, top: 'BIG5' },
+  ITA: { n: '義大利甲級聯賽', tier: 7, region: 'EUR', par: 91, min: 88, g: 38, base: 3900, coef: 2900, top: 'BIG5' },
+  FRA: { n: '法國甲級聯賽',   tier: 7, region: 'EUR', par: 91, min: 88, g: 34, base: 3800, coef: 2800, top: 'BIG5' },
 };
 
 export const MAX_TIER = 7;
@@ -332,19 +332,31 @@ export const LATE_LOCK_AGE = 29;
  * 帶動的點數一樣走蓄力槽，所以不會憑空跳級，只是累積得比較快。
  */
 export const SYNERGY = {
-  sta: { pac: .22, phy: .22 },
-  pac: { sta: .18, dri: .15 },
-  phy: { sta: .18, hea: .18, def: .12 },
-  fin: { hea: .12, dri: .12 },
-  dri: { pac: .15, fin: .12 },
-  pas: { vis: .22, dis: .12 },
-  vis: { pas: .22, pos: .12 },
-  def: { phy: .18, pos: .12, hea: .12 },
-  hea: { phy: .18, aer: .12 },
-  ref: { pos: .18, aer: .15 },
-  aer: { hea: .15, pos: .15, phy: .12 },
-  pos: { vis: .15, def: .12 },
-  dis: { pas: .18, vis: .12 },
+  sta: { pac: .20, phy: .20 },   // 體能 → 速度、對抗
+  dri: { pac: .20, pas: .20 },   // 盤帶 → 速度、傳球
+  pac: { sta: .20, dri: .20 },   // 速度 → 體能、盤帶
+  pas: { vis: .20, fin: .20 },   // 傳球 → 視野、射門
+  fin: { pas: .20, hea: .20 },   // 射門 → 傳球、頭球
+  hea: { fin: .20, phy: .20 },   // 頭球 → 射門、對抗
+  phy: { hea: .20, sta: .20 },   // 對抗 → 頭球、體能
+  // 站位是門將專屬能力，外場沒有這一項，所以原本指向站位的兩條邊改接：
+  def: { phy: .20, hea: .20 },   // 防守 → 對抗、頭球
+  vis: { pas: .20, def: .20 },   // 視野 → 傳球、防守（閱讀比賽同時幫出球與補位）
+};
+
+/**
+ * 門將的能力組只有 5 項（體能／撲救／制空／站位／腳下傳球），
+ * 上面那張表裡的速度、對抗、防守、視野他們一項都沒有 —— 直接套用等於整套失效。
+ * 因此門將走自己的環，規則一樣是「一個能力影響兩個」。
+ * 比例壓到 .12：門將 5 項能力全部計入 ovr，這個環比外場緊得多，
+ * 用同樣的 .20 會讓門將結構性地強過所有外場位置。
+ */
+export const SYNERGY_GK = {
+  sta: { ref: .12, aer: .12 },   // 體能 → 撲救、制空
+  ref: { pos: .12, aer: .12 },   // 撲救 → 站位、制空
+  aer: { ref: .12, sta: .12 },   // 制空 → 撲救、體能
+  pos: { ref: .12, dis: .12 },   // 站位 → 撲救、腳下傳球
+  dis: { pos: .12, sta: .12 },   // 腳下傳球 → 站位、體能
 };
 
 /* ==================================================================== */

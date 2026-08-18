@@ -654,7 +654,7 @@ function callThreshold(p) {
   // 法國這種強國要 ~82（等於得是該國最好的那批），台灣約 60。
   // 這條線一定要跟著 LV 的 par 尺度一起移動 —— 寫死絕對值的話，
   // 尺度一改就會變成「強國永遠選不上、弱國人人是國腳」。
-  const base = clamp(nat.natl * 0.40 + 52, 62, 86);
+  const base = clamp(nat.natl * 0.40 + 55, 65, 88);
   const own = p.natlPick === p.nation ? (ORIGINS[p.origin]?.callAdj || 0) : 2;
   return base + own;
 }
