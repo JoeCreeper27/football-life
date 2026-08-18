@@ -3,7 +3,7 @@ import {
   LV, CLUBS, YOUTH_CLUBS, TIER, DPOS, EVENTS, TRAITS, ABIL, CONF, POS_GROUP,
   NATIONS, ORIGINS, REGION, MAX_TIER, leaguesAt,
   ARCHETYPE, ARCH_SWITCH, ROLE_RANK, SQUAD, PHYSICAL, PHYSICAL_LOCK_AGE, growthPhase, STAGE_TRAIN,
-  TRAINING, trainingFor,
+  trainingTable, trainingFor,
 } from './data.js';
 import {
   rngOf, syncCursor, addAb, subAb, abCost, ovr, defaultPos, posQualified, squadGap,
@@ -152,13 +152,15 @@ STEPS.PRE_DICE = (s, ctx, input) => {
     }
 
     // 學院有必修課：前幾顆骰被固定課表吃掉，剩下的才由玩家安排
+    // 帶上顯示名稱，UI 層就不必認得訓練表
     const fixed = env.fixed.slice(0, Math.max(0, dice.length - 1))
-      .map((key, i) => ({ key, die: dice[i] }));
+      .map((key, i) => ({ key, die: dice[i], n: trainingTable(p.group)[key]?.n || key }));
     const free = dice.slice(fixed.length);
 
     const majors = ARCHETYPE[p.arch]?.major || [];
+    const TT = trainingTable(p.group);
     const options = trainingFor(p.group).map(key => {
-      const t = TRAINING[key];
+      const t = TT[key];
       const feeds = Object.keys(t.ab).filter(k => k in p.ab);
       return {
         v: key, t: t.n,
@@ -182,8 +184,9 @@ STEPS.PRE_DICE = (s, ctx, input) => {
   const spent = [];
   // 權重先正規化：一顆骰的總產出固定，差別在「分給哪幾項能力」，
   // 不然項目餵的能力越多就越強，玩家只會一直選同一項
+  const TT = trainingTable(p.group);
   const apply = (key, amount) => {
-    const t = TRAINING[key];
+    const t = TT[key];
     if (!t) return;
     const total = Object.values(t.ab).reduce((a, b) => a + b, 0);
     for (const [k, w] of Object.entries(t.ab)) {
@@ -204,7 +207,7 @@ STEPS.PRE_DICE = (s, ctx, input) => {
     s._extraRisk = 6;
     p.injury.load += 1.5;
     card(ctx, 'info', '自主加練',
-      `所有人都走了，你留下來多練了 ${hl(TRAINING[input.extra]?.n || '')}。` +
+      `所有人都走了，你留下來多練了 ${hl(TT[input.extra]?.n || '')}。` +
       `<br>身體不會忘記這些時間，但也不會忘記你沒有休息。（受傷率 ${up(4)}）`);
   }
 

@@ -4,7 +4,7 @@ import {
 } from './engine/state.js';
 import { run, answer } from './engine/flow.js';
 import {
-  ABIL, GROUP_ABIL, POS_GROUP, DPOS, LV, TIER, SQUAD, TRAINING,
+  ABIL, GROUP_ABIL, POS_GROUP, DPOS, LV, TIER, SQUAD,
   NATIONS, NATION_ORDER, ORIGINS, REGION, ARCHETYPE, MAX_ABIL,
 } from './engine/data.js';
 import { fmtMoney } from './engine/sim.js';
@@ -167,7 +167,7 @@ function renderTrain({ title, dice, fixed, options, extra }) {
 
     if (fixed.length) {
       a.innerHTML += `<div class="fixed-row">必修課表：` +
-        fixed.map(f => `${TRAINING[f.key].n} <b>${f.die}</b>`).join('　') + `</div>`;
+        fixed.map(f => `${f.n} <b>${f.die}</b>`).join('　') + `</div>`;
     }
     if (dice.length) {
       a.innerHTML += `<div id="dice">${dice.map((v, i) =>

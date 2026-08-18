@@ -10,7 +10,7 @@
  */
 import { createState, ovr } from '../src/engine/state.js';
 import { run, answer } from '../src/engine/flow.js';
-import { POS_WEIGHT, LV, NATIONS, NATION_ORDER, ARCHETYPE, TRAINING } from '../src/engine/data.js';
+import { POS_WEIGHT, LV, NATIONS, NATION_ORDER, ARCHETYPE, trainingTable } from '../src/engine/data.js';
 import { randomSeed } from '../src/engine/rng.js';
 
 const N = parseInt(process.argv[2], 10) || 2000;
@@ -62,7 +62,8 @@ function botTrain(state, pending) {
   const p = state.player;
   const dp = p.dpos || { GK: 'GK', DF: 'CB', MF: 'CM', FW: 'ST' }[p.group];
   const w = POS_WEIGHT[dp];
-  const score = key => Object.entries(TRAINING[key].ab)
+  const TT = trainingTable(p.group);
+  const score = key => Object.entries(TT[key].ab)
     .reduce((sum, [k, wt]) => sum + wt * (w[k] || 0.02) * (p.pot[k] > p.ab[k] ? 1 : 0.2), 0);
   const ranked = pending.options.filter(o => !o.dead).sort((a, b) => score(b.v) - score(a.v));
   const picks = pending.dice.map((die, i) => ({ key: ranked[i % Math.min(2, ranked.length)].v, die }));

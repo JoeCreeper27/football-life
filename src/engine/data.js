@@ -171,11 +171,11 @@ export const LV = {
   EU_D2: { n: '歐陸次級聯賽',   tier: 6, region: 'EUR', par: 77, min: 84, g: 38, base: 2300, coef: 850, top: 'EUR2' },
 
   /* --- T7 五大聯賽 --- */
-  ENG: { n: '英格蘭超級聯賽', tier: 7, region: 'EUR', par: 80, min: 85, g: 38, base: 4600, coef: 3200, top: 'BIG5' },
-  ESP: { n: '西班牙甲級聯賽', tier: 7, region: 'EUR', par: 80, min: 85, g: 38, base: 4400, coef: 3100, top: 'BIG5' },
-  GER: { n: '德國甲級聯賽',   tier: 7, region: 'EUR', par: 80, min: 85, g: 34, base: 4200, coef: 3000, top: 'BIG5' },
-  ITA: { n: '義大利甲級聯賽', tier: 7, region: 'EUR', par: 80, min: 85, g: 38, base: 3900, coef: 2900, top: 'BIG5' },
-  FRA: { n: '法國甲級聯賽',   tier: 7, region: 'EUR', par: 80, min: 85, g: 34, base: 3800, coef: 2800, top: 'BIG5' },
+  ENG: { n: '英格蘭超級聯賽', tier: 7, region: 'EUR', par: 80, min: 87, g: 38, base: 4600, coef: 3200, top: 'BIG5' },
+  ESP: { n: '西班牙甲級聯賽', tier: 7, region: 'EUR', par: 80, min: 87, g: 38, base: 4400, coef: 3100, top: 'BIG5' },
+  GER: { n: '德國甲級聯賽',   tier: 7, region: 'EUR', par: 80, min: 87, g: 34, base: 4200, coef: 3000, top: 'BIG5' },
+  ITA: { n: '義大利甲級聯賽', tier: 7, region: 'EUR', par: 80, min: 87, g: 38, base: 3900, coef: 2900, top: 'BIG5' },
+  FRA: { n: '法國甲級聯賽',   tier: 7, region: 'EUR', par: 80, min: 87, g: 34, base: 3800, coef: 2800, top: 'BIG5' },
 };
 
 export const MAX_TIER = 7;
@@ -336,31 +336,44 @@ export const PHYSICAL = ['pac', 'sta', 'phy'];
  * for: '*' 全體 / 'OUT' 外場 / 'GK' 門將
  */
 export const TRAINING = {
-  fitness:  { n: '體能訓練',   for: '*',   ab: { sta: 1.0, pac: 0.45 } },
-  weights:  { n: '重量訓練',   for: '*',   ab: { phy: 1.0, hea: 0.4 } },
-  sprint:   { n: '衝刺訓練',   for: '*',   ab: { pac: 1.0, sta: 0.4 } },
-  tactics:  { n: '戰術訓練',   for: '*',   ab: { vis: 0.9, pos: 0.7, def: 0.3 } },
-  passing:  { n: '傳球練習',   for: 'OUT', ab: { pas: 1.0, vis: 0.4 } },
-  shooting: { n: '射門練習',   for: 'OUT', ab: { fin: 1.0, pac: 0.2 } },
-  setpiece: { n: '定位球練習', for: 'OUT', ab: { fin: 0.7, pas: 0.6, hea: 0.3 } },
-  marking:  { n: '一對一盯防', for: 'OUT', ab: { def: 1.0, phy: 0.4, pos: 0.3 } },
-  aerial:   { n: '空中對抗',   for: '*',   ab: { hea: 1.0, phy: 0.5, aer: 0.7 } },
-  rondo:    { n: '抓鬼（搶圈）', for: 'OUT', ab: { pas: 0.7, dri: 0.5, vis: 0.5 } },
-  juggling: { n: '挑球訓練',   for: 'OUT', ab: { dri: 1.0, fin: 0.3 } },
-  dribble:  { n: '一對一過人', for: 'OUT', ab: { dri: 0.9, pac: 0.4, fin: 0.3 } },
-  reflex:   { n: '撲救訓練',   for: 'GK',  ab: { ref: 1.0, pos: 0.4 } },
-  handling: { n: '門將出球',   for: 'GK',  ab: { dis: 1.0, pas: 0.4, vis: 0.3 } },
-  command:  { n: '制空指揮',   for: 'GK',  ab: { aer: 1.0, pos: 0.5, hea: 0.3 } },
+  fitness:  { n: '體能訓練',     ab: { sta: 1.00, pac: 0.45 } },
+  weights:  { n: '重量訓練',     ab: { phy: 1.00, sta: 0.40 } },
+  sprint:   { n: '衝刺訓練',     ab: { pac: 1.00, sta: 0.40 } },
+  tactics:  { n: '戰術訓練',     ab: { vis: 1.00, def: 0.20, pas: 0.20 } },
+  passing:  { n: '傳球練習',     ab: { pas: 1.00, vis: 0.30, fin: 0.10 } },
+  shooting: { n: '射門練習',     ab: { fin: 1.00, pas: 0.20 } },
+  setpiece: { n: '定位球練習',   ab: { fin: 0.70, pas: 0.60, hea: 0.30 } },
+  marking:  { n: '一對一盯防',   ab: { def: 1.00, phy: 0.40 } },
+  aerial:   { n: '空中對抗',     ab: { hea: 1.00, phy: 0.50 } },
+  rondo:    { n: '抓鬼（搶圈）', ab: { pas: 0.70, dri: 0.50, vis: 0.50 } },
+  juggling: { n: '挑球訓練',     ab: { dri: 1.00, fin: 0.30, pas: 0.30 } },
+  dribble:  { n: '一對一過人',   ab: { dri: 0.90, pac: 0.40, fin: 0.10 } },
 };
+
+/**
+ * 門將的能力組完全不同（體能／撲救／制空／站位／腳下傳球），
+ * 所以同名訓練對門將的意義也不一樣 —— 重量訓練練的是制空的爭頂能力，
+ * 衝刺訓練練的是門線上的爆發反應。分成兩張表才不會有練不到的權重白白蒸發。
+ */
+export const TRAINING_GK = {
+  fitness:  { n: '體能訓練',   ab: { sta: 1.00 } },
+  weights:  { n: '重量訓練',   ab: { aer: 0.80, sta: 0.20 } },
+  sprint:   { n: '衝刺訓練',   ab: { ref: 0.50, sta: 0.20, dis: 0.20 } },
+  tactics:  { n: '戰術訓練',   ab: { pos: 0.70, dis: 0.20 } },
+  aerial:   { n: '空中對抗',   ab: { aer: 0.70, ref: 0.30 } },
+  reflex:   { n: '撲救訓練',   ab: { ref: 1.00, pos: 0.40 } },
+  handling: { n: '門將出球',   ab: { dis: 1.00 } },
+  command:  { n: '制空指揮',   ab: { aer: 1.00, pos: 0.50 } },
+};
+
+/** 這名球員該用哪一張訓練表 */
+export const trainingTable = group => (group === 'GK' ? TRAINING_GK : TRAINING);
 
 export const TRAINING_ORDER = Object.keys(TRAINING);
 
-/** 這個項目對這名球員有沒有意義（門將／外場專屬） */
+/** 這個位置可以選的訓練項目 */
 export function trainingFor(group) {
-  return TRAINING_ORDER.filter(k => {
-    const t = TRAINING[k];
-    return t.for === '*' || (t.for === 'GK') === (group === 'GK');
-  });
+  return Object.keys(trainingTable(group));
 }
 
 /**
