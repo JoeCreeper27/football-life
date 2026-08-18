@@ -81,6 +81,9 @@ body{margin:0;padding:0;min-height:100vh;background:var(--bg);color:var(--ink);
 .abrow{display:flex;align-items:center;gap:8px;padding:6px 8px;margin:3px 0;
   background:var(--panel);border:1px solid var(--line);border-radius:8px;cursor:pointer}
 .abrow.capped{opacity:.4}
+.abrow.major{border-color:var(--amber)}
+.abrow.major .nm{color:var(--amber)}
+.nm small{opacity:.6;margin-left:3px;font-size:10px}
 .nm{width:56px;font-size:13px;flex:none}
 .bar{flex:1;height:7px;background:rgba(0,0,0,.3);border-radius:4px;position:relative;overflow:hidden}
 .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--amber)}
@@ -139,6 +142,7 @@ th{color:var(--dim);font-weight:400}
       <div class="st"><b id="bd-age">—</b><span>年齡</span></div>
       <div class="st"><b id="bd-year">—</b><span>年份</span></div>
       <div class="st"><b id="bd-ovr">—</b><span>綜合</span></div>
+      <div class="st"><b id="bd-fan">50</b><span>球迷聲望</span></div>
       <div class="st"><b id="bd-sal">0</b><span>生涯薪(萬)</span></div>
     </div>
     <div id="phase"><div data-p="0">季前</div><div data-p="1">賽季中</div><div data-p="2">季末</div></div>

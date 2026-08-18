@@ -1,5 +1,5 @@
 import { clamp } from './rng.js';
-import { LV, TIER, SQUAD, POS_WEIGHT, POS_OUTPUT, DPOS, CONF } from './data.js';
+import { LV, TIER, SQUAD, POS_WEIGHT, POS_OUTPUT, DPOS, CONF, ARCHETYPE } from './data.js';
 import { ovr, squadGap, defaultPos, isAbroad } from './state.js';
 
 /* ---------------- 陣中地位與出場時間 ---------------- */
@@ -38,15 +38,29 @@ export function simSeason(s, rng) {
   const p = s.player, c = s.club;
   const L = LV[c.lv];
   const st = STYLE[p.style] || STYLE['標準'];
-  const d = dValue(s) + st.d;
+  // 球迷聲望透過主場氣氛回饋到表現上（±2）
+  const fanBoost = (s.career.fanRep - 50) / 25;
+  const d = dValue(s) + st.d + fanBoost;
   const dp = p.dpos || defaultPos(p.group);
-  const out = POS_OUTPUT[dp];
+  const base = POS_OUTPUT[dp];
+  const arch = ARCHETYPE[p.arch];
+  const out = arch
+    ? { g: base.g * arch.out.g, a: base.a * arch.out.a, cs: base.cs * arch.out.cs }
+    : base;
 
-  const apps = Math.round(L.g * c.minutes * p.injury.seasonFactor);
+  // 速度型原型 31 歲後產能斷崖，技術型幾乎不受影響
+  const decay = arch && p.age >= 31
+    ? (arch.ageBias === 'early' ? clamp(1 - (p.age - 30) * 0.11, 0.4, 1)
+      : arch.ageBias === 'late' ? 1 : clamp(1 - (p.age - 30) * 0.05, 0.7, 1))
+    : 1;
+
+  const minutes = clamp(c.minutes + (arch?.minutes || 0), 0, 0.98);
+  const apps = Math.round(L.g * minutes * p.injury.seasonFactor);
   const share = apps / 38;
-  const perf = clamp(0.80 + d * 0.035, 0.30, 1.60) * st.out;
+  const perf = clamp(0.80 + d * 0.035, 0.30, 1.60) * st.out * decay;
 
-  const goals = Math.max(0, Math.round(out.g * share * perf + rng.gauss(1.4)));
+  const bonus = s._bonusGoals || 0;
+  const goals = Math.max(0, Math.round(out.g * share * perf + rng.gauss(1.4))) + bonus;
   const assists = Math.max(0, Math.round(out.a * share * perf + rng.gauss(1.2)));
   const cs = out.cs > 0
     ? Math.max(0, Math.round(out.cs * share * clamp(0.7 + d * 0.05, 0.2, 1.8) + rng.gauss(1.0)))
@@ -57,7 +71,7 @@ export function simSeason(s, rng) {
     year: s.career.year, age: p.age, lv: c.lv, lvName: L.n,
     club: c.club, tier: c.tier, dpos: dp, role: c.role,
     apps, goals, assists, cs, rating, d: +d.toFixed(1),
-    minutes: +(c.minutes * 100).toFixed(0),
+    arch: p.arch, minutes: +(minutes * 100).toFixed(0),
     loanFrom: c.loanFrom,
     abroad: isAbroad(s),
   };
@@ -82,7 +96,8 @@ export function accrueLoad(s) {
   const st = STYLE[p.style] || STYLE['標準'];
   const explosive = ((p.ab.pac ?? 40) + (p.ab.phy ?? 40)) / 20;
   const scar = p.injury.aclCount >= 2 ? 1.4 : p.injury.aclCount >= 1 ? 1.18 : 1;
-  const gain = explosive * st.load * clamp(0.4 + c.minutes, 0.4, 1.4) * scar;
+  const archLoad = ARCHETYPE[p.arch]?.load || 1;
+  const gain = explosive * st.load * clamp(0.4 + c.minutes, 0.4, 1.4) * scar * archLoad;
   p.injury.load += gain;
   return gain;
 }
@@ -97,7 +112,9 @@ export function annualSalary(s) {
   const d = dValue(s);
   const posCoef = DPOS[s.player.dpos || defaultPos(s.player.group)].sal;
   const tierCoef = TIER[s.club.tier].sal;
-  const raw = (L.base + Math.max(-2, d) * L.coef) * posCoef * tierCoef;
+  // 高聲望是談判籌碼，低聲望球會會想把你賣掉
+  const fanCoef = s.career.fanRep >= 75 ? 1.1 : s.career.fanRep <= 25 ? 0.9 : 1;
+  const raw = (L.base + Math.max(-2, d) * L.coef) * posCoef * tierCoef * fanCoef;
   return Math.max(Math.round(L.base * 0.5), Math.round(raw));
 }
 
