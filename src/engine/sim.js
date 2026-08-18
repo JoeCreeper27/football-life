@@ -29,9 +29,9 @@ export function dValue(s) {
 }
 
 const STYLE = {
-  '全場壓迫': { d: 1, out: 1.08, load: 1.25 },
+  '全場壓迫': { d: 1.4, out: 1.08, load: 1.25 },
   '標準':     { d: 0, out: 1.00, load: 1.00 },
-  '節省體力': { d: -1, out: 0.94, load: 0.70 },
+  '節省體力': { d: -1.4, out: 0.94, load: 0.70 },
 };
 
 export function simSeason(s, rng) {
@@ -39,7 +39,7 @@ export function simSeason(s, rng) {
   const L = LV[c.lv];
   const st = STYLE[p.style] || STYLE['標準'];
   // 球迷聲望透過主場氣氛回饋到表現上（±2）
-  const fanBoost = (s.career.fanRep - 50) / 25;
+  const fanBoost = (s.career.fanRep - 50) / 19;
   const d = dValue(s) + st.d + fanBoost;
   const dp = p.dpos || defaultPos(p.group);
   const base = POS_OUTPUT[dp];
@@ -57,15 +57,15 @@ export function simSeason(s, rng) {
   const minutes = clamp(c.minutes + (arch?.minutes || 0), 0, 0.98);
   const apps = Math.round(L.g * minutes * p.injury.seasonFactor);
   const share = apps / 38;
-  const perf = clamp(0.80 + d * 0.035, 0.30, 1.60) * st.out * decay;
+  const perf = clamp(0.80 + d * 0.026, 0.30, 1.60) * st.out * decay;
 
   const bonus = s._bonusGoals || 0;
   const goals = Math.max(0, Math.round(out.g * share * perf + rng.gauss(1.4))) + bonus;
   const assists = Math.max(0, Math.round(out.a * share * perf + rng.gauss(1.2)));
   const cs = out.cs > 0
-    ? Math.max(0, Math.round(out.cs * share * clamp(0.7 + d * 0.05, 0.2, 1.8) + rng.gauss(1.0)))
+    ? Math.max(0, Math.round(out.cs * share * clamp(0.7 + d * 0.037, 0.2, 1.8) + rng.gauss(1.0)))
     : 0;
-  const rating = +clamp(6.30 + d * 0.045 + rng.gauss(0.12), 5.20, 8.60).toFixed(2);
+  const rating = +clamp(6.30 + d * 0.033 + rng.gauss(0.12), 5.20, 8.60).toFixed(2);
 
   return {
     year: s.career.year, age: p.age, lv: c.lv, lvName: L.n,
@@ -94,7 +94,8 @@ export function injuryRisk(s) {
 export function accrueLoad(s) {
   const p = s.player, c = s.club;
   const st = STYLE[p.style] || STYLE['標準'];
-  const explosive = ((p.ab.pac ?? 40) + (p.ab.phy ?? 40)) / 20;
+  // 除數要跟著能力尺度走，否則能力一通膨，韌帶量表就爆得特別快
+  const explosive = ((p.ab.pac ?? 40) + (p.ab.phy ?? 40)) / 38;
   const scar = p.injury.aclCount >= 2 ? 1.4 : p.injury.aclCount >= 1 ? 1.18 : 1;
   const archLoad = ARCHETYPE[p.arch]?.load || 1;
   const gain = explosive * st.load * clamp(0.4 + c.minutes, 0.4, 1.4) * scar * archLoad;
@@ -114,7 +115,7 @@ export function annualSalary(s) {
   const tierCoef = TIER[s.club.tier].sal;
   // 高聲望是談判籌碼，低聲望球會會想把你賣掉
   const fanCoef = s.career.fanRep >= 75 ? 1.1 : s.career.fanRep <= 25 ? 0.9 : 1;
-  const raw = (L.base + Math.max(-2, d) * L.coef) * posCoef * tierCoef * fanCoef;
+  const raw = (L.base + Math.max(-3, d) * (L.coef / 1.35)) * posCoef * tierCoef * fanCoef;
   return Math.max(Math.round(L.base * 0.5), Math.round(raw));
 }
 
@@ -128,8 +129,8 @@ export function applyDecline(s) {
   const p = s.player;
   if (p.age < CONF.declineAge) return null;
   const severe = p.age >= 35;
-  const stepBig = severe ? 4 + (p.age - 35) : 3;
-  const stepSmall = severe ? 2 : 1;
+  const stepBig = severe ? 5 + (p.age - 35) : 4;
+  const stepSmall = severe ? 3 : 1;
   const changes = {};
   const hit = (k, v) => {
     if (!(k in p.ab)) return;

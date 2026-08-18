@@ -1,11 +1,11 @@
 import { randomSeed } from './engine/rng.js';
 import {
-  createState, ovr, abCost, addAb, defaultPos, isAbroad, SCHEMA_VERSION,
+  createState, ovr, abCost, addAb, defaultPos, isAbroad, synergyOf, SCHEMA_VERSION,
 } from './engine/state.js';
 import { run, answer } from './engine/flow.js';
 import {
   ABIL, GROUP_ABIL, POS_GROUP, DPOS, LV, TIER, SQUAD,
-  NATIONS, NATION_ORDER, ORIGINS, REGION, ARCHETYPE,
+  NATIONS, NATION_ORDER, ORIGINS, REGION, ARCHETYPE, MAX_ABIL,
 } from './engine/data.js';
 import { fmtMoney } from './engine/sim.js';
 
@@ -197,23 +197,28 @@ function renderAlloc({ title, dice, pool, locked = [], major = [] }) {
     }
     const visible = showAll ? keys : keys.filter(k => major.includes(k));
     visible.forEach(k => {
-      const v = draft.ab[k], pk = draft.pot[k] ?? 62;
+      const v = draft.ab[k], pk = draft.pot[k] ?? 70;
       const isLocked = locked.includes(k);
-      const cap = v >= 80 || isLocked;
+      const cap = v >= MAX_ABIL || isLocked;
       const cost = abCost(draft, k), carry = draft.carry[k] || 0;
       const r = document.createElement('div');
       r.className = 'abrow' + (cap ? ' capped' : '') + (major.includes(k) ? ' major' : '');
+      const link = isLocked ? [] : synergyOf(draft, k);
       r.innerHTML =
-        `<span class="nm">${ABIL[k]}${isLocked ? '<small>鎖</small>' : ''}</span>` +
-        `<span class="bar"><i style="width:${v / 80 * 100}%"></i><em style="left:${pk / 80 * 100}%"></em></span>` +
-        `<span class="val">${v}<small>/${pk}</small>${cost > 1 && !isLocked ? `<br><small>${carry}/${cost}</small>` : ''}</span>`;
+        `<span class="nm">${ABIL[k]}${isLocked ? '<small>鎖</small>' : ''}` +
+        (link.length ? `<small>→${link.map(j => ABIL[j]).join('')}</small>` : '') + `</span>` +
+        `<span class="bar"><i style="width:${v / MAX_ABIL * 100}%"></i><em style="left:${pk / MAX_ABIL * 100}%"></em></span>` +
+        // 蓄力槽只要有值就顯示：連帶成長常常只加半點，不顯示玩家會以為沒作用
+        `<span class="val">${v}<small>/${pk}</small>` +
+        `${(cost > 1 || carry > 0) && !isLocked ? `<br><small>蓄力 ${carry.toFixed(1)}/${cost}</small>` : ''}</span>`;
       if (!cap && remaining() > 0) {
         r.onclick = () => {
           const amt = dice ? dice[idx] : 1;
-          const before = { v: draft.ab[k], c: draft.carry[k] };
+          // 連帶成長會動到不只一項，所以整份快照才復原得回來
+          const snap = { ab: { ...draft.ab }, carry: { ...draft.carry } };
           addAb(draft, k, amt);
           spent[k] = (spent[k] || 0) + amt;
-          hist.push({ k, amt, before });
+          hist.push({ k, amt, snap });
           if (dice) idx++; else left--;
           render();
         };
@@ -235,14 +240,15 @@ function renderAlloc({ title, dice, pool, locked = [], major = [] }) {
     undo.disabled = !hist.length;
     undo.onclick = () => {
       const h = hist.pop();
-      draft.ab[h.k] = h.before.v; draft.carry[h.k] = h.before.c;
+      draft.ab = { ...h.snap.ab };
+      draft.carry = { ...h.snap.carry };
       spent[h.k] -= h.amt;
       if (dice) idx--; else left++;
       render();
     };
     a.appendChild(undo);
 
-    if (remaining() === 0 || keys.every(k => draft.ab[k] >= 80)) {
+    if (remaining() === 0 || keys.every(k => draft.ab[k] >= MAX_ABIL)) {
       const ok = document.createElement('button');
       ok.className = 'btn main';
       ok.style.textAlign = 'center';

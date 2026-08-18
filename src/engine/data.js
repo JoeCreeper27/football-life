@@ -23,13 +23,13 @@ export const GROUP_ABIL = {
 /* ---------------- 細分位置 ---------------- */
 export const DPOS = {
   GK: { n: '門將', sal: 0.92, group: 'GK' },
-  CB: { n: '中衛', sal: 0.98, group: 'DF', req: { def: 4, hea: 3, phy: 3, pac: -4 } },
-  FB: { n: '邊後衛', sal: 1.00, group: 'DF', req: { sta: 4, pac: 3, def: 0 } },
-  DM: { n: '後腰', sal: 1.02, group: 'MF', req: { def: 3, phy: 2, pas: -2 } },
-  CM: { n: '中場', sal: 1.05, group: 'MF', req: { pas: 2, vis: 2, sta: 2 } },
-  AM: { n: '前腰', sal: 1.15, group: 'MF', req: { vis: 4, pas: 3, dri: 2 } },
-  W:  { n: '邊鋒', sal: 1.15, group: 'FW', req: { pac: 4, dri: 3 } },
-  ST: { n: '中鋒', sal: 1.20, group: 'FW', req: { fin: 4, phy: 0, hea: 1 } },
+  CB: { n: '中衛', sal: 0.98, group: 'DF', req: { def: 5, hea: 4, phy: 4, pac: -5 } },
+  FB: { n: '邊後衛', sal: 1.00, group: 'DF', req: { sta: 5, pac: 4, def: 0 } },
+  DM: { n: '後腰', sal: 1.02, group: 'MF', req: { def: 4, phy: 3, pas: -3 } },
+  CM: { n: '中場', sal: 1.05, group: 'MF', req: { pas: 3, vis: 3, sta: 3 } },
+  AM: { n: '前腰', sal: 1.15, group: 'MF', req: { vis: 5, pas: 4, dri: 3 } },
+  W:  { n: '邊鋒', sal: 1.15, group: 'FW', req: { pac: 5, dri: 4 } },
+  ST: { n: '中鋒', sal: 1.20, group: 'FW', req: { fin: 5, phy: 0, hea: 1 } },
 };
 
 /** 每個位置的能力權重，決定同一組能力對不同位置的意義 */
@@ -126,59 +126,62 @@ export const ORIGINS = {
  */
 export const LV = {
   /* --- 養成階段（非職業） --- */
-  JHS:     { n: '國中足球隊',       tier: 0, par: 18, min: 0, g: 12, amateur: true },
-  HS:      { n: '高中校隊',         tier: 0, par: 26, min: 0, g: 18, amateur: true },
-  ACADEMY: { n: '足球學校青訓梯隊', tier: 0, par: 32, min: 0, g: 24, amateur: true },
-  UNI:     { n: '大學足球隊',       tier: 0, par: 34, min: 0, g: 20, amateur: true },
+  JHS:     { n: '國中足球隊',       tier: 0, par: 38, min: 0, g: 12, amateur: true },
+  HS:      { n: '高中校隊',         tier: 0, par: 48, min: 0, g: 18, amateur: true },
+  ACADEMY: { n: '足球學校青訓梯隊', tier: 0, par: 54, min: 0, g: 24, amateur: true },
+  UNI:     { n: '大學足球隊',       tier: 0, par: 56, min: 0, g: 20, amateur: true },
 
   /* --- T1 半職業／業餘頂點 --- */
-  TPFL:   { n: '台灣企業足球聯賽', tier: 1, region: 'ASIA', par: 40, min: 34, g: 27, base: 60, coef: 20, top: 'HOME' },
-  JFL:    { n: '日本足球聯賽',     tier: 1, region: 'ASIA', par: 40, min: 34, g: 30, base: 70, coef: 24, top: 'HOME' },
-  K4:     { n: 'K4 聯賽',          tier: 1, region: 'ASIA', par: 40, min: 34, g: 28, base: 65, coef: 22, top: 'HOME' },
-  USL2:   { n: '美國業餘聯賽',     tier: 1, region: 'NAM',  par: 40, min: 34, g: 24, base: 75, coef: 24, top: 'HOME' },
-  EUR_D5: { n: '歐洲第五級聯賽',   tier: 1, region: 'EUR',  par: 40, min: 34, g: 34, base: 70, coef: 24, top: 'HOME' },
-  SAM_D3: { n: '南美地區聯賽',     tier: 1, region: 'SAM',  par: 40, min: 34, g: 26, base: 50, coef: 18, top: 'HOME' },
+  TPFL:   { n: '台灣企業足球聯賽', tier: 1, region: 'ASIA', par: 62, min: 56, g: 27, base: 60, coef: 20, top: 'HOME' },
+  JFL:    { n: '日本足球聯賽',     tier: 1, region: 'ASIA', par: 62, min: 56, g: 30, base: 70, coef: 24, top: 'HOME' },
+  K4:     { n: 'K4 聯賽',          tier: 1, region: 'ASIA', par: 62, min: 56, g: 28, base: 65, coef: 22, top: 'HOME' },
+  USL2:   { n: '美國業餘聯賽',     tier: 1, region: 'NAM',  par: 62, min: 56, g: 24, base: 75, coef: 24, top: 'HOME' },
+  EUR_D5: { n: '歐洲第五級聯賽',   tier: 1, region: 'EUR',  par: 62, min: 56, g: 34, base: 70, coef: 24, top: 'HOME' },
+  SAM_D3: { n: '南美地區聯賽',     tier: 1, region: 'SAM',  par: 62, min: 56, g: 26, base: 50, coef: 18, top: 'HOME' },
 
   /* --- T2 低階職業 --- */
-  J3:     { n: 'J3 聯賽',          tier: 2, region: 'ASIA', par: 45, min: 42, g: 38, base: 180, coef: 60 },
-  K3:     { n: 'K3 聯賽',          tier: 2, region: 'ASIA', par: 45, min: 42, g: 32, base: 170, coef: 58 },
-  USL1:   { n: '美國三級聯賽',     tier: 2, region: 'NAM',  par: 45, min: 42, g: 32, base: 200, coef: 65 },
-  EUR_D4: { n: '歐洲第四級聯賽',   tier: 2, region: 'EUR',  par: 45, min: 42, g: 42, base: 190, coef: 62 },
-  BRA_C:  { n: '巴西丙級聯賽',     tier: 2, region: 'SAM',  par: 45, min: 42, g: 30, base: 150, coef: 52 },
-  ARG_B:  { n: '阿根廷乙級聯賽',   tier: 2, region: 'SAM',  par: 45, min: 42, g: 34, base: 150, coef: 52 },
+  J3:     { n: 'J3 聯賽',          tier: 2, region: 'ASIA', par: 69, min: 65, g: 38, base: 180, coef: 60 },
+  K3:     { n: 'K3 聯賽',          tier: 2, region: 'ASIA', par: 69, min: 65, g: 32, base: 170, coef: 58 },
+  USL1:   { n: '美國三級聯賽',     tier: 2, region: 'NAM',  par: 69, min: 65, g: 32, base: 200, coef: 65 },
+  EUR_D4: { n: '歐洲第四級聯賽',   tier: 2, region: 'EUR',  par: 69, min: 65, g: 42, base: 190, coef: 62 },
+  BRA_C:  { n: '巴西丙級聯賽',     tier: 2, region: 'SAM',  par: 69, min: 65, g: 30, base: 150, coef: 52 },
+  ARG_B:  { n: '阿根廷乙級聯賽',   tier: 2, region: 'SAM',  par: 69, min: 65, g: 34, base: 150, coef: 52 },
 
   /* --- T3 次級職業 --- */
-  J2:     { n: 'J2 聯賽',          tier: 3, region: 'ASIA', par: 50, min: 47, g: 42, base: 420, coef: 150 },
-  K2:     { n: 'K2 聯賽',          tier: 3, region: 'ASIA', par: 50, min: 47, g: 36, base: 400, coef: 145 },
-  USLC:   { n: '美職次級聯賽',     tier: 3, region: 'NAM',  par: 50, min: 47, g: 34, base: 470, coef: 160 },
-  EUR_D3: { n: '歐洲第三級聯賽',   tier: 3, region: 'EUR',  par: 50, min: 47, g: 44, base: 450, coef: 155 },
-  BRA_B:  { n: '巴西乙級聯賽',     tier: 3, region: 'SAM',  par: 50, min: 47, g: 38, base: 380, coef: 135 },
+  J2:     { n: 'J2 聯賽',          tier: 3, region: 'ASIA', par: 76, min: 72, g: 42, base: 420, coef: 150 },
+  K2:     { n: 'K2 聯賽',          tier: 3, region: 'ASIA', par: 76, min: 72, g: 36, base: 400, coef: 145 },
+  USLC:   { n: '美職次級聯賽',     tier: 3, region: 'NAM',  par: 76, min: 72, g: 34, base: 470, coef: 160 },
+  EUR_D3: { n: '歐洲第三級聯賽',   tier: 3, region: 'EUR',  par: 76, min: 72, g: 44, base: 450, coef: 155 },
+  BRA_B:  { n: '巴西乙級聯賽',     tier: 3, region: 'SAM',  par: 76, min: 72, g: 38, base: 380, coef: 135 },
 
   /* --- T4 洲際頂級 --- */
-  J1:     { n: 'J1 聯賽',              tier: 4, region: 'ASIA', par: 56, min: 53, g: 38, base: 1100, coef: 420, top: 'TOP' },
-  K1:     { n: 'K1 聯賽',              tier: 4, region: 'ASIA', par: 56, min: 53, g: 38, base: 1000, coef: 400, top: 'TOP' },
-  MLS:    { n: '美國職業足球大聯盟',   tier: 4, region: 'NAM',  par: 56, min: 53, g: 34, base: 1500, coef: 520, top: 'TOP' },
-  BRA_A:  { n: '巴西甲級聯賽',         tier: 4, region: 'SAM',  par: 56, min: 53, g: 38, base: 900,  coef: 360, top: 'TOP' },
-  ARG_A:  { n: '阿根廷甲級聯賽',       tier: 4, region: 'SAM',  par: 56, min: 53, g: 30, base: 800,  coef: 330, top: 'TOP' },
+  J1:     { n: 'J1 聯賽',              tier: 4, region: 'ASIA', par: 82, min: 79, g: 38, base: 1100, coef: 420, top: 'TOP' },
+  K1:     { n: 'K1 聯賽',              tier: 4, region: 'ASIA', par: 82, min: 79, g: 38, base: 1000, coef: 400, top: 'TOP' },
+  MLS:    { n: '美國職業足球大聯盟',   tier: 4, region: 'NAM',  par: 82, min: 79, g: 34, base: 1500, coef: 520, top: 'TOP' },
+  BRA_A:  { n: '巴西甲級聯賽',         tier: 4, region: 'SAM',  par: 82, min: 79, g: 38, base: 900,  coef: 360, top: 'TOP' },
+  ARG_A:  { n: '阿根廷甲級聯賽',       tier: 4, region: 'SAM',  par: 82, min: 79, g: 30, base: 800,  coef: 330, top: 'TOP' },
 
   /* --- T5 歐洲跳板 --- */
-  POR:     { n: '葡萄牙超級聯賽',   tier: 5, region: 'EUR', par: 58, min: 55, g: 34, base: 1800, coef: 720, top: 'EUR2' },
-  NED:     { n: '荷蘭甲級聯賽',     tier: 5, region: 'EUR', par: 58, min: 55, g: 34, base: 1900, coef: 760, top: 'EUR2' },
-  EUR_SPR: { n: '歐洲跳板聯賽',     tier: 5, region: 'EUR', par: 58, min: 55, g: 34, base: 1600, coef: 700, top: 'EUR2' },
+  POR:     { n: '葡萄牙超級聯賽',   tier: 5, region: 'EUR', par: 86, min: 84, g: 34, base: 1800, coef: 720, top: 'EUR2' },
+  NED:     { n: '荷蘭甲級聯賽',     tier: 5, region: 'EUR', par: 86, min: 84, g: 34, base: 1900, coef: 760, top: 'EUR2' },
+  EUR_SPR: { n: '歐洲跳板聯賽',     tier: 5, region: 'EUR', par: 86, min: 84, g: 34, base: 1600, coef: 700, top: 'EUR2' },
 
   /* --- T6 五大次級 --- */
-  CHAMP: { n: '英式次級聯賽',   tier: 6, region: 'EUR', par: 60, min: 57, g: 46, base: 2600, coef: 900, top: 'EUR2' },
-  EU_D2: { n: '歐陸次級聯賽',   tier: 6, region: 'EUR', par: 60, min: 57, g: 38, base: 2300, coef: 850, top: 'EUR2' },
+  CHAMP: { n: '英式次級聯賽',   tier: 6, region: 'EUR', par: 88, min: 86, g: 46, base: 2600, coef: 900, top: 'EUR2' },
+  EU_D2: { n: '歐陸次級聯賽',   tier: 6, region: 'EUR', par: 88, min: 86, g: 38, base: 2300, coef: 850, top: 'EUR2' },
 
   /* --- T7 五大聯賽 --- */
-  ENG: { n: '英格蘭超級聯賽', tier: 7, region: 'EUR', par: 65, min: 62, g: 38, base: 4600, coef: 3200, top: 'BIG5' },
-  ESP: { n: '西班牙甲級聯賽', tier: 7, region: 'EUR', par: 65, min: 62, g: 38, base: 4400, coef: 3100, top: 'BIG5' },
-  GER: { n: '德國甲級聯賽',   tier: 7, region: 'EUR', par: 65, min: 62, g: 34, base: 4200, coef: 3000, top: 'BIG5' },
-  ITA: { n: '義大利甲級聯賽', tier: 7, region: 'EUR', par: 65, min: 62, g: 38, base: 3900, coef: 2900, top: 'BIG5' },
-  FRA: { n: '法國甲級聯賽',   tier: 7, region: 'EUR', par: 65, min: 62, g: 34, base: 3800, coef: 2800, top: 'BIG5' },
+  ENG: { n: '英格蘭超級聯賽', tier: 7, region: 'EUR', par: 91, min: 88, g: 38, base: 4600, coef: 3200, top: 'BIG5' },
+  ESP: { n: '西班牙甲級聯賽', tier: 7, region: 'EUR', par: 91, min: 88, g: 38, base: 4400, coef: 3100, top: 'BIG5' },
+  GER: { n: '德國甲級聯賽',   tier: 7, region: 'EUR', par: 91, min: 88, g: 34, base: 4200, coef: 3000, top: 'BIG5' },
+  ITA: { n: '義大利甲級聯賽', tier: 7, region: 'EUR', par: 91, min: 88, g: 38, base: 3900, coef: 2900, top: 'BIG5' },
+  FRA: { n: '法國甲級聯賽',   tier: 7, region: 'EUR', par: 91, min: 88, g: 34, base: 3800, coef: 2800, top: 'BIG5' },
 };
 
 export const MAX_TIER = 7;
+
+/** 能力上限：FIFA 式 1–99 量表（頂級球員相關能力約 90） */
+export const MAX_ABIL = 99;
 
 /** 某一層級的所有聯賽 id */
 export function leaguesAt(tier) {
@@ -283,18 +286,18 @@ export const CLUBS = {
 
 /** 球會等級：對陣中門檻的加成、冠軍率、薪資係數 */
 export const TIER = {
-  1: { n: '豪門',       bonus: 6, champ: 34, sal: 1.6 },
-  2: { n: '爭冠／歐戰', bonus: 3, champ: 14, sal: 1.2 },
+  1: { n: '豪門',       bonus: 8, champ: 34, sal: 1.6 },
+  2: { n: '爭冠／歐戰', bonus: 4, champ: 14, sal: 1.2 },
   3: { n: '中游',       bonus: 0, champ: 4,  sal: 1.0 },
-  4: { n: '保級',       bonus: -3, champ: 1, sal: 0.8 },
+  4: { n: '保級',       bonus: -4, champ: 1, sal: 0.8 },
 };
 
 /* ---------------- 陣中地位 ---------------- */
 export const SQUAD = [
-  { k: 'KEY',      n: '絕對核心', gap: 5,   minLo: .88, minHi: .95 },
-  { k: 'STARTER',  n: '主力',     gap: 2,   minLo: .74, minHi: .88 },
+  { k: 'KEY',      n: '絕對核心', gap: 6,   minLo: .88, minHi: .95 },
+  { k: 'STARTER',  n: '主力',     gap: 3,   minLo: .74, minHi: .88 },
   { k: 'ROTATION', n: '輪替',     gap: -1,  minLo: .44, minHi: .70 },
-  { k: 'BENCH',    n: '替補',     gap: -4,  minLo: .16, minHi: .40 },
+  { k: 'BENCH',    n: '替補',     gap: -5,  minLo: .16, minHi: .40 },
   { k: 'STAND',    n: '看台席',   gap: -99, minLo: .00, minHi: .10 },
 ];
 
@@ -311,9 +314,9 @@ export const ROLE_RANK = { KEY: 4, STARTER: 3, ROTATION: 2, BENCH: 1, STAND: 0 }
  * 巔峰期之後幾乎練不動，玩家的注意力自然轉向數據、榮譽與轉會。
  */
 export const GROWTH = [
-  { until: 18, n: 3, lo: 2, hi: 8, cost: 1.0, n2: '潛力期' },
-  { until: 23, n: 3, lo: 1, hi: 6, cost: 1.0, n2: '成長期' },
-  { until: 28, n: 2, lo: 1, hi: 5, cost: 1.5, n2: '巔峰期' },
+  { until: 18, n: 3, lo: 3, hi: 11, cost: 1.0, n2: '潛力期' },
+  { until: 23, n: 3, lo: 2, hi: 8, cost: 1.0, n2: '成長期' },
+  { until: 28, n: 2, lo: 1, hi: 6, cost: 1.5, n2: '巔峰期' },
   { until: 99, n: 1, lo: 1, hi: 4, cost: 2.0, n2: '維持期' },
 ];
 
@@ -322,6 +325,39 @@ export const growthPhase = age => GROWTH.find(g => age <= g.until);
 /** 29 歲後只有技術類還練得動，其餘鎖住 —— 這條規則會自然把老將推向轉型 */
 export const LATE_GROWABLE = ['pas', 'vis', 'fin', 'pos', 'dis', 'hea'];
 export const LATE_LOCK_AGE = 29;
+
+/**
+ * 連帶成長：練一項能力會帶動相關的其他項，比例是該項點數的一部分。
+ * 現實裡沒有人能只練體能而速度和對抗完全不動 —— 重訓、衝刺、對抗訓練本來就重疊。
+ * 帶動的點數一樣走蓄力槽，所以不會憑空跳級，只是累積得比較快。
+ */
+export const SYNERGY = {
+  sta: { pac: .20, phy: .20 },   // 體能 → 速度、對抗
+  dri: { pac: .20, pas: .20 },   // 盤帶 → 速度、傳球
+  pac: { sta: .20, dri: .20 },   // 速度 → 體能、盤帶
+  pas: { vis: .20, fin: .20 },   // 傳球 → 視野、射門
+  fin: { pas: .20, hea: .20 },   // 射門 → 傳球、頭球
+  hea: { fin: .20, phy: .20 },   // 頭球 → 射門、對抗
+  phy: { hea: .20, sta: .20 },   // 對抗 → 頭球、體能
+  // 站位是門將專屬能力，外場沒有這一項，所以原本指向站位的兩條邊改接：
+  def: { phy: .20, hea: .20 },   // 防守 → 對抗、頭球
+  vis: { pas: .20, def: .20 },   // 視野 → 傳球、防守（閱讀比賽同時幫出球與補位）
+};
+
+/**
+ * 門將的能力組只有 5 項（體能／撲救／制空／站位／腳下傳球），
+ * 上面那張表裡的速度、對抗、防守、視野他們一項都沒有 —— 直接套用等於整套失效。
+ * 因此門將走自己的環，規則一樣是「一個能力影響兩個」。
+ * 比例壓到 .12：門將 5 項能力全部計入 ovr，這個環比外場緊得多，
+ * 用同樣的 .20 會讓門將結構性地強過所有外場位置。
+ */
+export const SYNERGY_GK = {
+  sta: { ref: .12, aer: .12 },   // 體能 → 撲救、制空
+  ref: { pos: .12, aer: .12 },   // 撲救 → 站位、制空
+  aer: { ref: .12, sta: .12 },   // 制空 → 撲救、體能
+  pos: { ref: .12, dis: .12 },   // 站位 → 撲救、腳下傳球
+  dis: { pos: .12, sta: .12 },   // 腳下傳球 → 站位、體能
+};
 
 /* ==================================================================== */
 /* 原型：不是開局選的，是前幾年加點長出來的                                */
@@ -337,97 +373,97 @@ export const LATE_LOCK_AGE = 29;
 export const ARCHETYPE = {
   poacher: {
     n: '禁區之狐', pos: ['ST'], major: ['fin', 'hea', 'vis'],
-    req: p => p.ab.fin >= 45 && p.ab.fin - p.ab.pac >= 4,
+    req: p => p.ab.fin >= 65 && p.ab.fin - p.ab.pac >= 12,
     out: { g: 1.35, a: 0.6, cs: 1 }, ageBias: 'late',
     d: '不吃速度，衰退期照樣進球',
     evolve: { key: 'clinical', n: '冷血終結者', cond: s => sumStat(s, 'goals') >= 120 },
   },
   speedster: {
     n: '速度殺手', pos: ['ST', 'W'], major: ['pac', 'fin', 'dri'],
-    req: p => p.ab.pac >= 50 && p.ab.pac - p.ab.phy >= 4,
+    req: p => p.ab.pac >= 72 && p.ab.pac - p.ab.phy >= 12,
     out: { g: 1.2, a: 0.9, cs: 1 }, ageBias: 'early',
     d: '巔峰期最強，31 歲後產能斷崖',
   },
   complete: {
     n: '全能中鋒', pos: ['ST'], major: ['phy', 'hea', 'fin', 'pas'],
-    req: p => p.ab.phy >= 45 && p.ab.hea >= 45,
+    req: p => p.ab.phy >= 65 && p.ab.hea >= 65,
     out: { g: 1.0, a: 1.3, cs: 1 }, ageBias: 'mid',
     d: '平衡型，做球給隊友的戲份多',
   },
   falseNine: {
     n: '偽九號', pos: ['ST', 'AM'], major: ['vis', 'pas', 'dri', 'fin'],
-    req: p => p.ab.vis >= 48 && p.ab.vis - p.ab.phy >= 4,
+    req: p => p.ab.vis >= 69 && p.ab.vis - p.ab.phy >= 12,
     out: { g: 0.85, a: 1.6, cs: 1 }, ageBias: 'late',
     d: '退到中場拿球，可與前腰互轉',
   },
   magician: {
     n: '邊路魔術師', pos: ['W'], major: ['dri', 'pac', 'vis'],
-    req: p => p.ab.dri >= 50 && p.ab.dri - p.ab.fin >= 3,
+    req: p => p.ab.dri >= 72 && p.ab.dri - p.ab.fin >= 11,
     out: { g: 0.8, a: 1.5, cs: 1 }, ageBias: 'early',
     d: '過人集錦讓球迷聲望長最快',
     evolve: { key: 'standing', n: '看台起立者', cond: s => s.career.fanRep >= 85 },
   },
   cutInside: {
     n: '內切射手', pos: ['W'], major: ['fin', 'dri', 'pac'],
-    req: p => p.ab.fin >= 48 && p.ab.dri >= 45,
+    req: p => p.ab.fin >= 69 && p.ab.dri >= 65,
     out: { g: 1.3, a: 0.9, cs: 1 }, ageBias: 'mid',
     d: '慣用腳與所在邊路相反，內切起腳',
   },
   engine: {
     n: '中場發動機', pos: ['CM', 'DM'], major: ['sta', 'phy', 'def', 'pas'],
-    req: p => p.ab.sta >= 50 && p.ab.sta - p.ab.vis >= 3,
+    req: p => p.ab.sta >= 72 && p.ab.sta - p.ab.vis >= 11,
     out: { g: 1.0, a: 1.0, cs: 1 }, ageBias: 'early',
     minutes: 0.08, load: 1.2,
     d: '出場率 +8%，但韌帶負荷 ×1.2',
   },
   maestro: {
     n: '中場大師', pos: ['CM'], major: ['pas', 'vis'],
-    req: p => p.ab.pas >= 52 && p.ab.vis >= 48,
+    req: p => p.ab.pas >= 74 && p.ab.vis >= 69,
     out: { g: 1.0, a: 1.4, cs: 1 }, ageBias: 'late',
     d: '不吃速度體能，評分天花板最高',
     evolve: { key: 'metronome', n: '節拍器', cond: s => sumStat(s, 'apps') >= 300 && avgRating(s) >= 7.3 },
   },
   tenCore: {
     n: '十號核心', pos: ['AM'], major: ['vis', 'pas', 'dri'],
-    req: p => p.ab.vis >= 52 && p.ab.pas >= 48,
+    req: p => p.ab.vis >= 74 && p.ab.pas >= 69,
     out: { g: 1.1, a: 1.6, cs: 1 }, ageBias: 'mid',
     d: '球隊圍著你轉，金球獎權重最高',
   },
   shield: {
     n: '防守屏障', pos: ['DM'], major: ['def', 'phy', 'hea'],
-    req: p => p.ab.def >= 50 && p.ab.def - p.ab.dri >= 4,
+    req: p => p.ab.def >= 72 && p.ab.def - p.ab.dri >= 12,
     out: { g: 1.0, a: 0.7, cs: 1.15 }, ageBias: 'late',
     d: '獎項少但續約最穩',
   },
   rock: {
     n: '中衛磐石', pos: ['CB'], major: ['def', 'hea', 'phy'],
-    req: p => p.ab.def >= 50 && p.ab.hea >= 45,
+    req: p => p.ab.def >= 72 && p.ab.hea >= 65,
     out: { g: 1.0, a: 1.0, cs: 1.3 }, ageBias: 'late',
     captain: 2,
     d: '零封 ×1.3，隊長袖標機率 ×2',
   },
   ballplaying: {
     n: '出球中衛', pos: ['CB'], major: ['pas', 'vis', 'def'],
-    req: p => p.ab.pas >= 45 && p.ab.def >= 45,
+    req: p => p.ab.pas >= 65 && p.ab.def >= 65,
     out: { g: 1.0, a: 1.4, cs: 1.1 }, ageBias: 'late',
     d: '現代足球最搶手的型',
   },
   attackingFB: {
     n: '助攻邊衛', pos: ['FB'], major: ['sta', 'pac', 'dri', 'pas'],
-    req: p => p.ab.sta >= 48 && p.ab.pac >= 48,
+    req: p => p.ab.sta >= 69 && p.ab.pac >= 69,
     out: { g: 1.0, a: 1.5, cs: 1.0 }, ageBias: 'early',
     d: '衰退期被迫轉中衛的經典劇本',
   },
   shotstopper: {
     n: '撲救之神', pos: ['GK'], major: ['ref', 'pos'],
-    req: p => p.ab.ref >= 52,
+    req: p => p.ab.ref >= 74,
     out: { g: 1, a: 1, cs: 1.35 }, ageBias: 'late',
     d: '評分波動大，單場英雄戲份多',
     evolve: { key: 'unbeatable', n: '不可逾越', cond: s => bestStat(s, 'cs') >= 18 },
   },
   sweeper: {
     n: '門線清道夫', pos: ['GK'], major: ['dis', 'aer', 'pos'],
-    req: p => p.ab.dis >= 45 && p.ab.aer >= 45,
+    req: p => p.ab.dis >= 65 && p.ab.aer >= 65,
     out: { g: 1, a: 1, cs: 1.1 }, ageBias: 'late',
     d: '出球型門將，豪門偏好',
   },
@@ -772,9 +808,10 @@ export const CONF = {
   startYear: 2026,
   retireAge: 42,
   declineAge: 31,
-  baseInjury: 11,
+  baseInjury: 8,
   eventCards: 3,
-  aclCap: 50,
+  aclCap: 62,
+  abilScale: 1.35,   // 事件卡與衰退的能力增減換算到 1–99 尺度
   jhsYears: 3,
   hsYears: 3,
   uniYears: 4,
