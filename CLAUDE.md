@@ -24,7 +24,7 @@ python3 -m http.server 8000                 # 免安裝直接跑（純 ES module
 三層，**嚴格單向相依**：`data.js`（純資料）← `state.js` / `sim.js`（純計算）← `flow.js`（狀態機）← `main.js`（DOM）。
 
 - `src/engine/**` 零 DOM 相依，必須能在 Node 裡跑。這是 `tools/balance-sim.js`（以及未來的 Kotlin 移植、server 端 seed 重放驗證排行榜）能成立的前提。**不要在 engine 裡碰 `document`、`localStorage`、`window`。**
-- `src/main.js` 是唯一碰 DOM 的檔案，只認得 `{tone, title, html}` 卡片與 `pending.type`（`choice` / `alloc`），完全不知道遊戲規則。
+- `src/main.js` 是唯一碰 DOM 的檔案，只認得 `{tone, title, html}` 卡片與 `pending.type`（`choice` / `train` / `alloc`），完全不知道遊戲規則。
 - 配色靠 `body[data-stage]`（由 `board()` 設定：養成階段用 `club.stage`，職業期用 `PRO_<地區>`）切換 CSS 變數。**底色只能掛在 `body`**，`html` 一旦有底色就會蓋掉整頁的階段配色。
 
 ### 引擎對外只有兩個函式
@@ -97,6 +97,12 @@ STEPS.FOO = (s, ctx, input) => {
 的對照來驗 —— 位置本身的能力權重差異很容易被誤讀成環境效果。
 
 `diceSpec` 還會依上季出場率與評分加減骰子，所以**出場率有兩層意義**：當季數據，以及下一季的成長。
+
+季前不是直接加點，而是把每顆骰指派給 `TRAINING` 裡的訓練項目（`pending.type === 'train'`）。
+每個項目餵養多個能力，**權重會先正規化**（除以該項目的權重總和）—— 不然餵越多能力的項目就越強，
+玩家只會一直選同一項。`STAGE_TRAIN[stage].fixed` 是必修課表（足球學校＝體能＋戰術），
+會自動吃掉前幾顆骰；自主加練的代價寫成 `s._extraRisk`（當季生效），
+**不要改用 `p.injury.nextRisk`** —— 那個會跨季累積，年年加練會滾成 99% 必然受傷。
 
 `SYNERGY` / `SYNERGY_GK` 是連帶成長表（環狀圖，每個能力剛好帶動兩個），實作在
 `addAb(p, k, points, spill)` 裡。**門將的能力組與外場幾乎沒有交集，一定要走 `SYNERGY_GK`**，

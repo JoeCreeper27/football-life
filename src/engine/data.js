@@ -155,27 +155,27 @@ export const LV = {
   BRA_B:  { n: '巴西乙級聯賽',     tier: 3, region: 'SAM',  par: 66, min: 72, g: 38, base: 380, coef: 135 },
 
   /* --- T4 洲際頂級 --- */
-  J1:     { n: 'J1 聯賽',              tier: 4, region: 'ASIA', par: 71, min: 80, g: 38, base: 1100, coef: 420, top: 'TOP' },
-  K1:     { n: 'K1 聯賽',              tier: 4, region: 'ASIA', par: 71, min: 80, g: 38, base: 1000, coef: 400, top: 'TOP' },
-  MLS:    { n: '美國職業足球大聯盟',   tier: 4, region: 'NAM',  par: 71, min: 80, g: 34, base: 1500, coef: 520, top: 'TOP' },
-  BRA_A:  { n: '巴西甲級聯賽',         tier: 4, region: 'SAM',  par: 71, min: 80, g: 38, base: 900,  coef: 360, top: 'TOP' },
-  ARG_A:  { n: '阿根廷甲級聯賽',       tier: 4, region: 'SAM',  par: 71, min: 80, g: 30, base: 800,  coef: 330, top: 'TOP' },
+  J1:     { n: 'J1 聯賽',              tier: 4, region: 'ASIA', par: 71, min: 82, g: 38, base: 1100, coef: 420, top: 'TOP' },
+  K1:     { n: 'K1 聯賽',              tier: 4, region: 'ASIA', par: 71, min: 82, g: 38, base: 1000, coef: 400, top: 'TOP' },
+  MLS:    { n: '美國職業足球大聯盟',   tier: 4, region: 'NAM',  par: 71, min: 82, g: 34, base: 1500, coef: 520, top: 'TOP' },
+  BRA_A:  { n: '巴西甲級聯賽',         tier: 4, region: 'SAM',  par: 71, min: 82, g: 38, base: 900,  coef: 360, top: 'TOP' },
+  ARG_A:  { n: '阿根廷甲級聯賽',       tier: 4, region: 'SAM',  par: 71, min: 82, g: 30, base: 800,  coef: 330, top: 'TOP' },
 
   /* --- T5 歐洲跳板 --- */
-  POR:     { n: '葡萄牙超級聯賽',   tier: 5, region: 'EUR', par: 75, min: 80, g: 34, base: 1800, coef: 720, top: 'EUR2' },
-  NED:     { n: '荷蘭甲級聯賽',     tier: 5, region: 'EUR', par: 75, min: 80, g: 34, base: 1900, coef: 760, top: 'EUR2' },
-  EUR_SPR: { n: '歐洲跳板聯賽',     tier: 5, region: 'EUR', par: 75, min: 80, g: 34, base: 1600, coef: 700, top: 'EUR2' },
+  POR:     { n: '葡萄牙超級聯賽',   tier: 5, region: 'EUR', par: 75, min: 83, g: 34, base: 1800, coef: 720, top: 'EUR2' },
+  NED:     { n: '荷蘭甲級聯賽',     tier: 5, region: 'EUR', par: 75, min: 83, g: 34, base: 1900, coef: 760, top: 'EUR2' },
+  EUR_SPR: { n: '歐洲跳板聯賽',     tier: 5, region: 'EUR', par: 75, min: 83, g: 34, base: 1600, coef: 700, top: 'EUR2' },
 
   /* --- T6 五大次級 --- */
-  CHAMP: { n: '英式次級聯賽',   tier: 6, region: 'EUR', par: 77, min: 81, g: 46, base: 2600, coef: 900, top: 'EUR2' },
-  EU_D2: { n: '歐陸次級聯賽',   tier: 6, region: 'EUR', par: 77, min: 81, g: 38, base: 2300, coef: 850, top: 'EUR2' },
+  CHAMP: { n: '英式次級聯賽',   tier: 6, region: 'EUR', par: 77, min: 84, g: 46, base: 2600, coef: 900, top: 'EUR2' },
+  EU_D2: { n: '歐陸次級聯賽',   tier: 6, region: 'EUR', par: 77, min: 84, g: 38, base: 2300, coef: 850, top: 'EUR2' },
 
   /* --- T7 五大聯賽 --- */
-  ENG: { n: '英格蘭超級聯賽', tier: 7, region: 'EUR', par: 80, min: 83, g: 38, base: 4600, coef: 3200, top: 'BIG5' },
-  ESP: { n: '西班牙甲級聯賽', tier: 7, region: 'EUR', par: 80, min: 83, g: 38, base: 4400, coef: 3100, top: 'BIG5' },
-  GER: { n: '德國甲級聯賽',   tier: 7, region: 'EUR', par: 80, min: 83, g: 34, base: 4200, coef: 3000, top: 'BIG5' },
-  ITA: { n: '義大利甲級聯賽', tier: 7, region: 'EUR', par: 80, min: 83, g: 38, base: 3900, coef: 2900, top: 'BIG5' },
-  FRA: { n: '法國甲級聯賽',   tier: 7, region: 'EUR', par: 80, min: 83, g: 34, base: 3800, coef: 2800, top: 'BIG5' },
+  ENG: { n: '英格蘭超級聯賽', tier: 7, region: 'EUR', par: 80, min: 85, g: 38, base: 4600, coef: 3200, top: 'BIG5' },
+  ESP: { n: '西班牙甲級聯賽', tier: 7, region: 'EUR', par: 80, min: 85, g: 38, base: 4400, coef: 3100, top: 'BIG5' },
+  GER: { n: '德國甲級聯賽',   tier: 7, region: 'EUR', par: 80, min: 85, g: 34, base: 4200, coef: 3000, top: 'BIG5' },
+  ITA: { n: '義大利甲級聯賽', tier: 7, region: 'EUR', par: 80, min: 85, g: 38, base: 3900, coef: 2900, top: 'BIG5' },
+  FRA: { n: '法國甲級聯賽',   tier: 7, region: 'EUR', par: 80, min: 85, g: 34, base: 3800, coef: 2800, top: 'BIG5' },
 };
 
 export const MAX_TIER = 7;
@@ -330,17 +330,51 @@ export const growthPhase = age => GROWTH.find(g => age <= g.until);
 export const PHYSICAL = ['pac', 'sta', 'phy'];
 
 /**
+ * 訓練項目：玩家不再直接點能力，而是選「這一季要練什麼」。
+ * 每個項目會餵養多個能力（權重 = 每點骰值換算成幾點能力），
+ * 所以練射門也會順便長一點速度，練戰術會同時長視野與站位。
+ * for: '*' 全體 / 'OUT' 外場 / 'GK' 門將
+ */
+export const TRAINING = {
+  fitness:  { n: '體能訓練',   for: '*',   ab: { sta: 1.0, pac: 0.45 } },
+  weights:  { n: '重量訓練',   for: '*',   ab: { phy: 1.0, hea: 0.4 } },
+  sprint:   { n: '衝刺訓練',   for: '*',   ab: { pac: 1.0, sta: 0.4 } },
+  tactics:  { n: '戰術訓練',   for: '*',   ab: { vis: 0.9, pos: 0.7, def: 0.3 } },
+  passing:  { n: '傳球練習',   for: 'OUT', ab: { pas: 1.0, vis: 0.4 } },
+  shooting: { n: '射門練習',   for: 'OUT', ab: { fin: 1.0, pac: 0.2 } },
+  setpiece: { n: '定位球練習', for: 'OUT', ab: { fin: 0.7, pas: 0.6, hea: 0.3 } },
+  marking:  { n: '一對一盯防', for: 'OUT', ab: { def: 1.0, phy: 0.4, pos: 0.3 } },
+  aerial:   { n: '空中對抗',   for: '*',   ab: { hea: 1.0, phy: 0.5, aer: 0.7 } },
+  rondo:    { n: '抓鬼（搶圈）', for: 'OUT', ab: { pas: 0.7, dri: 0.5, vis: 0.5 } },
+  juggling: { n: '挑球訓練',   for: 'OUT', ab: { dri: 1.0, fin: 0.3 } },
+  dribble:  { n: '一對一過人', for: 'OUT', ab: { dri: 0.9, pac: 0.4, fin: 0.3 } },
+  reflex:   { n: '撲救訓練',   for: 'GK',  ab: { ref: 1.0, pos: 0.4 } },
+  handling: { n: '門將出球',   for: 'GK',  ab: { dis: 1.0, pas: 0.4, vis: 0.3 } },
+  command:  { n: '制空指揮',   for: 'GK',  ab: { aer: 1.0, pos: 0.5, hea: 0.3 } },
+};
+
+export const TRAINING_ORDER = Object.keys(TRAINING);
+
+/** 這個項目對這名球員有沒有意義（門將／外場專屬） */
+export function trainingFor(group) {
+  return TRAINING_ORDER.filter(k => {
+    const t = TRAINING[k];
+    return t.for === '*' || (t.for === 'GK') === (group === 'GK');
+  });
+}
+
+/**
  * 訓練環境：決定訓練骰數與「練什麼比較有效率」。
  * 足球學校把人練成運動員（體能類 ×1.6），校隊與大學把人練成球員（技術類 ×1.3）——
  * 這是「進足球學校 vs 留校隊」真正的機制差異，不只是骰子多寡。
  * boost 會乘在分配到該類能力的點數上。
  */
 export const STAGE_TRAIN = {
-  JHS:     { dice: -1, phy: 1.0, tec: 1.0, d: '一週練三次，什麼都碰一點' },
-  HS:      { dice: 0,  phy: 0.95, tec: 1.5, d: '課業與球隊兼顧，體能練得少，但技術與默契磨得很細' },
-  ACADEMY: { dice: 1,  phy: 1.7, tec: 0.8, d: '整天都在練，體能與對抗突飛猛進，技術相對粗糙' },
-  UNI:     { dice: 0,  phy: 0.9, tec: 1.35, d: '對抗強度不足，但戰術與技術磨得很深' },
-  PRO:     { dice: 0,  phy: 1.0, tec: 1.0, d: '' },
+  JHS:     { dice: -1, phy: 1.0, tec: 1.0, fixed: [], d: '一週練三次，什麼都碰一點' },
+  HS:      { dice: 0,  phy: 0.95, tec: 1.5, fixed: [], d: '課業與球隊兼顧，體能練得少，技術與默契磨得很細；課表自己排' },
+  ACADEMY: { dice: 1,  phy: 1.7, tec: 0.8, fixed: ['fitness', 'tactics'], d: '學院有固定課表：體能與戰術是每天的必修，剩下的時間才輪到你自己安排' },
+  UNI:     { dice: 0,  phy: 0.9, tec: 1.35, fixed: ['tactics'], d: '對抗強度不足，但戰術課排得很滿' },
+  PRO:     { dice: 0,  phy: 1.0, tec: 1.0, fixed: [], d: '' },
 };
 export const PHYSICAL_HARD_AGE = 26;   // 起，成本 ×2
 export const PHYSICAL_LOCK_AGE = 33;   // 起，練不動
@@ -863,7 +897,7 @@ export const CONF = {
   // declineAge 已由 DECLINE 表取代
   baseInjury: 4,
   eventCards: 3,
-  aclCap: 95,
+  aclCap: 120,
   abilScale: 1.35,   // 事件卡與衰退的能力增減換算到 1–99 尺度
   jhsYears: 3,
   hsYears: 3,

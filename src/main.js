@@ -4,7 +4,7 @@ import {
 } from './engine/state.js';
 import { run, answer } from './engine/flow.js';
 import {
-  ABIL, GROUP_ABIL, POS_GROUP, DPOS, LV, TIER, SQUAD,
+  ABIL, GROUP_ABIL, POS_GROUP, DPOS, LV, TIER, SQUAD, TRAINING,
   NATIONS, NATION_ORDER, ORIGINS, REGION, ARCHETYPE, MAX_ABIL,
 } from './engine/data.js';
 import { fmtMoney } from './engine/sim.js';
@@ -148,7 +148,76 @@ function scrollBottom() {
 /* ---------------- 決策 ---------------- */
 function renderPending(pending) {
   if (pending.type === 'choice') return renderChoice(pending);
+  if (pending.type === 'train') return renderTrain(pending);
   if (pending.type === 'alloc') return renderAlloc(pending);
+}
+
+/** 季前訓練：把每顆骰指派給一個訓練項目，而不是直接點能力 */
+function renderTrain({ title, dice, fixed, options, extra }) {
+  const a = $('act');
+  const picks = [];
+  let phase = 'dice';      // dice → extra → done
+  let chosenExtra = null;
+
+  const render = () => {
+    const idx = picks.length;
+    a.innerHTML = `<div class="title">${title}　` +
+      (phase === 'dice' ? `剩餘 ${dice.length - idx} 顆訓練骰` : '自主加練（可跳過）') +
+      `</div>`;
+
+    if (fixed.length) {
+      a.innerHTML += `<div class="fixed-row">必修課表：` +
+        fixed.map(f => `${TRAINING[f.key].n} <b>${f.die}</b>`).join('　') + `</div>`;
+    }
+    if (dice.length) {
+      a.innerHTML += `<div id="dice">${dice.map((v, i) =>
+        `<div class="die ${i < idx ? 'used' : ''} ${i === idx && phase === 'dice' ? 'active' : ''} ${v >= 9 ? 'six' : ''}">${v}</div>`
+      ).join('')}</div>`;
+    }
+
+    if (phase === 'dice' || phase === 'extra') {
+      options.forEach(o => {
+        const b = document.createElement('button');
+        b.className = 'btn' + (o.major ? ' main' : '');
+        b.disabled = !!o.dead;
+        b.innerHTML = o.t + `<small>${o.s}</small>`;
+        b.onclick = () => {
+          if (phase === 'dice') picks.push({ key: o.v, die: dice[idx] });
+          else { chosenExtra = o.v; phase = 'done'; submit(); return; }
+          if (picks.length >= dice.length) phase = extra ? 'extra' : 'done';
+          if (phase === 'done') return submit();
+          render();
+        };
+        a.appendChild(b);
+      });
+    }
+
+    const undo = document.createElement('button');
+    undo.className = 'btn';
+    undo.style.textAlign = 'center';
+    undo.textContent = '↩ 復原';
+    undo.disabled = !picks.length;
+    undo.onclick = () => { picks.pop(); phase = 'dice'; render(); };
+    a.appendChild(undo);
+
+    if (phase === 'extra') {
+      const skip = document.createElement('button');
+      skip.className = 'btn main';
+      skip.style.textAlign = 'center';
+      skip.textContent = '不加練，好好休息 ▸';
+      skip.onclick = () => { chosenExtra = null; submit(); };
+      a.appendChild(skip);
+    }
+    scrollBottom();
+  };
+
+  const submit = () => {
+    a.innerHTML = '';
+    push(answer(S, { fixed, picks, extra: chosenExtra }));
+  };
+
+  if (!dice.length) { phase = extra ? 'extra' : 'done'; if (phase === 'done') return submit(); }
+  render();
 }
 
 function renderChoice({ title, options }) {

@@ -81,7 +81,7 @@ export function simSeason(s, rng) {
 
 export function injuryRisk(s) {
   const p = s.player, c = s.club;
-  let risk = CONF.baseInjury + p.injury.nextRisk;
+  let risk = CONF.baseInjury + p.injury.nextRisk + (s._extraRisk || 0);
   risk += c.minutes * 6;
   if (p.age >= 33) risk += 10; else if (p.age >= 30) risk += 5;
   if (p.style === '全場壓迫') risk += 4;
