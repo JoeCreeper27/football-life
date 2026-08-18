@@ -25,6 +25,7 @@ python3 -m http.server 8000                 # 免安裝直接跑（純 ES module
 
 - `src/engine/**` 零 DOM 相依，必須能在 Node 裡跑。這是 `tools/balance-sim.js`（以及未來的 Kotlin 移植、server 端 seed 重放驗證排行榜）能成立的前提。**不要在 engine 裡碰 `document`、`localStorage`、`window`。**
 - `src/main.js` 是唯一碰 DOM 的檔案，只認得 `{tone, title, html}` 卡片與 `pending.type`（`choice` / `train` / `alloc`），完全不知道遊戲規則。
+- 用 `hidden` 控制顯示的元素，若作者樣式給了 `display`（例如浮層的 `display:flex`），一定要補 `[hidden]{display:none}` —— 作者樣式優先度高過瀏覽器預設的 `[hidden]`，否則元素永遠關不掉。
 - 任何「點開才看得到」的面板都要用 `position:fixed` 浮層。`main.js` 每張卡片都會呼叫 `scrollBottom()`，放在文件流裡的面板在長生涯中一定會被捲出畫面（能力細項就踩過這個坑）。
 - 配色靠 `body[data-stage]`（由 `board()` 設定：養成階段用 `club.stage`，職業期用 `PRO_<地區>`）切換 CSS 變數。**底色只能掛在 `body`**，`html` 一旦有底色就會蓋掉整頁的階段配色。
 
