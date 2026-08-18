@@ -1,5 +1,5 @@
 import { clamp } from './rng.js';
-import { LV, TIER, SQUAD, POS_WEIGHT, POS_OUTPUT, DPOS, CONF, ARCHETYPE, DECLINE } from './data.js';
+import { LV, TIER, SQUAD, POS_WEIGHT, POS_OUTPUT, DPOS, CONF, ARCHETYPE, DECLINE, TECHNICAL, MAX_ABIL } from './data.js';
 import { ovr, squadGap, defaultPos, isAbroad } from './state.js';
 
 /* ---------------- 陣中地位與出場時間 ---------------- */
@@ -127,18 +127,25 @@ export function annualSalary(s) {
  */
 export function applyDecline(s) {
   const p = s.player;
-  // 取年齡符合的最後一段；技術類不在表裡，所以永遠不掉
   const band = DECLINE.filter(d => p.age >= d.from).pop();
   if (!band) return null;
+
+  // 體能越好，衰退越慢（0.55 ~ 1.45 倍）。
+  // 保養身體因此變成一個真的有回報的長期投資，而且體能本身也在掉 ——
+  // 疏於保養的球員會越掉越快，這個正回饋就是「斷崖式衰退」的來源。
+  const fit = clamp(1.35 - ((p.ab.sta ?? 60) - 50) / 60, 0.55, 1.45);
+
+  p.decay = p.decay || {};
   const changes = {};
   for (const [k, v] of Object.entries(band)) {
     if (k === 'from' || !(k in p.ab)) continue;
-    let drop = v;
-    // 〈節奏大師〉把體能類的衰退再減半
-    if (p.traits.tempo) drop = Math.max(0, drop - 1);
-    if (!drop) continue;
+    if (p.traits.tempo && TECHNICAL.includes(k)) continue; // 節奏大師：技術類免疫
+    p.decay[k] = (p.decay[k] || 0) + v * fit;
+    const drop = Math.floor(p.decay[k]);
+    if (drop <= 0) continue;
+    p.decay[k] -= drop;
     const before = p.ab[k];
-    p.ab[k] = clamp(p.ab[k] - drop, 1, 99);
+    p.ab[k] = clamp(p.ab[k] - drop, 1, MAX_ABIL);
     if (p.ab[k] !== before) changes[k] = p.ab[k] - before;
   }
   return changes;

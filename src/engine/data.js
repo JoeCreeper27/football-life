@@ -148,34 +148,34 @@ export const LV = {
   ARG_B:  { n: '阿根廷乙級聯賽',   tier: 2, region: 'SAM',  par: 61, min: 63, g: 34, base: 150, coef: 52 },
 
   /* --- T3 次級職業 --- */
-  J2:     { n: 'J2 聯賽',          tier: 3, region: 'ASIA', par: 66, min: 69, g: 42, base: 420, coef: 150 },
-  K2:     { n: 'K2 聯賽',          tier: 3, region: 'ASIA', par: 66, min: 69, g: 36, base: 400, coef: 145 },
-  USLC:   { n: '美職次級聯賽',     tier: 3, region: 'NAM',  par: 66, min: 69, g: 34, base: 470, coef: 160 },
-  EUR_D3: { n: '歐洲第三級聯賽',   tier: 3, region: 'EUR',  par: 66, min: 69, g: 44, base: 450, coef: 155 },
-  BRA_B:  { n: '巴西乙級聯賽',     tier: 3, region: 'SAM',  par: 66, min: 69, g: 38, base: 380, coef: 135 },
+  J2:     { n: 'J2 聯賽',          tier: 3, region: 'ASIA', par: 66, min: 72, g: 42, base: 420, coef: 150 },
+  K2:     { n: 'K2 聯賽',          tier: 3, region: 'ASIA', par: 66, min: 72, g: 36, base: 400, coef: 145 },
+  USLC:   { n: '美職次級聯賽',     tier: 3, region: 'NAM',  par: 66, min: 72, g: 34, base: 470, coef: 160 },
+  EUR_D3: { n: '歐洲第三級聯賽',   tier: 3, region: 'EUR',  par: 66, min: 72, g: 44, base: 450, coef: 155 },
+  BRA_B:  { n: '巴西乙級聯賽',     tier: 3, region: 'SAM',  par: 66, min: 72, g: 38, base: 380, coef: 135 },
 
   /* --- T4 洲際頂級 --- */
-  J1:     { n: 'J1 聯賽',              tier: 4, region: 'ASIA', par: 71, min: 77, g: 38, base: 1100, coef: 420, top: 'TOP' },
-  K1:     { n: 'K1 聯賽',              tier: 4, region: 'ASIA', par: 71, min: 77, g: 38, base: 1000, coef: 400, top: 'TOP' },
-  MLS:    { n: '美國職業足球大聯盟',   tier: 4, region: 'NAM',  par: 71, min: 77, g: 34, base: 1500, coef: 520, top: 'TOP' },
-  BRA_A:  { n: '巴西甲級聯賽',         tier: 4, region: 'SAM',  par: 71, min: 77, g: 38, base: 900,  coef: 360, top: 'TOP' },
-  ARG_A:  { n: '阿根廷甲級聯賽',       tier: 4, region: 'SAM',  par: 71, min: 77, g: 30, base: 800,  coef: 330, top: 'TOP' },
+  J1:     { n: 'J1 聯賽',              tier: 4, region: 'ASIA', par: 71, min: 80, g: 38, base: 1100, coef: 420, top: 'TOP' },
+  K1:     { n: 'K1 聯賽',              tier: 4, region: 'ASIA', par: 71, min: 80, g: 38, base: 1000, coef: 400, top: 'TOP' },
+  MLS:    { n: '美國職業足球大聯盟',   tier: 4, region: 'NAM',  par: 71, min: 80, g: 34, base: 1500, coef: 520, top: 'TOP' },
+  BRA_A:  { n: '巴西甲級聯賽',         tier: 4, region: 'SAM',  par: 71, min: 80, g: 38, base: 900,  coef: 360, top: 'TOP' },
+  ARG_A:  { n: '阿根廷甲級聯賽',       tier: 4, region: 'SAM',  par: 71, min: 80, g: 30, base: 800,  coef: 330, top: 'TOP' },
 
   /* --- T5 歐洲跳板 --- */
-  POR:     { n: '葡萄牙超級聯賽',   tier: 5, region: 'EUR', par: 75, min: 82, g: 34, base: 1800, coef: 720, top: 'EUR2' },
-  NED:     { n: '荷蘭甲級聯賽',     tier: 5, region: 'EUR', par: 75, min: 82, g: 34, base: 1900, coef: 760, top: 'EUR2' },
-  EUR_SPR: { n: '歐洲跳板聯賽',     tier: 5, region: 'EUR', par: 75, min: 82, g: 34, base: 1600, coef: 700, top: 'EUR2' },
+  POR:     { n: '葡萄牙超級聯賽',   tier: 5, region: 'EUR', par: 75, min: 80, g: 34, base: 1800, coef: 720, top: 'EUR2' },
+  NED:     { n: '荷蘭甲級聯賽',     tier: 5, region: 'EUR', par: 75, min: 80, g: 34, base: 1900, coef: 760, top: 'EUR2' },
+  EUR_SPR: { n: '歐洲跳板聯賽',     tier: 5, region: 'EUR', par: 75, min: 80, g: 34, base: 1600, coef: 700, top: 'EUR2' },
 
   /* --- T6 五大次級 --- */
-  CHAMP: { n: '英式次級聯賽',   tier: 6, region: 'EUR', par: 77, min: 85, g: 46, base: 2600, coef: 900, top: 'EUR2' },
-  EU_D2: { n: '歐陸次級聯賽',   tier: 6, region: 'EUR', par: 77, min: 85, g: 38, base: 2300, coef: 850, top: 'EUR2' },
+  CHAMP: { n: '英式次級聯賽',   tier: 6, region: 'EUR', par: 77, min: 81, g: 46, base: 2600, coef: 900, top: 'EUR2' },
+  EU_D2: { n: '歐陸次級聯賽',   tier: 6, region: 'EUR', par: 77, min: 81, g: 38, base: 2300, coef: 850, top: 'EUR2' },
 
   /* --- T7 五大聯賽 --- */
-  ENG: { n: '英格蘭超級聯賽', tier: 7, region: 'EUR', par: 80, min: 89, g: 38, base: 4600, coef: 3200, top: 'BIG5' },
-  ESP: { n: '西班牙甲級聯賽', tier: 7, region: 'EUR', par: 80, min: 89, g: 38, base: 4400, coef: 3100, top: 'BIG5' },
-  GER: { n: '德國甲級聯賽',   tier: 7, region: 'EUR', par: 80, min: 89, g: 34, base: 4200, coef: 3000, top: 'BIG5' },
-  ITA: { n: '義大利甲級聯賽', tier: 7, region: 'EUR', par: 80, min: 89, g: 38, base: 3900, coef: 2900, top: 'BIG5' },
-  FRA: { n: '法國甲級聯賽',   tier: 7, region: 'EUR', par: 80, min: 89, g: 34, base: 3800, coef: 2800, top: 'BIG5' },
+  ENG: { n: '英格蘭超級聯賽', tier: 7, region: 'EUR', par: 80, min: 83, g: 38, base: 4600, coef: 3200, top: 'BIG5' },
+  ESP: { n: '西班牙甲級聯賽', tier: 7, region: 'EUR', par: 80, min: 83, g: 38, base: 4400, coef: 3100, top: 'BIG5' },
+  GER: { n: '德國甲級聯賽',   tier: 7, region: 'EUR', par: 80, min: 83, g: 34, base: 4200, coef: 3000, top: 'BIG5' },
+  ITA: { n: '義大利甲級聯賽', tier: 7, region: 'EUR', par: 80, min: 83, g: 38, base: 3900, coef: 2900, top: 'BIG5' },
+  FRA: { n: '法國甲級聯賽',   tier: 7, region: 'EUR', par: 80, min: 83, g: 34, base: 3800, coef: 2800, top: 'BIG5' },
 };
 
 export const MAX_TIER = 7;
@@ -328,19 +328,39 @@ export const growthPhase = age => GROWTH.find(g => age <= g.until);
  * 這就是為什麼技術型中場四十歲還能先發，而速度型邊鋒三十出頭就得轉型。
  */
 export const PHYSICAL = ['pac', 'sta', 'phy'];
+
+/**
+ * 訓練環境：決定訓練骰數與「練什麼比較有效率」。
+ * 足球學校把人練成運動員（體能類 ×1.6），校隊與大學把人練成球員（技術類 ×1.3）——
+ * 這是「進足球學校 vs 留校隊」真正的機制差異，不只是骰子多寡。
+ * boost 會乘在分配到該類能力的點數上。
+ */
+export const STAGE_TRAIN = {
+  JHS:     { dice: -1, phy: 1.0, tec: 1.0, d: '一週練三次，什麼都碰一點' },
+  HS:      { dice: 0,  phy: 0.95, tec: 1.5, d: '課業與球隊兼顧，體能練得少，但技術與默契磨得很細' },
+  ACADEMY: { dice: 1,  phy: 1.7, tec: 0.8, d: '整天都在練，體能與對抗突飛猛進，技術相對粗糙' },
+  UNI:     { dice: 0,  phy: 0.9, tec: 1.35, d: '對抗強度不足，但戰術與技術磨得很深' },
+  PRO:     { dice: 0,  phy: 1.0, tec: 1.0, d: '' },
+};
 export const PHYSICAL_HARD_AGE = 26;   // 起，成本 ×2
 export const PHYSICAL_LOCK_AGE = 33;   // 起，練不動
 
 /**
- * 非均勻衰退表：取年齡符合的最後一段。
- * 只有體能類會掉，技術類完全不掉 —— 這是「技術型長青」的機制來源。
+ * 非均勻衰退表：取年齡符合的最後一段，數值是每年掉的點數（小數會累進到滿 1 才扣）。
+ * 技術類也會掉，但幅度差一個量級（速度 2.1／年 vs 視野 0.15／年），
+ * 而且要到 38 歲才開始 —— 這是「速度型早退、技術型長青」的機制來源。
+ * 實際掉幅還會再乘上體能修正：體能越好衰退越慢。
  */
 export const DECLINE = [
-  { from: 29, pac: 1, sta: 1 },
-  { from: 32, pac: 1, sta: 1, phy: 1 },
-  { from: 35, pac: 2, sta: 2, phy: 1, ref: 1 },
-  { from: 38, pac: 2, sta: 2, phy: 1, ref: 1, hea: 1 },
+  { from: 29, pac: 1.0, sta: 0.8 },
+  { from: 32, pac: 1.2, sta: 1.0, phy: 0.6, dri: 0.4, hea: 0.2, ref: 0.3 },
+  { from: 35, pac: 1.7, sta: 1.3, phy: 0.9, dri: 0.6, hea: 0.4, ref: 0.6, def: 0.3, fin: 0.3, aer: 0.4 },
+  { from: 38, pac: 2.1, sta: 1.6, phy: 1.1, dri: 0.8, hea: 0.5, ref: 0.8, def: 0.4, fin: 0.4, aer: 0.5,
+    pas: 0.20, vis: 0.15, pos: 0.15, dis: 0.25 },
 ];
+
+/** 純技術類：衰退幅度最小，〈節奏大師〉可以完全免疫 */
+export const TECHNICAL = ['pas', 'vis', 'pos', 'dis'];
 
 /**
  * 連帶成長：練一項能力會帶動相關的其他項，比例是該項點數的一部分。
@@ -545,6 +565,23 @@ export const EVENTS = [
   { n: '語言與新環境', for: 'ABROAD', gt: '你開始用當地語言在場上喊人', bt: '聽不懂戰術會議，訓練賽站錯位', g: { vis: 2, sta: 1 }, b: { vis: -2, sta: -1 } },
   { n: '思鄉', for: 'ABROAD', gt: '把想家的力氣全放到球場上', bt: '整季心不在焉', g: { rand: 2 }, b: { rand: -2, inj: 4 } },
   { n: '當地媒體的檢視', for: 'ABROAD', gt: '一場好球讓報紙改口叫你自己人', bt: '被寫成「便宜的外籍球員」', g: { fin: 1, dri: 1 }, b: { rand: -2 } },
+
+  /* ---------- 街頭足球：養成期與低階聯賽限定 ---------- */
+  { n: '在公園踢街球', for: '*', weight: 1.4,
+    cond: s => s.club.stage !== 'PRO' || LV[s.club.lv].tier <= 2,
+    gt: '水泥地上沒有裁判也沒有戰術，只有你和球。過人變得像呼吸一樣自然',
+    bt: '地面不平，落地時腳踝拐了一下，腫得像麵包',
+    g: { dri: 3, fin: 2 }, b: { inj: 12, sta: -2 } },
+  { n: '街頭五人制對決', for: '*', weight: 1.2,
+    cond: s => s.club.stage !== 'PRO' || LV[s.club.lv].tier <= 2,
+    gt: '場地小到只能把球黏在腳上，出球快了半拍',
+    bt: '對面那個大人根本不是來踢球的，你被鏟了一腳',
+    g: { dri: 2, pas: 2 }, b: { inj: 10, pac: -1 } },
+  { n: '被街頭老手電爆', for: '*', weight: 1.0,
+    cond: s => s.club.stage !== 'PRO' && s.player.age <= 17,
+    gt: '你看懂了他的節奏，最後一球從他胯下穿過去',
+    bt: '整個下午你連球都碰不到，回家路上一句話都沒說',
+    g: { vis: 2, dri: 2 }, b: { sta: -1, fin: -1 } },
 
   /* ---------- 第一類：球迷文化 ---------- */
   { n: '球迷幫你寫了 chant', for: 'PRO', once: true, cond: s => s.club.yearsAtClub >= 2 && s.career.fanRep >= 60,

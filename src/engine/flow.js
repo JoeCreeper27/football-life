@@ -2,7 +2,7 @@ import { clamp } from './rng.js';
 import {
   LV, CLUBS, YOUTH_CLUBS, TIER, DPOS, EVENTS, TRAITS, ABIL, CONF, POS_GROUP,
   NATIONS, ORIGINS, REGION, MAX_TIER, leaguesAt,
-  ARCHETYPE, ARCH_SWITCH, ROLE_RANK, SQUAD, PHYSICAL_LOCK_AGE, growthPhase,
+  ARCHETYPE, ARCH_SWITCH, ROLE_RANK, SQUAD, PHYSICAL, PHYSICAL_LOCK_AGE, growthPhase, STAGE_TRAIN,
 } from './data.js';
 import {
   rngOf, syncCursor, addAb, subAb, abCost, ovr, defaultPos, posQualified, squadGap,
@@ -103,16 +103,35 @@ STEPS.PRE_DECLINE = (s, ctx) => {
  * 這是「總量控制住、重壓在 24 歲前」的實作點，動這裡等於動整條成長曲線。
  */
 function diceSpec(s, rng) {
-  const p = s.player, st = s.club.stage;
+  const p = s.player;
   const g = growthPhase(p.age);
-  let n = g.n;
-  if (st === 'ACADEMY') n += 1;               // 足球學校：整天都在練
-  else if (st === 'JHS') n -= 1;              // 國中：一週練三次
+  const env = STAGE_TRAIN[s.club.stage] || STAGE_TRAIN.PRO;
+  let n = g.n + env.dice;
+
+  // 上場時間與表現直接換成成長：坐板凳的人練不起來，這是出場率的第二層意義
+  const last = s.career.seasons[s.career.seasons.length - 1];
+  if (last && last.apps > 0) {
+    if (last.minutes >= 70) n += 1;
+    else if (last.minutes < 30) n -= 1;
+    if (last.rating >= 7.2) n += 1;
+  }
+
   if (p.injury.rehab > 0 || p.injury.seasonFactor === 0) n = Math.min(n, 1);
   if (p.traits.benched) n -= 1;
   if (p.origin === 'immigrant' && p.age <= 15) n -= 1;   // 適應期
   if (s._diceDebuff) { n -= s._diceDebuff; s._diceDebuff = undefined; }
-  return { n: Math.max(1, n), lo: p.traits.golden ? Math.max(g.lo, 4) : g.lo, hi: g.hi, phase: g.n2 };
+  return {
+    n: Math.max(1, n),
+    lo: p.traits.golden ? Math.max(g.lo, 4) : g.lo,
+    hi: g.hi,
+    phase: g.n2,
+  };
+}
+
+/** 訓練環境讓不同類型的能力練起來效率不同 */
+function trainBoost(s, k) {
+  const env = STAGE_TRAIN[s.club.stage] || STAGE_TRAIN.PRO;
+  return PHYSICAL.includes(k) ? env.phy : env.tec;
 }
 
 STEPS.PRE_DICE = (s, ctx, input) => {
@@ -129,6 +148,16 @@ STEPS.PRE_DICE = (s, ctx, input) => {
         `${PHYSICAL_LOCK_AGE} 歲之後，${locked.map(k => ABIL[k]).join('、')} 再怎麼練都回不去了。<br>` +
         `但傳球、視野這些東西還在長 —— 用腦子踢球的日子開始了。`);
     }
+    const env = STAGE_TRAIN[s.club.stage] || STAGE_TRAIN.PRO;
+    if (env.d && !s._envNoted) {
+      s._envNoted = s.club.stage;
+      card(ctx, 'info', '訓練環境', `${env.d}<br>` +
+        `體能類效率 ×${env.phy.toFixed(2)}、技術類效率 ×${env.tec.toFixed(2)}。`);
+    } else if (env.d && s._envNoted !== s.club.stage) {
+      s._envNoted = s.club.stage;
+      card(ctx, 'info', '訓練環境改變', `${env.d}<br>` +
+        `體能類效率 ×${env.phy.toFixed(2)}、技術類效率 ×${env.tec.toFixed(2)}。`);
+    }
     return ask(s, {
       type: 'alloc', title: `季前特訓（${spec.phase}）：分配訓練骰`,
       dice, locked, major: ARCHETYPE[p.arch]?.major || [],
@@ -138,7 +167,7 @@ STEPS.PRE_DICE = (s, ctx, input) => {
   const before = { ...p.ab };
   for (const [k, v] of Object.entries(input)) {
     if (!isGrowable(p, k)) continue;
-    addAb(p, k, v);
+    addAb(p, k, v * trainBoost(s, k));
   }
   // 帶動成長的能力也要列出來，否則玩家不知道點數跑去哪了
   const direct = [], linked = [];

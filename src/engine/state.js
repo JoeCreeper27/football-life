@@ -19,7 +19,7 @@ export function createState(seed, { name, number, group, nation = 'TW', origin =
 
   // 12 歲起步，起始值低；國家青訓水準與出身直接反映在這裡
   const ab = {};
-  keys.forEach(k => (ab[k] = clamp(rng.int(42, 54) + nat.dev + org.ab, 30, 62)));
+  keys.forEach(k => (ab[k] = clamp(rng.int(20, 32) + nat.dev + org.ab, 12, 42)));
 
   /**
    * 潛力天花板。兩層結構：
@@ -70,6 +70,7 @@ export function createState(seed, { name, number, group, nation = 'TW', origin =
       nation, origin, altNation, natlPick: nation, natlPicked: false,
       age: CONF.startAge, ab, pot, carry,
       arch: null, archEvolved: null, archSwitched: false,
+      decay: {},
       traits: {}, removed: [],
       injury: { load: 0, aclCount: 0, bigCount: 0, nextRisk: 0, rehab: 0, seasonFactor: 1 },
       service: 0,
@@ -169,8 +170,13 @@ export function abCost(p, k) {
 
   let c = gk ? (cur >= 94 ? 5 : cur >= 87 ? 4 : cur >= 78 ? 2 : 1)
              : (cur >= 94 ? 4 : cur >= 87 ? 3 : cur >= 78 ? 2 : 1);
-  // 超過潛力上限：貴，但沒有封死。主修便宜一些，讓長生涯還能緩慢往上推。
-  if (cur >= cap) c *= major ? (gk ? 2.5 : 2) : (gk ? 3.5 : 3);
+  // 超過潛力上限：越推越貴，而且是加速的。
+  // 這條線是天賦差距的守門員 —— 太便宜的話，低天賦球員照樣爬到頂，
+  // 天賦分布再寬也會被抹平（實測曾經平均突破 8 分、P95 突破 22 分）。
+  if (cur >= cap) {
+    const over = cur - cap;
+    c *= (major ? 2.5 : 4) + over * 0.7;
+  }
   c *= growthPhase(p.age).cost;
   // 26 歲之後體能類練得動但很吃力，技術類不受影響
   if (p.age >= PHYSICAL_HARD_AGE && PHYSICAL.includes(k)) c *= 2;
