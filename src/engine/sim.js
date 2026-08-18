@@ -130,10 +130,12 @@ export function applyDecline(s) {
   const band = DECLINE.filter(d => p.age >= d.from).pop();
   if (!band) return null;
 
-  // 體能越好，衰退越慢（0.55 ~ 1.45 倍）。
-  // 保養身體因此變成一個真的有回報的長期投資，而且體能本身也在掉 ——
-  // 疏於保養的球員會越掉越快，這個正回饋就是「斷崖式衰退」的來源。
-  const fit = clamp(1.35 - ((p.ab.sta ?? 60) - 50) / 60, 0.55, 1.45);
+  // 掉幅 = 體能修正 × 年齡修正
+  //   體能越好掉得越慢（0.55 ~ 1.45 倍）—— 保養身體是有回報的長期投資
+  //   35 歲之後每年再加成，40 歲約 1.4 倍、42 歲約 1.6 倍
+  // 體能本身也在掉，兩條乘起來就是老將的斷崖式衰退。
+  const fit = clamp(1.35 - ((p.ab.sta ?? 60) - 50) / 60, 0.55, 1.45)
+            * (1 + Math.max(0, p.age - 35) * 0.08);
 
   p.decay = p.decay || {};
   const changes = {};

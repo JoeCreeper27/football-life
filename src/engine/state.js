@@ -190,7 +190,7 @@ export function abCost(p, k) {
   // 天賦分布再寬也會被抹平（實測曾經平均突破 8 分、P95 突破 22 分）。
   if (cur >= cap) {
     const over = cur - cap;
-    c *= (major ? 4 : 6) + over * 1.3;
+    c *= (major ? 2.6 : 3.6) + over * 1.15;
   }
   c *= growthPhase(p.age).cost;
   // 26 歲之後體能類練得動但很吃力，技術類不受影響

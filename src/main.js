@@ -188,14 +188,17 @@ function renderAbilDetail() {
   box.hidden = !detailOpen;
   if (!detailOpen) return;
   const p = S.player;
-  box.innerHTML = GROUP_ABIL[p.group].map(k => {
-    const v = p.ab[k], pk = p.pot[k] ?? 70;
-    return `<div class="abrow">` +
-      `<span class="nm">${ABIL[k]}</span>` +
-      `<span class="bar"><i style="width:${v / MAX_ABIL * 100}%"></i>` +
-      `<em style="left:${pk / MAX_ABIL * 100}%"></em></span>` +
-      `<span class="val">${v}<small>/${pk}</small></span></div>`;
-  }).join('') + `<div class="radar-key">紅線 = 潛力上限（再往上成本大增）</div>`;
+  box.innerHTML = `<div class="sheet"><h4>能力細項　${p.name}・${p.age} 歲</h4>` +
+    GROUP_ABIL[p.group].map(k => {
+      const v = p.ab[k], pk = p.pot[k] ?? 70;
+      return `<div class="abrow">` +
+        `<span class="nm">${ABIL[k]}</span>` +
+        `<span class="bar"><i style="width:${v / MAX_ABIL * 100}%"></i>` +
+        `<em style="left:${pk / MAX_ABIL * 100}%"></em></span>` +
+        `<span class="val">${v}<small>/${pk}</small></span></div>`;
+    }).join('') +
+    `<div class="radar-key">紅線 = 潛力上限（再往上成本大增）<br>點任意處關閉</div></div>`;
+  box.onclick = () => { detailOpen = false; renderAbilDetail(); };
 }
 
 function scrollBottom() {

@@ -45,7 +45,11 @@ body{margin:0;padding:0;min-height:100vh;background:var(--bg);color:var(--ink);
 .st span{font-size:9px;color:var(--dim)}
 #abils{flex:none;width:164px;cursor:pointer}
 #abils svg{display:block;width:100%}
-#abils-detail{margin:8px 0 0}
+#abils-detail{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.72);
+  display:flex;align-items:center;justify-content:center;padding:16px}
+#abils-detail .sheet{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+  padding:14px;width:100%;max-width:360px;max-height:86vh;overflow-y:auto}
+#abils-detail h4{margin:0 0 8px;font-size:13px;color:var(--amber)}
 #abils-detail .abrow{cursor:default;padding:4px 8px;margin:2px 0}
 .radar-key{text-align:center;font-size:10px;color:var(--dim);margin-top:4px}
 /* 已指派的訓練項目：飽和度逐級加深 */
@@ -165,11 +169,13 @@ th{color:var(--dim);font-weight:400}
       <div id="abils" title="點擊看能力細項"></div>
     </div>
   </div>
-  <div id="abils-detail" hidden></div>
+
 
   <div id="log"></div>
   <div id="act"></div>
 </div>
+<!-- 能力細項用固定浮層：放在文件流裡會被 scrollBottom() 捲出畫面 -->
+<div id="abils-detail" hidden></div>
 <script type="module" src="./src/main.js"></script>
 </body>
 </html>
