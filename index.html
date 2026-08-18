@@ -44,6 +44,11 @@ body{margin:0;padding:0;min-height:100vh;background:var(--bg);color:var(--ink);
 #phase{display:flex;gap:4px;margin-top:8px;font-size:10px;color:var(--dim)}
 #phase div{flex:1;text-align:center;padding:3px;border-radius:5px;background:rgba(0,0,0,.3)}
 #phase div.on{background:var(--amber);color:#0b1a10;font-weight:900}
+#bd-toggle{display:block;width:100%;margin-top:8px;padding:4px;font-size:11px;
+  background:transparent;color:var(--dim);border:1px solid var(--line);
+  border-radius:6px;font-family:inherit;cursor:pointer}
+#abils{margin-top:8px;max-height:46vh;overflow-y:auto}
+#abils .abrow{cursor:default;padding:4px 8px;margin:2px 0}
 
 /* 記錄流 */
 .yr-block{margin:14px 0}
@@ -104,6 +109,9 @@ input{width:100%;background:var(--panel);border:1px solid var(--line);border-rad
 .row .btn{width:auto;flex:1;text-align:center;min-width:70px}
 .row .btn.sel{border-color:var(--amber);color:var(--amber)}
 .row.grid .btn{flex:0 1 auto;min-width:60px;padding:8px 10px;margin:0;font-size:14px}
+.row.trainset{gap:6px;margin:2px 0 8px}
+.row.trainset .btn{flex:0 1 auto;min-width:0;padding:7px 12px;margin:0;
+  font-size:14px;font-weight:700;text-align:center}
 .row.stack{flex-direction:column;gap:0}
 .row.stack .btn{width:100%;text-align:left}
 #setup-note{font-size:12px;color:var(--dim);margin-top:8px;line-height:1.5;
@@ -148,6 +156,8 @@ th{color:var(--dim);font-weight:400}
       <div class="st"><b id="bd-sal">0</b><span>生涯薪(萬)</span></div>
     </div>
     <div id="phase"><div data-p="0">季前</div><div data-p="1">賽季中</div><div data-p="2">季末</div></div>
+    <button id="bd-toggle">能力一覽 ▾</button>
+    <div id="abils" hidden></div>
   </div>
 
   <div id="log"></div>
