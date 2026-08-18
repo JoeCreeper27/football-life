@@ -279,7 +279,7 @@ function drawEvent(s, rng) {
 function applyEffects(s, ctx, table, mag, win) {
   const p = s.player, parts = [];
   for (const [k, v] of Object.entries(table)) {
-    const amt = Math.max(1, Math.round(Math.abs(v) * (mag / 2)));
+    const amt = Math.max(1, Math.round(Math.abs(v) * (mag / 2) * (k === 'fanRep' || k === 'inj' ? 1 : CONF.abilScale)));
     if (k === 'inj') {
       p.injury.nextRisk += v > 0 ? amt : -amt;
       parts.push(`受傷率 ${v > 0 ? up(amt) : dn(-amt)}`);
@@ -387,8 +387,8 @@ STEPS.MID_INJURY = (s, ctx) => {
     if (big) {
       p.injury.bigCount++;
       p.injury.seasonFactor = 0;
-      subAb(p, 'pac', 5); subAb(p, 'sta', 3);
-      card(ctx, 'bad', '重傷', `一次落地讓整個賽季結束。速度 ${dn(-5)}、體能 ${dn(-3)}。`);
+      subAb(p, 'pac', 7); subAb(p, 'sta', 4);
+      card(ctx, 'bad', '重傷', `一次落地讓整個賽季結束。速度 ${dn(-7)}、體能 ${dn(-4)}。`);
       if (p.age < 30 && p.injury.bigCount >= 2) unlock(s, ctx, 'glass');
       s.career.counters.ironStreak = 0;
     } else {
@@ -409,9 +409,9 @@ STEPS.MID_INJURY = (s, ctx) => {
 STEPS.MID_ACL = (s, ctx, input) => {
   const p = s.player;
   if (input === undefined) {
-    subAb(p, 'pac', 5);
+    subAb(p, 'pac', 7);
     card(ctx, 'bad', '膝蓋發出警訊',
-      `長期累積的負荷讓十字韌帶亮起紅燈，速度先掉了 ${dn(-5)}。醫療團隊把選擇權交給你。`);
+      `長期累積的負荷讓十字韌帶亮起紅燈，速度先掉了 ${dn(-7)}。醫療團隊把選擇權交給你。`);
     return ask(s, {
       type: 'choice', title: '你要怎麼處理？',
       options: [
@@ -426,11 +426,11 @@ STEPS.MID_ACL = (s, ctx, input) => {
     p.injury.load = 0;
     p.injury.rehab = 1;
     p.injury.seasonFactor = 0;
-    const back = ctx.rng.int(3, 8);
+    const back = ctx.rng.int(4, 11);
     addAb(p, 'pac', back);
     card(ctx, 'bad', '十字韌帶手術', `整季報銷。漫長復健後速度回復 ${up(back)}。`);
     if (p.injury.aclCount >= 2) {
-      Object.keys(p.ab).forEach(k => { if (k === 'pac') p.ab[k] = Math.round(p.ab[k] / 2); });
+      Object.keys(p.ab).forEach(k => { if (k === 'pac') p.ab[k] = Math.round(p.ab[k] * 0.55); });
       card(ctx, 'bad', '第二次了', '兩度韌帶重建，爆發力再也回不來。速度直接砍半。');
     }
     s.player.traits.knee = false;
@@ -445,9 +445,9 @@ STEPS.MID_ACL = (s, ctx, input) => {
       p.injury.aclCount++;
       p.injury.rehab = 1;
       p.injury.seasonFactor = 0;
-      subAb(p, 'pac', 5);
+      subAb(p, 'pac', 7);
       s.career.counters.gambleWin = 0;
-      card(ctx, 'bad', '重大韌帶斷裂', `賭輸了。整季報銷、隔年也難全恢復，速度再 ${dn(-5)}。`);
+      card(ctx, 'bad', '重大韌帶斷裂', `賭輸了。整季報銷、隔年也難全恢復，速度再 ${dn(-7)}。`);
     }
   }
   s.step = 'MID_SEASON';
@@ -535,7 +535,7 @@ STEPS.END_ARCH_EVO = (s, ctx, input) => {
 
   // 轉型：31 歲後速度掉到門檻下，全遊戲最有戲的一刻
   const sw = ARCH_SWITCH[p.arch];
-  if (sw && !p.archSwitched && p.age >= 31 && (p.ab.pac ?? 99) < 52) {
+  if (sw && !p.archSwitched && p.age >= 31 && (p.ab.pac ?? 99) < 68) {
     const to = ARCHETYPE[sw.to];
     if (input === undefined) {
       return ask(s, {
@@ -650,9 +650,11 @@ STEPS.END_AWARDS = (s, ctx) => {
 /** 代表隊徵召門檻：強國難擠、弱國容易，出身也有影響 */
 function callThreshold(p) {
   const nat = NATIONS[p.natlPick] || nationOf(p);
-  // 上限壓在 66：足球強國的國腳名額極難擠，但不能高到綜合評價根本碰不到。
-  // 這條線要跟著 LV 的 par 尺度一起移動，否則能力一通膨，人人都是國腳。
-  const base = clamp(nat.natl * 0.5 + 28, 44, 66);
+  // 徵召門檻由國家實力推導，並且必須落在球員實際碰得到的 ovr 區間內：
+  // 法國這種強國要 ~82（等於得是該國最好的那批），台灣約 60。
+  // 這條線一定要跟著 LV 的 par 尺度一起移動 —— 寫死絕對值的話，
+  // 尺度一改就會變成「強國永遠選不上、弱國人人是國腳」。
+  const base = clamp(nat.natl * 0.40 + 52, 62, 86);
   const own = p.natlPick === p.nation ? (ORIGINS[p.origin]?.callAdj || 0) : 2;
   return base + own;
 }
@@ -928,12 +930,12 @@ STEPS.END_MOVE = (s, ctx, input) => {
       `你回來了。${hl(c.club)}（${LV[to].n}）把 ${p.number} 號球衣留給你，` +
       `機場有球迷等著。${drop ? '層級是降了，但這裡有人記得你的名字。' : ''}`);
   } else if (kind === 'side') {
-    const clubTier = ovr(p) >= LV[to].par + 3 ? (ctx.rng.chance(40) ? 1 : 2) : (ctx.rng.chance(55) ? 2 : 3);
+    const clubTier = ovr(p) >= LV[to].par + 4 ? (ctx.rng.chance(40) ? 1 : 2) : (ctx.rng.chance(55) ? 2 : 3);
     moveTo(s, to, clubTier, ctx.rng, ctx);
     card(ctx, 'info', '轉戰他鄉',
       `同一個級別，換一片天。你加盟了 ${hl(c.club)}（${LV[to].n}・${TIER[clubTier].n}）。`);
   } else if (kind === 'up') {
-    const clubTier = ovr(p) >= LV[to].par + 4 ? (ctx.rng.chance(45) ? 1 : 2) : (ctx.rng.chance(50) ? 2 : 3);
+    const clubTier = ovr(p) >= LV[to].par + 5 ? (ctx.rng.chance(45) ? 1 : 2) : (ctx.rng.chance(50) ? 2 : 3);
     const abroad = !isHomeLeague(p, to);
     moveTo(s, to, clubTier, ctx.rng, ctx);
     card(ctx, 'gold', abroad ? '海外轉會成功' : '轉會成功',
@@ -944,10 +946,10 @@ STEPS.END_MOVE = (s, ctx, input) => {
   }
 
   // 能力跌破底線就被淘汰（不分年齡：這是「第二人生」劇本的入口）
-  if (LV[c.lv].tier === 1 && ovr(p) < LV[c.lv].min - 2 && ctx.rng.chance(55)) {
+  if (LV[c.lv].tier === 1 && ovr(p) < LV[c.lv].min - 3 && ctx.rng.chance(55)) {
     return retire(s, ctx, `連 ${LV[c.lv].n} 都留不住你的位置，最後一份合約沒有續。`);
   }
-  if (ovr(p) < LV[c.lv].min - 8 && p.age >= 30) {
+  if (ovr(p) < LV[c.lv].min - 11 && p.age >= 30) {
     return retire(s, ctx, '沒有球會再遞出合約，你只好承認時間到了。');
   }
   s.step = 'YEAR_ADVANCE';
@@ -1125,7 +1127,7 @@ function retire(s, ctx, reason) {
   const RANK = ['世界級傳奇', '洲際級名將', '聯賽級主力', '職業球員', '半職業'];
   const rank = RANK[GATE.findIndex(g => legacy >= g)] ?? RANK[4];
 
-  if (legacy < GATE[2] && Object.values(p.pot).reduce((a, b) => a + b, 0) < 480) unlock(s, ctx, 'grinder');
+  if (legacy < GATE[2] && Object.values(p.pot).reduce((a, b) => a + b, 0) < 640) unlock(s, ctx, 'grinder');
 
   s.done = true;
   s.pending = null;

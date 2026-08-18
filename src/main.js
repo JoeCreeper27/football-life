@@ -5,7 +5,7 @@ import {
 import { run, answer } from './engine/flow.js';
 import {
   ABIL, GROUP_ABIL, POS_GROUP, DPOS, LV, TIER, SQUAD,
-  NATIONS, NATION_ORDER, ORIGINS, REGION, ARCHETYPE,
+  NATIONS, NATION_ORDER, ORIGINS, REGION, ARCHETYPE, MAX_ABIL,
 } from './engine/data.js';
 import { fmtMoney } from './engine/sim.js';
 
@@ -197,9 +197,9 @@ function renderAlloc({ title, dice, pool, locked = [], major = [] }) {
     }
     const visible = showAll ? keys : keys.filter(k => major.includes(k));
     visible.forEach(k => {
-      const v = draft.ab[k], pk = draft.pot[k] ?? 62;
+      const v = draft.ab[k], pk = draft.pot[k] ?? 70;
       const isLocked = locked.includes(k);
-      const cap = v >= 80 || isLocked;
+      const cap = v >= MAX_ABIL || isLocked;
       const cost = abCost(draft, k), carry = draft.carry[k] || 0;
       const r = document.createElement('div');
       r.className = 'abrow' + (cap ? ' capped' : '') + (major.includes(k) ? ' major' : '');
@@ -207,7 +207,7 @@ function renderAlloc({ title, dice, pool, locked = [], major = [] }) {
       r.innerHTML =
         `<span class="nm">${ABIL[k]}${isLocked ? '<small>鎖</small>' : ''}` +
         (link.length ? `<small>→${link.map(j => ABIL[j]).join('')}</small>` : '') + `</span>` +
-        `<span class="bar"><i style="width:${v / 80 * 100}%"></i><em style="left:${pk / 80 * 100}%"></em></span>` +
+        `<span class="bar"><i style="width:${v / MAX_ABIL * 100}%"></i><em style="left:${pk / MAX_ABIL * 100}%"></em></span>` +
         // 蓄力槽只要有值就顯示：連帶成長常常只加半點，不顯示玩家會以為沒作用
         `<span class="val">${v}<small>/${pk}</small>` +
         `${(cost > 1 || carry > 0) && !isLocked ? `<br><small>蓄力 ${carry.toFixed(1)}/${cost}</small>` : ''}</span>`;
@@ -248,7 +248,7 @@ function renderAlloc({ title, dice, pool, locked = [], major = [] }) {
     };
     a.appendChild(undo);
 
-    if (remaining() === 0 || keys.every(k => draft.ab[k] >= 80)) {
+    if (remaining() === 0 || keys.every(k => draft.ab[k] >= MAX_ABIL)) {
       const ok = document.createElement('button');
       ok.className = 'btn main';
       ok.style.textAlign = 'center';

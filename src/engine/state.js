@@ -1,11 +1,11 @@
 import { Rng, clamp } from './rng.js';
 import {
   GROUP_ABIL, YOUTH_CLUBS, CONF, DPOS, POS_WEIGHT, LV, TIER,
-  NATIONS, NATION_ORDER, ORIGINS, ARCHETYPE, SYNERGY,
+  NATIONS, NATION_ORDER, ORIGINS, ARCHETYPE, SYNERGY, MAX_ABIL,
   growthPhase, LATE_GROWABLE, LATE_LOCK_AGE,
 } from './data.js';
 
-export const SCHEMA_VERSION = '0.3.0';
+export const SCHEMA_VERSION = '0.4.0';
 
 /**
  * 建立一局新生涯。所有隨機都吃 rng，因此同種子同設定必得同一個開局。
@@ -19,25 +19,30 @@ export function createState(seed, { name, number, group, nation = 'TW', origin =
 
   // 12 歲起步，起始值低；國家青訓水準與出身直接反映在這裡
   const ab = {};
-  keys.forEach(k => (ab[k] = clamp(rng.int(17, 27) + nat.dev + org.ab, 10, 40)));
+  keys.forEach(k => (ab[k] = clamp(rng.int(42, 54) + nat.dev + org.ab, 30, 62)));
 
-  // OOTP 式潛力天花板：洗牌後 1 項頂尖、1 項優質、1 項中上、其餘平庸。
-  // 門將只有 5 項能力，天花板刻意更集中，避免出現全能怪。
+  /**
+   * 潛力天花板。兩層結構：
+   *
+   * 1. 天賦係數 talent —— 每個球員一個，把所有潛力一起往上或往下推。
+   *    這是「頂級球員相關能力全部 90」的來源：只有分項洗牌的話，ovr 是加權平均，
+   *    數學上永遠到不了 90，因為總會有幾項是平庸的。
+   * 2. 分項洗牌 —— 決定這個人的強項落在哪，並且偏向他這個位置真正吃重的能力
+   *    （前鋒的頂尖潛力落在射門而不是防守，才對得起 FIFA 式的直覺）。
+   */
+  const talent = rng.gauss(1);
+  const w = POS_WEIGHT[defaultPos(group)];
+  const shuffled = weightedOrder(rng, keys, w);
+
+  const BAND = group === 'GK'
+    ? [[85, 93], [81, 89], [75, 85], [69, 81]]
+    : [[85, 93], [81, 89], [77, 85], [71, 81], [65, 77]];
   const pot = {};
-  const shuffled = rng.shuffle(keys);
-  if (group === 'GK') {
-    shuffled.forEach((k, i) => {
-      pot[k] = i === 0 ? rng.int(70, 80) : i === 1 ? rng.int(60, 70) : rng.int(48, 58);
-    });
-  } else {
-    shuffled.forEach((k, i) => {
-      pot[k] = i === 0 ? rng.int(72, 80) : i === 1 ? rng.int(64, 74)
-             : i === 2 ? rng.int(56, 68) : rng.int(46, 62);
-    });
-  }
-  // 青訓水準拉抬整體天花板，混血再給最高項一點額外空間
-  keys.forEach(k => (pot[k] = clamp(pot[k] + nat.dev, 40, 80)));
-  pot[shuffled[0]] = clamp(pot[shuffled[0]] + org.potTop, 40, 80);
+  shuffled.forEach((k, i) => {
+    const [lo, hi] = BAND[Math.min(i, BAND.length - 1)];
+    pot[k] = clamp(Math.round(rng.int(lo, hi) + talent * 8 + nat.dev), 35, MAX_ABIL);
+  });
+  pot[shuffled[0]] = clamp(pot[shuffled[0]] + org.potTop, 35, MAX_ABIL);
 
   const carry = {};
   keys.forEach(k => (carry[k] = 0));
@@ -97,6 +102,24 @@ export function createState(seed, { name, number, group, nation = 'TW', origin =
   };
 }
 
+/**
+ * 加權排序：權重越高的能力越可能排在前面（＝拿到越高的潛力帶）。
+ * 前鋒的頂尖天賦應該長在射門上，而不是隨機掉到防守去。
+ * 仍然保留意外性 —— 偶爾出現的「傳球天賦前鋒」正是位置轉型劇本的來源。
+ */
+function weightedOrder(rng, keys, w) {
+  const pool = keys.slice();
+  const out = [];
+  while (pool.length) {
+    const wt = pool.map(k => (w[k] || 0.02) + 0.06);
+    let roll = rng.next() * wt.reduce((a, b) => a + b, 0);
+    let i = 0;
+    while (i < pool.length - 1 && (roll -= wt[i]) > 0) i++;
+    out.push(pool.splice(i, 1)[0]);
+  }
+  return out;
+}
+
 /** 從存檔還原 rng（靠 cursor 快轉） */
 export function rngOf(s) { return new Rng(s.seed, s.cursor); }
 export function syncCursor(s, rng) { s.cursor = rng.cursor; }
@@ -142,8 +165,8 @@ export function abCost(p, k) {
   const arch = ARCHETYPE[p.arch];
   const major = arch ? arch.major.includes(k) : false;
 
-  let c = gk ? (cur >= 76 ? 5 : cur >= 71 ? 4 : cur >= 63 ? 2 : 1)
-             : (cur >= 76 ? 4 : cur >= 71 ? 3 : cur >= 63 ? 2 : 1);
+  let c = gk ? (cur >= 94 ? 5 : cur >= 87 ? 4 : cur >= 78 ? 2 : 1)
+             : (cur >= 94 ? 4 : cur >= 87 ? 3 : cur >= 78 ? 2 : 1);
   // 超過潛力上限：貴，但沒有封死。主修便宜一些，讓長生涯還能緩慢往上推。
   if (cur >= cap) c *= major ? (gk ? 2.5 : 2) : (gk ? 3.5 : 3);
   c *= growthPhase(p.age).cost;
@@ -172,13 +195,13 @@ export function addAb(p, k, points, spill = true) {
   if (!(k in p.ab)) return 0;
   const before = p.ab[k];
   let budget = points + (p.carry[k] || 0);
-  while (p.ab[k] < 80) {
+  while (p.ab[k] < MAX_ABIL) {
     const cost = abCost(p, k);
     if (budget < cost) break;
     budget -= cost;
     p.ab[k]++;
   }
-  p.carry[k] = p.ab[k] >= 80 ? 0 : Math.round(budget * 100) / 100;
+  p.carry[k] = p.ab[k] >= MAX_ABIL ? 0 : Math.round(budget * 100) / 100;
 
   // 連帶成長只把相關能力帶到天賦上限為止；要突破天賦，得靠專門訓練
   if (spill && points > 0) {
@@ -198,7 +221,7 @@ export function synergyOf(p, k) {
 export function subAb(p, k, points) {
   if (!(k in p.ab)) return 0;
   const before = p.ab[k];
-  p.ab[k] = clamp(p.ab[k] - points, 1, 80);
+  p.ab[k] = clamp(p.ab[k] - points, 1, MAX_ABIL);
   return p.ab[k] - before;
 }
 
@@ -222,7 +245,7 @@ export function posQualified(p, dpos, lv, age) {
   const d = DPOS[dpos];
   if (!d.req) return true;
   const B = LV[lv].par;
-  const youth = age <= 21 ? 7 : age <= 24 ? 5 : age <= 26 ? 2 : 0;
+  const youth = age <= 21 ? 9 : age <= 24 ? 7 : age <= 26 ? 3 : 0;
   return Object.entries(d.req).every(([k, off]) => (p.ab[k] ?? 0) >= B + off - youth);
 }
 
@@ -235,11 +258,11 @@ export function posQualified(p, dpos, lv, age) {
 export function squadGap(s) {
   const { player, club } = s;
   const L = LV[club.lv];
-  const competition = 2; // 同位置隊內競爭的固定成本
+  const competition = 3; // 同位置隊內競爭的固定成本
   let gap = ovr(player) - (L.par + TIER[club.tier].bonus + competition);
-  if (player.traits.captain) gap += 3;
-  if (player.traits.onetool) gap -= 4;
+  if (player.traits.captain) gap += 4;
+  if (player.traits.onetool) gap -= 5;
   // 剛到異國的第一年，教練對外籍球員的期待值更高
-  if (isAbroad(s) && club.yearsAtClub === 0) gap -= 2;
+  if (isAbroad(s) && club.yearsAtClub === 0) gap -= 3;
   return gap;
 }
