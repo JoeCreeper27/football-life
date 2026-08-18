@@ -7,14 +7,14 @@
 export const ABIL = {
   sta: '體能', fin: '射門', pas: '傳球', dri: '盤帶', pac: '速度',
   phy: '對抗', def: '防守', hea: '頭球', vis: '視野',
-  ref: '撲救', aer: '制空', pos: '站位', dis: '腳下傳球',
+  ref: '撲救', aer: '制空', pos: '站位', lng: '長傳準確', sht: '短傳反應',
 };
 
 export const POS_GROUP = { GK: '門將', DF: '後衛', MF: '中場', FW: '前鋒' };
 
 /** 各大類可養成的能力 */
 export const GROUP_ABIL = {
-  GK: ['sta', 'ref', 'aer', 'pos', 'dis'],
+  GK: ['sta', 'ref', 'aer', 'pos', 'lng', 'sht'],
   DF: ['sta', 'def', 'hea', 'phy', 'pac', 'pas', 'vis', 'dri', 'fin'],
   MF: ['sta', 'pas', 'vis', 'dri', 'def', 'phy', 'pac', 'fin', 'hea'],
   FW: ['sta', 'fin', 'pac', 'dri', 'phy', 'hea', 'pas', 'vis', 'def'],
@@ -34,7 +34,7 @@ export const DPOS = {
 
 /** 每個位置的能力權重，決定同一組能力對不同位置的意義 */
 export const POS_WEIGHT = {
-  GK: { ref: .40, pos: .25, aer: .20, dis: .10, sta: .05 },
+  GK: { ref: .38, pos: .22, aer: .18, sht: .09, lng: .08, sta: .05 },
   CB: { def: .34, hea: .22, phy: .20, pac: .12, pas: .07, sta: .05 },
   FB: { pac: .24, sta: .22, def: .22, pas: .16, dri: .11, phy: .05 },
   DM: { def: .30, pas: .22, phy: .18, vis: .16, sta: .14 },
@@ -171,11 +171,11 @@ export const LV = {
   EU_D2: { n: '歐陸次級聯賽',   tier: 6, region: 'EUR', par: 77, min: 84, g: 38, base: 2300, coef: 850, top: 'EUR2' },
 
   /* --- T7 五大聯賽 --- */
-  ENG: { n: '英格蘭超級聯賽', tier: 7, region: 'EUR', par: 80, min: 87, g: 38, base: 4600, coef: 3200, top: 'BIG5' },
-  ESP: { n: '西班牙甲級聯賽', tier: 7, region: 'EUR', par: 80, min: 87, g: 38, base: 4400, coef: 3100, top: 'BIG5' },
-  GER: { n: '德國甲級聯賽',   tier: 7, region: 'EUR', par: 80, min: 87, g: 34, base: 4200, coef: 3000, top: 'BIG5' },
-  ITA: { n: '義大利甲級聯賽', tier: 7, region: 'EUR', par: 80, min: 87, g: 38, base: 3900, coef: 2900, top: 'BIG5' },
-  FRA: { n: '法國甲級聯賽',   tier: 7, region: 'EUR', par: 80, min: 87, g: 34, base: 3800, coef: 2800, top: 'BIG5' },
+  ENG: { n: '英格蘭超級聯賽', tier: 7, region: 'EUR', par: 80, min: 86, g: 38, base: 4600, coef: 3200, top: 'BIG5' },
+  ESP: { n: '西班牙甲級聯賽', tier: 7, region: 'EUR', par: 80, min: 86, g: 38, base: 4400, coef: 3100, top: 'BIG5' },
+  GER: { n: '德國甲級聯賽',   tier: 7, region: 'EUR', par: 80, min: 86, g: 34, base: 4200, coef: 3000, top: 'BIG5' },
+  ITA: { n: '義大利甲級聯賽', tier: 7, region: 'EUR', par: 80, min: 86, g: 38, base: 3900, coef: 2900, top: 'BIG5' },
+  FRA: { n: '法國甲級聯賽',   tier: 7, region: 'EUR', par: 80, min: 86, g: 34, base: 3800, coef: 2800, top: 'BIG5' },
 };
 
 export const MAX_TIER = 7;
@@ -358,11 +358,12 @@ export const TRAINING = {
 export const TRAINING_GK = {
   fitness:  { n: '體能訓練',   ab: { sta: 1.00 } },
   weights:  { n: '重量訓練',   ab: { aer: 0.80, sta: 0.20 } },
-  sprint:   { n: '衝刺訓練',   ab: { ref: 0.50, sta: 0.20, dis: 0.20 } },
-  tactics:  { n: '戰術訓練',   ab: { pos: 0.70, dis: 0.20 } },
+  sprint:   { n: '衝刺訓練',   ab: { ref: 0.50, sht: 0.20, sta: 0.20 } },
+  tactics:  { n: '戰術訓練',   ab: { pos: 0.70, lng: 0.20 } },
   aerial:   { n: '空中對抗',   ab: { aer: 0.70, ref: 0.30 } },
   reflex:   { n: '撲救訓練',   ab: { ref: 1.00, pos: 0.40 } },
-  handling: { n: '門將出球',   ab: { dis: 1.00 } },
+  handling: { n: '長傳調度',   ab: { lng: 1.00, pos: 0.20 } },
+  shortpass:{ n: '短傳出球',   ab: { sht: 1.00, lng: 0.30 } },
   command:  { n: '制空指揮',   ab: { aer: 1.00, pos: 0.50 } },
 };
 
@@ -403,11 +404,11 @@ export const DECLINE = [
   { from: 32, pac: 1.2, sta: 1.0, phy: 0.6, dri: 0.4, hea: 0.2, ref: 0.3 },
   { from: 35, pac: 1.7, sta: 1.3, phy: 0.9, dri: 0.6, hea: 0.4, ref: 0.6, def: 0.3, fin: 0.3, aer: 0.4 },
   { from: 38, pac: 2.1, sta: 1.6, phy: 1.1, dri: 0.8, hea: 0.5, ref: 0.8, def: 0.4, fin: 0.4, aer: 0.5,
-    pas: 0.20, vis: 0.15, pos: 0.15, dis: 0.25 },
+    pas: 0.20, vis: 0.15, pos: 0.15, lng: 0.20, sht: 0.25 },
 ];
 
 /** 純技術類：衰退幅度最小，〈節奏大師〉可以完全免疫 */
-export const TECHNICAL = ['pas', 'vis', 'pos', 'dis'];
+export const TECHNICAL = ['pas', 'vis', 'pos', 'lng', 'sht'];
 
 /**
  * 連帶成長：練一項能力會帶動相關的其他項，比例是該項點數的一部分。
@@ -438,8 +439,9 @@ export const SYNERGY_GK = {
   sta: { ref: .12, aer: .12 },   // 體能 → 撲救、制空
   ref: { pos: .12, aer: .12 },   // 撲救 → 站位、制空
   aer: { ref: .12, sta: .12 },   // 制空 → 撲救、體能
-  pos: { ref: .12, dis: .12 },   // 站位 → 撲救、腳下傳球
-  dis: { pos: .12, sta: .12 },   // 腳下傳球 → 站位、體能
+  pos: { ref: .12, lng: .12 },   // 站位 → 撲救、長傳準確
+  lng: { sht: .12, pos: .12 },   // 長傳準確 → 短傳反應、站位
+  sht: { ref: .12, lng: .12 },   // 短傳反應 → 撲救、長傳準確
 };
 
 /* ==================================================================== */
@@ -545,8 +547,8 @@ export const ARCHETYPE = {
     evolve: { key: 'unbeatable', n: '不可逾越', cond: s => bestStat(s, 'cs') >= 18 },
   },
   sweeper: {
-    n: '門線清道夫', pos: ['GK'], major: ['dis', 'aer', 'pos'],
-    req: p => p.ab.dis >= 65 && p.ab.aer >= 65,
+    n: '門線清道夫', pos: ['GK'], major: ['lng', 'sht', 'pos'],
+    req: p => p.ab.lng >= 65 && p.ab.aer >= 65,
     out: { g: 1, a: 1, cs: 1.1 }, ageBias: 'late',
     d: '出球型門將，豪門偏好',
   },
@@ -599,10 +601,11 @@ export const EVENTS = [
   { n: '角球攻防加練', for: '*', gt: '搶到第一點的能力變強了', bt: '空中對抗吃了幾次虧', g: { hea: 2 }, b: { hea: -2 } },
   { n: '撲救反應訓練', for: 'GK', gt: '近距離反應快得嚇人', bt: '重心亂了，撲救變慢', g: { ref: 2 }, b: { ref: -2 } },
   { n: '出擊時機判斷', for: 'GK', gt: '出擊時機抓得精準', bt: '幾次貿然出擊被吊門', g: { aer: 2 }, b: { pos: -2 } },
-  { n: '門將腳下訓練', for: 'GK', gt: '長傳直接找到前鋒', bt: '禁區內出球被斷，丟了球', g: { dis: 2 }, b: { dis: -2 } },
+  { n: '門將長傳訓練', for: 'GK', gt: '一腳長傳直接找到前鋒', bt: '長傳老是找不到人，控球權一直送出去', g: { lng: 2 }, b: { lng: -2 } },
+  { n: '後場短傳配合', for: 'GK', gt: '被逼搶時你總能把球傳出去', bt: '禁區內出球被斷，丟了球', g: { sht: 2 }, b: { sht: -2 } },
   { n: '教練戰術改造', for: '*', gt: '新體系裡你變成關鍵齒輪', bt: '完全不適應新的要求', g: { rand: 2 }, b: { rand: -2 } },
-  { n: '記者會失言', for: 'PRO', cond: s => LV[s.club.lv].tier >= 3, gt: '幽默化解了尖銳提問', bt: '一句話上了頭版，更衣室氣氛僵了', g: { sta: 1 }, b: { rand: -2, sta: -1 } },
-  { n: '社群媒體風波', for: 'PRO', cond: s => s.career.fanRep >= 45, gt: '一則貼文圈粉無數', bt: '舊貼文被翻出來炎上', g: { sta: 1 }, b: { rand: -2 } },
+  { n: '記者會失言', acts: ['低調道歉', '照原訂行程受訪', '再開一場記者會反擊'], for: 'PRO', cond: s => LV[s.club.lv].tier >= 3, gt: '幽默化解了尖銳提問', bt: '一句話上了頭版，更衣室氣氛僵了', g: { sta: 1 }, b: { rand: -2, sta: -1 } },
+  { n: '社群媒體風波', acts: ['關閉留言', '發一則聲明', '直播把話講清楚'], for: 'PRO', cond: s => s.career.fanRep >= 45, gt: '一則貼文圈粉無數', bt: '舊貼文被翻出來炎上', g: { sta: 1 }, b: { rand: -2 } },
   { n: '更衣室內鬨', for: 'PRO', gt: '你出面把話講開了', bt: '被貼上刺頭標籤', g: { vis: 1, sta: 1 }, b: { rand: -2 } },
   { n: '青訓小將挑戰你的位置', for: 'PRO', cond: s => s.player.age >= 26, gt: '你用表現讓他坐回板凳', bt: '訓練賽被完全壓制', g: { rand: 2 }, b: { rand: -2 } },
   { n: '飲食與睡眠管理', for: '*', gt: '體脂下降，回復速度變快', bt: '作息亂掉，整季昏昏沉沉', g: { sta: 2 }, b: { sta: -2, inj: 4 } },
@@ -614,7 +617,7 @@ export const EVENTS = [
   { n: '當地媒體的檢視', for: 'ABROAD', gt: '一場好球讓報紙改口叫你自己人', bt: '被寫成「便宜的外籍球員」', g: { fin: 1, dri: 1 }, b: { rand: -2 } },
 
   /* ---------- 街頭足球：養成期與低階聯賽限定 ---------- */
-  { n: '在公園踢街球', for: '*', weight: 1.4,
+  { n: '在公園踢街球', acts: ['踢半小時就走', '踢到天黑', '跟大人隊尬到底'], for: '*', weight: 1.4,
     cond: s => s.club.stage !== 'PRO' || LV[s.club.lv].tier <= 2,
     gt: '水泥地上沒有裁判也沒有戰術，只有你和球。過人變得像呼吸一樣自然',
     bt: '地面不平，落地時腳踝拐了一下，腫得像麵包',
@@ -631,7 +634,7 @@ export const EVENTS = [
     g: { vis: 2, dri: 2 }, b: { sta: -1, fin: -1 } },
 
   /* ---------- 第一類：球迷文化 ---------- */
-  { n: '球迷幫你寫了 chant', for: 'PRO', once: true, cond: s => s.club.yearsAtClub >= 2 && s.career.fanRep >= 60,
+  { n: '球迷幫你寫了 chant', acts: ['假裝沒聽到', '賽後揮手致意', '跟著一起唱'], for: 'PRO', once: true, cond: s => s.club.yearsAtClub >= 2 && s.career.fanRep >= 60,
     gt: '全場一起唱你的名字，你假裝沒聽到，但耳朵是紅的', bt: '那首歌是拿你上週的失誤編的',
     g: { fanRep: 15 }, b: { fanRep: -10, vis: -1 } },
   { n: '看台打出你的 tifo', for: 'PRO', once: true, cond: s => s.career.fanRep >= 75,
@@ -640,7 +643,7 @@ export const EVENTS = [
   { n: '名字出現在圍巾上', for: 'PRO', cond: s => s.club.yearsAtClub >= 3 && s.career.fanRep >= 70,
     gt: '球場外的攤販開始賣印著你名字的圍巾', bt: '攤販說你的名字太難寫了',
     g: { fanRep: 8 }, b: { fanRep: -2 } },
-  { n: '被自家球迷噓下場', for: 'PRO', cond: s => role(s) <= 1 || lastRating(s) < 6.5,
+  { n: '被自家球迷噓下場', acts: ['低頭走進通道', '舉手道歉', '走向看台把話說清楚'], for: 'PRO', cond: s => role(s) <= 1 || lastRating(s) < 6.5,
     gt: '你舉手道歉，看台安靜了下來', bt: '換人時的噓聲蓋過了廣播',
     g: { fanRep: -5 }, b: { fanRep: -20, sta: -1 } },
   { n: '客場全場噓你，你進球了', for: 'PRO', cond: s => s.career.clubHistory?.length > 0,
@@ -671,19 +674,19 @@ export const EVENTS = [
     g: { sta: 2, fanRep: 3 }, b: { fanRep: -3 } },
 
   /* ---------- 第二類：更衣室與私生活 ---------- */
-  { n: '和隊友的伴侶傳出緋聞', for: 'PRO', once: true, weight: 0.4, cond: s => s.player.age >= 22,
+  { n: '和隊友的伴侶傳出緋聞', acts: ['拒絕說明', '接受媒體採訪', '召開記者會澄清'], for: 'PRO', once: true, weight: 0.4, cond: s => s.player.age >= 22,
     gt: '澄清成功，只是一場誤會', bt: '照片說明不了什麼，但更衣室已經回不去了',
     g: { fanRep: -5 }, b: { fanRep: -30 },
     fx: (s, win, api) => { if (!win) { s.player.traits.captain = false; s._forceMove = true; api.unlock('cancer'); } } },
-  { n: '訓練場和隊友打起來', for: 'PRO', once: true,
+  { n: '訓練場和隊友打起來', acts: ['當場收手', '把話講開', '誰也不讓'], for: 'PRO', once: true,
     gt: '被視為有種，更衣室反而服你', bt: '被罰款禁賽，標籤撕不掉',
     g: { phy: 2 }, b: { fanRep: -10 },
     fx: (s, win, api) => { if (!win) api.suspend(3); } },
-  { n: '夜店被拍到', for: 'PRO', cond: s => s.player.age <= 30,
+  { n: '夜店被拍到', acts: ['交給公關處理', '自己出面說明', '公開反嗆狗仔'], for: 'PRO', cond: s => s.player.age <= 30,
     gt: '公關處理得宜，新聞隔天就沒了', bt: '凌晨四點的照片配上昨天的比分',
     g: { fanRep: 2 }, b: { sta: -2, fanRep: -12 },
     fx: (s, win, api) => { if (!win) api.fine(0.05); } },
-  { n: '賭博成癮', for: 'PRO', once: true, weight: 0.3, cond: s => s.career.salaryTotal >= 1000,
+  { n: '賭博成癮', acts: ['找人談、先停手', '限制額度慢慢戒', '一把翻本'], for: 'PRO', once: true, weight: 0.3, cond: s => s.career.salaryTotal >= 1000,
     gt: '你及時收手，沒有人知道', bt: '帳戶見底，你連自己輸了多少都算不出來',
     g: {}, b: { sta: -3 },
     fx: (s, win, api) => { if (!win) { s.career.salaryTotal = Math.round(s.career.salaryTotal * 0.8); api.card('bad', '代價', '生涯薪資 −20%。'); } } },
@@ -691,11 +694,11 @@ export const EVENTS = [
     gt: '教練笑笑帶過', bt: '這已經是這季第三次了',
     g: {}, b: { fanRep: -3 },
     fx: (s, win, api) => { if (!win) { s.club.minutes = Math.max(0, s.club.minutes - 0.15); api.card('bad', '冷凍', '被冷凍兩個月，本季出場率 −15%。'); } } },
-  { n: '和教練公開頂嘴', for: 'PRO', cond: s => role(s) <= 2,
+  { n: '和教練公開頂嘴', acts: ['私下溝通', '在會議上表態', '直接嗆回去'], for: 'PRO', cond: s => role(s) <= 2,
     gt: '教練反而欣賞你的火氣，給了你機會', bt: '你被丟進了不會上場的那份名單',
     g: {}, b: {},
     fx: (s, win, api) => { if (win) api.shiftRole(1); else { s.club.minutes = 0.05; api.card('bad', '冷宮', '本季出場率剩下 5%。'); } } },
-  { n: '爭主罰點球', for: 'PRO', cond: atPos('ST', 'AM', 'W'),
+  { n: '爭主罰點球', acts: ['讓給隊上一號射手', '照排定順序', '搶過球自己罰'], for: 'PRO', cond: atPos('ST', 'AM', 'W'),
     gt: '你搶過球，罰進了', bt: '你搶過球，然後罰丟了',
     g: { fin: 2, fanRep: 8 }, b: { fanRep: -12 } },
   { n: '隊內薪資曝光', for: 'PRO',
@@ -711,7 +714,7 @@ export const EVENTS = [
     fx: (s, win, api) => { if (win) api.unlock('captain'); } },
 
   /* ---------- 第三類：場上時刻 ---------- */
-  { n: '補時絕殺', for: 'PRO', cond: s => s.club.minutes >= 0.4,
+  { n: '補時絕殺', acts: ['安全球先做保護', '照常起腳', '直接遠射'], for: 'PRO', cond: s => s.club.minutes >= 0.4,
     gt: '球進的瞬間全隊衝向角旗', bt: '你打在門柱上，終場哨響',
     g: { fanRep: 15 }, b: { fin: -1 },
     fx: (s, win) => { if (win) s._bonusGoals = (s._bonusGoals || 0) + 1; } },
@@ -726,15 +729,15 @@ export const EVENTS = [
     gt: '值得。那球值得。', bt: '球隊少打一人，最後被扳平',
     g: { fanRep: 10 }, b: { fanRep: -5 },
     fx: (s, win, api) => { if (!win) api.suspend(1); } },
-  { n: '假摔被鏡頭抓到', for: 'PRO', cond: atPos('W', 'AM', 'ST'),
+  { n: '假摔被鏡頭抓到', acts: ['當作沒事', '賽後說明是碰到了', '公開否認到底'], for: 'PRO', cond: atPos('W', 'AM', 'ST'),
     gt: '裁判沒看到，事後也沒人追究', bt: '四個角度的重播，你一個都躲不掉',
     g: {}, b: { fanRep: -18 },
     fx: (s, win, api) => { if (!win) api.unlock('diver'); } },
-  { n: '點球大戰主動舉手', for: 'PRO', weight: 0.6,
+  { n: '點球大戰主動舉手', acts: ['排在第五順位', '排中間順位', '第一個站出來'], for: 'PRO', weight: 0.6,
     gt: '你走上去，罰進了，球隊晉級', bt: '你走上去，然後看著門將撲出來',
     g: { fanRep: 20 }, b: { fanRep: -20, fin: -2 },
     fx: (s, win, api) => { if (win && s.career.counters.clutch++ >= 2) api.unlock('bigmatch'); } },
-  { n: '爭議紅牌後炮轟裁判', for: 'PRO',
+  { n: '爭議紅牌後炮轟裁判', acts: ['忍住不回應', '賽後訪問點到為止', '社群發文開炮'], for: 'PRO',
     gt: '球迷站在你這邊，罰款你自己付', bt: '協會加重處分',
     g: { fanRep: 12 }, b: {},
     fx: (s, win, api) => { if (win) api.fine(0.02); else api.suspend(4); } },
@@ -757,11 +760,11 @@ export const EVENTS = [
     fx: (s, win) => { if (!win) s._forceMove = true; } },
 
   /* ---------- 第四類：合約與轉會 ---------- */
-  { n: '經紀人未經同意放話', for: 'PRO', cond: s => s.player.age >= 23,
+  { n: '經紀人未經同意放話', acts: ['私下警告', '公開切割', '當場解約'], for: 'PRO', cond: s => s.player.age >= 23,
     gt: '你公開切割，換掉了經紀人', bt: '你被寫成不忠誠的那個人',
     g: {}, b: { fanRep: -10 },
     fx: (s, win, api) => { if (!win) api.unlock('puppet'); } },
-  { n: '拒絕續約被下放二隊', for: 'PRO', cond: s => s.club.yearsAtClub >= 2,
+  { n: '拒絕續約被下放二隊', acts: ['先簽短約保住位置', '按兵不動等談判', '硬撐到自由身'], for: 'PRO', cond: s => s.club.yearsAtClub >= 2,
     gt: '你硬撐到了自由身，簽字費入袋', bt: '一整季沒有比賽',
     g: {}, b: {},
     fx: (s, win, api) => {

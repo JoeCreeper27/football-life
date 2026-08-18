@@ -151,15 +151,43 @@ function renderAbils() {
   box.hidden = !abilsOpen;
   $('bd-toggle').textContent = abilsOpen ? '能力一覽 ▴' : '能力一覽 ▾';
   if (!abilsOpen) return;
+
   const p = S.player;
-  box.innerHTML = GROUP_ABIL[p.group].map(k => {
-    const v = p.ab[k], pk = p.pot[k] ?? 70;
-    return `<div class="abrow">` +
-      `<span class="nm">${ABIL[k]}</span>` +
-      `<span class="bar"><i style="width:${v / MAX_ABIL * 100}%"></i>` +
-      `<em style="left:${pk / MAX_ABIL * 100}%"></em></span>` +
-      `<span class="val">${v}<small>/${pk}</small></span></div>`;
+  const keys = GROUP_ABIL[p.group];
+  const n = keys.length;
+  const R = 78, CX = 120, CY = 104;          // viewBox 240×208
+  // 從正上方開始，順時針平均分佈
+  const pt = (i, r) => {
+    const a = (i / n) * Math.PI * 2 - Math.PI / 2;
+    return [CX + Math.cos(a) * r, CY + Math.sin(a) * r];
+  };
+  const poly = f => keys.map((k, i) => pt(i, R * f(k) / MAX_ABIL).map(v => v.toFixed(1)).join(',')).join(' ');
+
+  const rings = [0.25, 0.5, 0.75, 1].map(f =>
+    `<polygon points="${keys.map((_, i) => pt(i, R * f).map(v => v.toFixed(1)).join(',')).join(' ')}"
+      fill="none" stroke="var(--line)" stroke-width="1"/>`).join('');
+  const spokes = keys.map((_, i) => {
+    const [x, y] = pt(i, R);
+    return `<line x1="${CX}" y1="${CY}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--line)" stroke-width="1"/>`;
   }).join('');
+  const labels = keys.map((k, i) => {
+    const [x, y] = pt(i, R + 17);
+    const anchor = x < CX - 6 ? 'end' : x > CX + 6 ? 'start' : 'middle';
+    return `<text x="${x.toFixed(1)}" y="${(y + 3).toFixed(1)}" text-anchor="${anchor}"
+      font-size="10" fill="var(--dim)">${ABIL[k]}<tspan fill="var(--ink)" font-weight="700"> ${p.ab[k]}</tspan></text>`;
+  }).join('');
+
+  box.innerHTML =
+    `<svg viewBox="0 0 240 208" width="100%" role="img" aria-label="能力雷達圖">` +
+      rings + spokes +
+      `<polygon points="${poly(k => p.pot[k] ?? 70)}" fill="none"
+        stroke="var(--dn)" stroke-width="1" stroke-dasharray="3 3" opacity=".8"/>` +
+      `<polygon points="${poly(k => p.ab[k])}" fill="var(--amber)" fill-opacity=".22"
+        stroke="var(--amber)" stroke-width="2"/>` +
+      labels +
+    `</svg>` +
+    `<div class="radar-key"><span style="color:var(--amber)">■</span> 目前能力　` +
+    `<span style="color:var(--dn)">╌</span> 潛力上限</div>`;
 }
 
 function scrollBottom() {
@@ -174,7 +202,7 @@ function renderPending(pending) {
 }
 
 /** 季前訓練：把每顆骰指派給一個訓練項目，而不是直接點能力 */
-function renderTrain({ title, dice, fixed, options, extra }) {
+function renderTrain({ title, note, dice, fixed, options, extra }) {
   const a = $('act');
   const picks = [];
   let phase = 'dice';      // dice → extra → done
@@ -190,6 +218,7 @@ function renderTrain({ title, dice, fixed, options, extra }) {
       a.innerHTML += `<div class="fixed-row">必修課表：` +
         fixed.map(f => `${f.n} <b>${f.die}</b>`).join('　') + `</div>`;
     }
+    if (note) a.innerHTML += `<div class="train-note">${note}</div>`;
     if (dice.length) {
       a.innerHTML += `<div id="dice">${dice.map((v, i) =>
         `<div class="die ${i < idx ? 'used' : ''} ${i === idx && phase === 'dice' ? 'active' : ''} ${v >= 9 ? 'six' : ''}">${v}</div>`

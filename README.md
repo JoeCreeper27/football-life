@@ -44,7 +44,7 @@ src/
 │  ├─ state.js        狀態建立、能力成長、綜合評價、陣中地位
 │  ├─ sim.js          出場時間、賽季數據、傷病、薪資、衰退
 │  └─ flow.js         年度流程狀態機
-├─ main.js            UI：記錄流 + 選項按鈕 + 狀態列 + 能力一覽
+├─ main.js            UI：記錄流 + 選項按鈕 + 狀態列 + 能力雷達圖
 tools/balance-sim.js  蒙地卡羅平衡模擬
 docs/SPEC.md          完整開發規格書
 ```

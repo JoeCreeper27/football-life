@@ -47,8 +47,10 @@ body{margin:0;padding:0;min-height:100vh;background:var(--bg);color:var(--ink);
 #bd-toggle{display:block;width:100%;margin-top:8px;padding:4px;font-size:11px;
   background:transparent;color:var(--dim);border:1px solid var(--line);
   border-radius:6px;font-family:inherit;cursor:pointer}
-#abils{margin-top:8px;max-height:46vh;overflow-y:auto}
-#abils .abrow{cursor:default;padding:4px 8px;margin:2px 0}
+#abils{margin-top:6px}
+#abils svg{display:block;margin:0 auto;max-width:250px}
+.radar-key{text-align:center;font-size:10px;color:var(--dim);margin-top:-4px}
+.train-note{font-size:11px;color:var(--dim);margin:0 0 8px;line-height:1.5}
 
 /* 記錄流 */
 .yr-block{margin:14px 0}
@@ -157,8 +159,9 @@ th{color:var(--dim);font-weight:400}
     </div>
     <div id="phase"><div data-p="0">季前</div><div data-p="1">賽季中</div><div data-p="2">季末</div></div>
     <button id="bd-toggle">能力一覽 ▾</button>
-    <div id="abils" hidden></div>
   </div>
+  <!-- 雷達圖放在 sticky 狀態列外面：否則它會把整個畫面往下推 -->
+  <div id="abils" hidden></div>
 
   <div id="log"></div>
   <div id="act"></div>
