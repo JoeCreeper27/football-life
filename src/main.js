@@ -80,6 +80,7 @@ function start() {
   S.step = 'YEAR_START';
   $('setup').hidden = true;
   $('board').hidden = false;
+  $('bd-toggle').onclick = () => { abilsOpen = !abilsOpen; renderAbils(); };
   push(run(S));
 }
 
@@ -139,6 +140,26 @@ function board() {
     c.stage === 'PRO' ? `PRO_${LV[c.lv].region || 'ASIA'}` : c.stage;
   const idx = { PRESEASON: 0, MIDSEASON: 1, SEASON_END: 2 }[S.phase] ?? 0;
   document.querySelectorAll('#phase div').forEach((d, i) => d.classList.toggle('on', i === idx));
+  renderAbils();
+}
+
+/** 能力一覽：改成選訓練之後，這是玩家唯一能看到自己能力值的地方 */
+let abilsOpen = false;
+
+function renderAbils() {
+  const box = $('abils');
+  box.hidden = !abilsOpen;
+  $('bd-toggle').textContent = abilsOpen ? '能力一覽 ▴' : '能力一覽 ▾';
+  if (!abilsOpen) return;
+  const p = S.player;
+  box.innerHTML = GROUP_ABIL[p.group].map(k => {
+    const v = p.ab[k], pk = p.pot[k] ?? 70;
+    return `<div class="abrow">` +
+      `<span class="nm">${ABIL[k]}</span>` +
+      `<span class="bar"><i style="width:${v / MAX_ABIL * 100}%"></i>` +
+      `<em style="left:${pk / MAX_ABIL * 100}%"></em></span>` +
+      `<span class="val">${v}<small>/${pk}</small></span></div>`;
+  }).join('');
 }
 
 function scrollBottom() {
@@ -180,7 +201,7 @@ function renderTrain({ title, dice, fixed, options, extra }) {
         const b = document.createElement('button');
         b.className = 'btn' + (o.major ? ' main' : '');
         b.disabled = !!o.dead;
-        b.innerHTML = o.t + `<small>${o.s}</small>`;
+        b.innerHTML = o.t;
         b.onclick = () => {
           if (phase === 'dice') picks.push({ key: o.v, die: dice[idx] });
           else { chosenExtra = o.v; phase = 'done'; submit(); return; }
@@ -398,6 +419,7 @@ function tryResume() {
     cont.onclick = () => {
       S = saved;
       $('setup').hidden = true; $('board').hidden = false; a.innerHTML = '';
+      $('bd-toggle').onclick = () => { abilsOpen = !abilsOpen; renderAbils(); };
       // 存檔沒有保留畫面歷史，直接從當前決策點續玩
       divider(`${S.career.year} 年 · ${S.player.age} 歲（讀取存檔）`);
       push(run(S));
