@@ -144,7 +144,7 @@ function board() {
 }
 
 /** 能力一覽：改成選訓練之後，這是玩家唯一能看到自己能力值的地方 */
-let abilsOpen = false;
+let abilsOpen = true;
 
 function renderAbils() {
   const box = $('abils');
@@ -197,11 +197,14 @@ function renderTrain({ title, dice, fixed, options, extra }) {
     }
 
     if (phase === 'dice' || phase === 'extra') {
+      // 訓練項目排成方格，一行放得下好幾個
+      const grid = document.createElement('div');
+      grid.className = 'row grid trainset';
       options.forEach(o => {
         const b = document.createElement('button');
         b.className = 'btn' + (o.major ? ' main' : '');
         b.disabled = !!o.dead;
-        b.innerHTML = o.t;
+        b.textContent = o.t;
         b.onclick = () => {
           if (phase === 'dice') picks.push({ key: o.v, die: dice[idx] });
           else { chosenExtra = o.v; phase = 'done'; submit(); return; }
@@ -209,8 +212,9 @@ function renderTrain({ title, dice, fixed, options, extra }) {
           if (phase === 'done') return submit();
           render();
         };
-        a.appendChild(b);
+        grid.appendChild(b);
       });
+      a.appendChild(grid);
     }
 
     const undo = document.createElement('button');
