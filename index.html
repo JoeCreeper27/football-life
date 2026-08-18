@@ -47,6 +47,8 @@ body{margin:0;padding:0;min-height:100vh;background:var(--bg);color:var(--ink);
 #abils svg{display:block;width:100%}
 #abils-detail{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.72);
   display:flex;align-items:center;justify-content:center;padding:16px}
+/* 作者樣式的 display:flex 會蓋掉瀏覽器預設的 [hidden]{display:none}，要補回來 */
+#abils-detail[hidden]{display:none}
 #abils-detail .sheet{background:var(--panel);border:1px solid var(--line);border-radius:12px;
   padding:14px;width:100%;max-width:360px;max-height:86vh;overflow-y:auto}
 #abils-detail h4{margin:0 0 8px;font-size:13px;color:var(--amber)}
