@@ -1,7 +1,7 @@
 import { Rng, clamp } from './rng.js';
 import {
   GROUP_ABIL, YOUTH_CLUBS, CONF, DPOS, POS_WEIGHT, LV, TIER,
-  NATIONS, NATION_ORDER, ORIGINS, ARCHETYPE,
+  NATIONS, NATION_ORDER, ORIGINS, ARCHETYPE, SYNERGY,
   growthPhase, LATE_GROWABLE, LATE_LOCK_AGE,
 } from './data.js';
 
@@ -139,12 +139,15 @@ export function ageWindow(p, lvId) {
  */
 export function abCost(p, k) {
   const cur = p.ab[k], cap = p.pot[k] ?? 62, gk = p.group === 'GK';
+  const arch = ARCHETYPE[p.arch];
+  const major = arch ? arch.major.includes(k) : false;
+
   let c = gk ? (cur >= 76 ? 5 : cur >= 71 ? 4 : cur >= 63 ? 2 : 1)
              : (cur >= 76 ? 4 : cur >= 71 ? 3 : cur >= 63 ? 2 : 1);
-  if (cur >= cap) c *= gk ? 4 : 3; // 超過潛力上限，成本暴增但不封死
+  // 超過潛力上限：貴，但沒有封死。主修便宜一些，讓長生涯還能緩慢往上推。
+  if (cur >= cap) c *= major ? (gk ? 2.5 : 2) : (gk ? 3.5 : 3);
   c *= growthPhase(p.age).cost;
-  const arch = ARCHETYPE[p.arch];
-  if (arch) c *= arch.major.includes(k) ? 0.7 : 1.3;
+  if (arch) c *= major ? 0.7 : 1.3;
   return Math.max(1, Math.ceil(c));
 }
 
@@ -160,8 +163,12 @@ export function addFanRep(s, v) {
   return s.career.fanRep - before;
 }
 
-/** 加點：未滿一級的餘數進蓄力槽，不蒸發 */
-export function addAb(p, k, points) {
+/**
+ * 加點：未滿一級的餘數進蓄力槽，不蒸發。
+ * spill = true 時會依 SYNERGY 帶動相關能力（帶動的點數一樣走蓄力槽，
+ * 所以不會憑空跳級，只是累積得比較快）。
+ */
+export function addAb(p, k, points, spill = true) {
   if (!(k in p.ab)) return 0;
   const before = p.ab[k];
   let budget = points + (p.carry[k] || 0);
@@ -171,8 +178,20 @@ export function addAb(p, k, points) {
     budget -= cost;
     p.ab[k]++;
   }
-  p.carry[k] = p.ab[k] >= 80 ? 0 : budget;
+  p.carry[k] = p.ab[k] >= 80 ? 0 : Math.round(budget * 100) / 100;
+
+  // 連帶成長只把相關能力帶到天賦上限為止；要突破天賦，得靠專門訓練
+  if (spill && points > 0) {
+    for (const [j, ratio] of Object.entries(SYNERGY[k] || {})) {
+      if (j in p.ab && p.ab[j] < (p.pot[j] ?? 62)) addAb(p, j, points * ratio, false);
+    }
+  }
   return p.ab[k] - before;
+}
+
+/** 這一項會帶動哪些能力（UI 用來提示玩家） */
+export function synergyOf(p, k) {
+  return Object.keys(SYNERGY[k] || {}).filter(j => j in p.ab);
 }
 
 /** 扣值 1:1 立即生效（跌比練快） */

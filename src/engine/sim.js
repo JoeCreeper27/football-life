@@ -94,7 +94,8 @@ export function injuryRisk(s) {
 export function accrueLoad(s) {
   const p = s.player, c = s.club;
   const st = STYLE[p.style] || STYLE['標準'];
-  const explosive = ((p.ab.pac ?? 40) + (p.ab.phy ?? 40)) / 20;
+  // 除數要跟著能力尺度走，否則能力一通膨，韌帶量表就爆得特別快
+  const explosive = ((p.ab.pac ?? 40) + (p.ab.phy ?? 40)) / 27;
   const scar = p.injury.aclCount >= 2 ? 1.4 : p.injury.aclCount >= 1 ? 1.18 : 1;
   const archLoad = ARCHETYPE[p.arch]?.load || 1;
   const gain = explosive * st.load * clamp(0.4 + c.minutes, 0.4, 1.4) * scar * archLoad;

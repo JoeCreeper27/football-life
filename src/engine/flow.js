@@ -5,7 +5,7 @@ import {
   ARCHETYPE, ARCH_SWITCH, ROLE_RANK, SQUAD, LATE_GROWABLE, LATE_LOCK_AGE, growthPhase,
 } from './data.js';
 import {
-  rngOf, syncCursor, addAb, subAb, ovr, defaultPos, posQualified, squadGap,
+  rngOf, syncCursor, addAb, subAb, abCost, ovr, defaultPos, posQualified, squadGap,
   nationOf, regionOf, isHomeLeague, isAbroad, ageWindow, isGrowable, addFanRep,
 } from './state.js';
 import {
@@ -135,13 +135,23 @@ STEPS.PRE_DICE = (s, ctx, input) => {
     }, 'PRE_DICE');
   }
   // input: { 能力key: 點數 }
-  const gains = [];
+  const before = { ...p.ab };
   for (const [k, v] of Object.entries(input)) {
     if (!isGrowable(p, k)) continue;
-    const got = addAb(p, k, v);
-    if (got > 0) gains.push(`${ABIL[k]} ${up(got)}`);
+    addAb(p, k, v);
   }
-  if (gains.length) card(ctx, '', '季前特訓成果', gains.join('、'));
+  // 帶動成長的能力也要列出來，否則玩家不知道點數跑去哪了
+  const direct = [], linked = [];
+  for (const k of Object.keys(p.ab)) {
+    const d = p.ab[k] - before[k];
+    if (d <= 0) continue;
+    (k in input ? direct : linked).push(`${ABIL[k]} ${up(d)}`);
+  }
+  if (direct.length || linked.length) {
+    card(ctx, '', '季前特訓成果',
+      (direct.join('、') || '沒有直接升級') +
+      (linked.length ? `<br><small>連帶成長：${linked.join('、')}</small>` : ''));
+  }
   s.step = isPro(s) ? 'PRE_STYLE' : 'PRE_SQUAD';
 };
 
@@ -283,10 +293,17 @@ function applyEffects(s, ctx, table, mag, win) {
     let key = k;
     if (k === 'rand') key = ctx.rng.pick(Object.keys(p.ab));
     if (!(key in p.ab)) continue;
-    if (v > 0) { const g = addAb(p, key, amt); parts.push(g ? `${ABIL[key]} ${up(g)}` : `${ABIL[key]} 蓄力中`); }
-    else { const g = subAb(p, key, amt); parts.push(`${ABIL[key]} ${dn(g)}`); }
+    if (v > 0) {
+      const g = addAb(p, key, amt);
+      parts.push(g ? `${ABIL[key]} ${up(g)}` : `${ABIL[key]} 蓄力 ${carryTxt(p, key)}`);
+    } else { const g = subAb(p, key, amt); parts.push(`${ABIL[key]} ${dn(g)}`); }
   }
   return parts;
+}
+
+/** 蓄力槽進度：告訴玩家點數沒有蒸發，只是還沒滿一級 */
+function carryTxt(p, k) {
+  return `${Math.floor(p.carry[k] || 0)}/${abCost(p, k)}`;
 }
 
 STEPS.MID_EVENTS = (s, ctx, input) => {
@@ -633,8 +650,9 @@ STEPS.END_AWARDS = (s, ctx) => {
 /** 代表隊徵召門檻：強國難擠、弱國容易，出身也有影響 */
 function callThreshold(p) {
   const nat = NATIONS[p.natlPick] || nationOf(p);
-  // 上限壓在 60：足球強國的國腳名額極難擠，但不能高到綜合評價根本碰不到
-  const base = clamp(nat.natl * 0.45 + 26, 40, 60);
+  // 上限壓在 66：足球強國的國腳名額極難擠，但不能高到綜合評價根本碰不到。
+  // 這條線要跟著 LV 的 par 尺度一起移動，否則能力一通膨，人人都是國腳。
+  const base = clamp(nat.natl * 0.5 + 28, 44, 66);
   const own = p.natlPick === p.nation ? (ORIGINS[p.origin]?.callAdj || 0) : 2;
   return base + own;
 }
