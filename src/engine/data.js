@@ -12,6 +12,34 @@ export const ABIL = {
 
 export const POS_GROUP = { GK: '門將', DF: '後衛', MF: '中場', FW: '前鋒' };
 
+/** 雷達圖用的單字縮寫，長名稱在小圖上會擠成一團 */
+export const ABIL_SHORT = {
+  sta: '體', fin: '射', pas: '傳', dri: '盤', pac: '速',
+  phy: '抗', def: '守', hea: '頭', vis: '視',
+  ref: '撲', aer: '制', pos: '位', lng: '長', sht: '短',
+};
+
+/**
+ * 體型：開局隨機，不是玩家選的 —— 這是你拿到的身體，不是你挑的。
+ * up 的能力初始值與潛力上限都有優勢，down 的兩者都吃虧。
+ * 門將的身體需求和外場完全不同，所以另外一張表。
+ */
+export const BUILD = {
+  tall:   { n: '高大', d: '對抗與制空有先天優勢，但轉身與爆發吃虧',
+            up: ['phy', 'hea', 'def'], down: ['pac', 'sta', 'dri'],
+            gkUp: ['ref', 'aer'],      gkDown: ['sht', 'sta'] },
+  normal: { n: '中等', d: '沒有先天優勢，也沒有先天弱點',
+            up: [], down: [], gkUp: [], gkDown: [] },
+  small:  { n: '矮小', d: '速度、體能與盤帶有先天優勢，但對抗吃虧',
+            up: ['pac', 'sta', 'dri'], down: ['phy', 'hea', 'def'],
+            gkUp: ['sht', 'sta'],      gkDown: ['ref', 'aer'] },
+};
+
+export const BUILD_ROLL = ['tall', 'tall', 'normal', 'normal', 'normal', 'small', 'small'];
+
+/** 體型對初始值與潛力上限的加減 */
+export const BUILD_ADJ = { ab: 4, pot: 7, abDown: -3, potDown: -6 };
+
 /** 各大類可養成的能力 */
 export const GROUP_ABIL = {
   GK: ['sta', 'ref', 'aer', 'pos', 'lng', 'sht'],

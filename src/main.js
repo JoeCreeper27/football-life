@@ -5,7 +5,7 @@ import {
 import { run, answer } from './engine/flow.js';
 import {
   ABIL, GROUP_ABIL, POS_GROUP, DPOS, LV, TIER, SQUAD,
-  NATIONS, NATION_ORDER, ORIGINS, REGION, ARCHETYPE, MAX_ABIL,
+  NATIONS, NATION_ORDER, ORIGINS, REGION, ARCHETYPE, MAX_ABIL, ABIL_SHORT, BUILD,
 } from './engine/data.js';
 import { fmtMoney } from './engine/sim.js';
 
@@ -80,7 +80,6 @@ function start() {
   S.step = 'YEAR_START';
   $('setup').hidden = true;
   $('board').hidden = false;
-  $('bd-toggle').onclick = () => { abilsOpen = !abilsOpen; renderAbils(); };
   push(run(S));
 }
 
@@ -126,7 +125,7 @@ function board() {
   const roleName = (SQUAD.find(r => r.k === c.role) || {}).n || '';
   const archName = ARCHETYPE[p.arch]?.n;
   $('bd-sub').textContent =
-    `${NATIONS[p.nation].n}・${archName || (p.dpos ? DPOS[p.dpos].n : POS_GROUP[p.group])}` +
+    `${NATIONS[p.nation].n}・${BUILD[p.build]?.n || ''}・${archName || (p.dpos ? DPOS[p.dpos].n : POS_GROUP[p.group])}` +
     (c.stage === 'PRO' ? `・${roleName}・出場率 ${Math.round(c.minutes * 100)}%` : '');
   const tier = c.stage === 'PRO' ? `（${TIER[c.tier].n}）` : '';
   const away = c.stage === 'PRO' && isAbroad(S) ? ' ✈' : '';
@@ -138,24 +137,18 @@ function board() {
   $('bd-sal').textContent = Math.round(S.career.salaryTotal).toLocaleString('zh-TW');
   document.body.dataset.stage =
     c.stage === 'PRO' ? `PRO_${LV[c.lv].region || 'ASIA'}` : c.stage;
-  const idx = { PRESEASON: 0, MIDSEASON: 1, SEASON_END: 2 }[S.phase] ?? 0;
-  document.querySelectorAll('#phase div').forEach((d, i) => d.classList.toggle('on', i === idx));
+  $('bd-phase').textContent =
+    { PRESEASON: '季前', MIDSEASON: '賽季中', SEASON_END: '季末' }[S.phase] || '季前';
   renderAbils();
 }
 
 /** 能力一覽：改成選訓練之後，這是玩家唯一能看到自己能力值的地方 */
-let abilsOpen = true;
-
 function renderAbils() {
   const box = $('abils');
-  box.hidden = !abilsOpen;
-  $('bd-toggle').textContent = abilsOpen ? '能力一覽 ▴' : '能力一覽 ▾';
-  if (!abilsOpen) return;
-
   const p = S.player;
   const keys = GROUP_ABIL[p.group];
   const n = keys.length;
-  const R = 78, CX = 120, CY = 104;          // viewBox 240×208
+  const R = 40, CX = 62, CY = 58;            // viewBox 124×116，釘在狀態列裡要夠小
   // 從正上方開始，順時針平均分佈
   const pt = (i, r) => {
     const a = (i / n) * Math.PI * 2 - Math.PI / 2;
@@ -170,24 +163,22 @@ function renderAbils() {
     const [x, y] = pt(i, R);
     return `<line x1="${CX}" y1="${CY}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--line)" stroke-width="1"/>`;
   }).join('');
+  // 小圖上用單字縮寫，全名會擠成一團
   const labels = keys.map((k, i) => {
-    const [x, y] = pt(i, R + 17);
-    const anchor = x < CX - 6 ? 'end' : x > CX + 6 ? 'start' : 'middle';
-    return `<text x="${x.toFixed(1)}" y="${(y + 3).toFixed(1)}" text-anchor="${anchor}"
-      font-size="10" fill="var(--dim)">${ABIL[k]}<tspan fill="var(--ink)" font-weight="700"> ${p.ab[k]}</tspan></text>`;
+    const [x, y] = pt(i, R + 11);
+    return `<text x="${x.toFixed(1)}" y="${(y + 3).toFixed(1)}" text-anchor="middle"
+      font-size="9" fill="var(--dim)">${ABIL_SHORT[k] || ABIL[k]}</text>`;
   }).join('');
 
   box.innerHTML =
-    `<svg viewBox="0 0 240 208" width="100%" role="img" aria-label="能力雷達圖">` +
+    `<svg viewBox="0 0 124 116" role="img" aria-label="能力雷達圖">` +
       rings + spokes +
       `<polygon points="${poly(k => p.pot[k] ?? 70)}" fill="none"
         stroke="var(--dn)" stroke-width="1" stroke-dasharray="3 3" opacity=".8"/>` +
       `<polygon points="${poly(k => p.ab[k])}" fill="var(--amber)" fill-opacity=".22"
         stroke="var(--amber)" stroke-width="2"/>` +
       labels +
-    `</svg>` +
-    `<div class="radar-key"><span style="color:var(--amber)">■</span> 目前能力　` +
-    `<span style="color:var(--dn)">╌</span> 潛力上限</div>`;
+    `</svg>`;
 }
 
 function scrollBottom() {
@@ -452,8 +443,7 @@ function tryResume() {
     cont.onclick = () => {
       S = saved;
       $('setup').hidden = true; $('board').hidden = false; a.innerHTML = '';
-      $('bd-toggle').onclick = () => { abilsOpen = !abilsOpen; renderAbils(); };
-      // 存檔沒有保留畫面歷史，直接從當前決策點續玩
+          // 存檔沒有保留畫面歷史，直接從當前決策點續玩
       divider(`${S.career.year} 年 · ${S.player.age} 歲（讀取存檔）`);
       push(run(S));
     };

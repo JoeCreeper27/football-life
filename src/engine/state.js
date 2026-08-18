@@ -2,6 +2,7 @@ import { Rng, clamp } from './rng.js';
 import {
   GROUP_ABIL, YOUTH_CLUBS, CONF, DPOS, POS_WEIGHT, LV, TIER,
   NATIONS, NATION_ORDER, ORIGINS, ARCHETYPE, SYNERGY, SYNERGY_GK, MAX_ABIL,
+  BUILD, BUILD_ROLL, BUILD_ADJ,
   growthPhase, PHYSICAL, PHYSICAL_HARD_AGE, PHYSICAL_LOCK_AGE,
 } from './data.js';
 
@@ -17,9 +18,17 @@ export function createState(seed, { name, number, group, nation = 'TW', origin =
   const nat = NATIONS[nation] || NATIONS.TW;
   const org = ORIGINS[origin] || ORIGINS.local;
 
+  // 體型開局隨機，影響初始值與潛力上限（不是玩家選的）
+  const build = rng.pick(BUILD_ROLL);
+  const B = BUILD[build];
+  const upList = group === 'GK' ? B.gkUp : B.up;
+  const downList = group === 'GK' ? B.gkDown : B.down;
+  const buildAb = k => (upList.includes(k) ? BUILD_ADJ.ab : downList.includes(k) ? BUILD_ADJ.abDown : 0);
+  const buildPot = k => (upList.includes(k) ? BUILD_ADJ.pot : downList.includes(k) ? BUILD_ADJ.potDown : 0);
+
   // 12 歲起步，起始值低；國家青訓水準與出身直接反映在這裡
   const ab = {};
-  keys.forEach(k => (ab[k] = clamp(rng.int(20, 32) + nat.dev + org.ab, 12, 42)));
+  keys.forEach(k => (ab[k] = clamp(rng.int(20, 32) + nat.dev + org.ab + buildAb(k), 12, 46)));
 
   /**
    * 潛力天花板。兩層結構：
@@ -42,7 +51,7 @@ export function createState(seed, { name, number, group, nation = 'TW', origin =
   const pot = {};
   shuffled.forEach((k, i) => {
     const [lo, hi] = BAND[Math.min(i, BAND.length - 1)];
-    pot[k] = clamp(Math.round(rng.int(lo, hi) + talent * 20 + nat.dev), 25, MAX_ABIL);
+    pot[k] = clamp(Math.round(rng.int(lo, hi) + talent * 20 + nat.dev + buildPot(k)), 25, MAX_ABIL);
   });
   pot[shuffled[0]] = clamp(pot[shuffled[0]] + org.potTop, 35, MAX_ABIL);
 
@@ -68,6 +77,7 @@ export function createState(seed, { name, number, group, nation = 'TW', origin =
     player: {
       name, number, group, dpos: null,
       nation, origin, altNation, natlPick: nation, natlPicked: false,
+      build,
       age: CONF.startAge, ab, pot, carry,
       arch: null, archEvolved: null, archSwitched: false,
       decay: {},

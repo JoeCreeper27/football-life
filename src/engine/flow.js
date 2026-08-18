@@ -3,6 +3,7 @@ import {
   LV, CLUBS, YOUTH_CLUBS, TIER, DPOS, EVENTS, TRAITS, ABIL, CONF, POS_GROUP,
   NATIONS, ORIGINS, REGION, MAX_TIER, leaguesAt,
   ARCHETYPE, ARCH_SWITCH, ROLE_RANK, SQUAD, PHYSICAL, PHYSICAL_LOCK_AGE, growthPhase, STAGE_TRAIN,
+  BUILD,
   trainingTable, trainingFor,
 } from './data.js';
 import {
@@ -64,6 +65,11 @@ const STAGE_LABEL = {
 
 STEPS.YEAR_START = (s, ctx) => {
   const c = s.club;
+  if (!s._bornNoted) {
+    s._bornNoted = true;
+    const b = BUILD[s.player.build];
+    if (b) card(ctx, 'info', `體型：${b.n}`, `${b.d}。<br>這是你拿到的身體，不是你挑的。`);
+  }
   const stage = STAGE_LABEL[c.stage] ? STAGE_LABEL[c.stage](c.stageYear) : LV[c.lv].n;
   const where = isPro(s) && isAbroad(s) ? ' · 旅外' : '';
   ctx.cards.push({ divider: `${s.career.year} 年 · ${s.player.age} 歲 · ${stage}${where}` });
