@@ -45,14 +45,19 @@ function nationNote() {
   const ceiling = LV[nat.home[tiers[tiers.length - 1]]];
   return `<b>${nat.n}</b>（${REGION[nat.region]}）　青訓水準 ${nat.dev > 0 ? '+' + nat.dev : nat.dev}｜代表隊實力 ${nat.natl}<br>` +
     `國內起點：${entry.n}　國內天花板：${ceiling.n}${tiers[tiers.length - 1] < 7 ? '（要踢五大聯賽必須旅外）' : ''}<br>` +
-    `${nat.uni ? '有大學足球這條升學路線' : '沒有大學足球，高中之後只能走職業'}<br>` +
+    `${nat.uni ? '有大學足球這條升學路線' : '沒有大學足球，高中之後只能走職業'}` +
+    `${nat.potBonus ? `　<b class="hl">本地／混血出身潛力 +${nat.potBonus}</b>` : ''}<br>` +
     `<b>${org.n}</b>：${org.fx}`;
 }
 
 function setup() {
   pickRow('pos-row', Object.entries(POS_GROUP).map(([k, n]) => [k, n]), pickedGroup, k => (pickedGroup = k));
   pickRow('nation-row', NATION_ORDER.map(k => [k, NATIONS[k].n]), pickedNation, k => (pickedNation = k));
-  pickRow('origin-row', Object.entries(ORIGINS).map(([k, o]) => [k, o.n, o.d]), pickedOrigin, k => (pickedOrigin = k));
+  // 有些國家沒有移民這條路
+  const originList = Object.entries(ORIGINS)
+    .filter(([k]) => !(k === 'immigrant' && NATIONS[pickedNation].noImmigrant));
+  if (!originList.some(([k]) => k === pickedOrigin)) pickedOrigin = 'local';
+  pickRow('origin-row', originList.map(([k, o]) => [k, o.n, o.d]), pickedOrigin, k => (pickedOrigin = k));
   $('setup-note').innerHTML = nationNote();
   $('btn-start').onclick = start;
 }

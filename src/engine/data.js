@@ -121,12 +121,20 @@ export const NATIONS = {
         home: { 1: 'EUR_D5', 2: 'EUR_D4', 3: 'EUR_D3', 5: 'POR' } },
   NL: { n: '荷蘭',   region: 'EUR',  dev: 2,  natl: 76, uni: false,
         home: { 1: 'EUR_D5', 2: 'EUR_D4', 3: 'EUR_D3', 5: 'NED' } },
+  // 非洲：國內階梯只到第 2 層，想再往上一定得旅外（與台灣同樣的設計）。
+  // 沒有移民選項；本地與混血出身享有潛力加成（街頭足球文化與身體素質傳統）。
+  NG: { n: '奈及利亞', region: 'AFR', dev: 1,  natl: 66, uni: false,
+        noImmigrant: true, potBonus: 5,
+        home: { 1: 'AFR_D3', 2: 'NPFL' } },
+  CI: { n: '象牙海岸', region: 'AFR', dev: 1,  natl: 64, uni: false,
+        noImmigrant: true, potBonus: 5,
+        home: { 1: 'AFR_D3', 2: 'CIV1' } },
 };
 
 /** 開場選單順序 */
-export const NATION_ORDER = ['TW', 'JP', 'KR', 'US', 'BR', 'AR', 'GB', 'ES', 'DE', 'IT', 'FR', 'PT', 'NL'];
+export const NATION_ORDER = ['TW', 'JP', 'KR', 'US', 'BR', 'AR', 'GB', 'ES', 'DE', 'IT', 'FR', 'PT', 'NL', 'NG', 'CI'];
 
-export const REGION = { ASIA: '亞洲', EUR: '歐洲', SAM: '南美', NAM: '北美' };
+export const REGION = { ASIA: '亞洲', EUR: '歐洲', SAM: '南美', NAM: '北美', AFR: '非洲' };
 
 /**
  * 出身：三條路各有明確的機制差異，不只是換皮
@@ -138,7 +146,7 @@ export const REGION = { ASIA: '亞洲', EUR: '歐洲', SAM: '南美', NAM: '北�
 export const ORIGINS = {
   local:     { n: '純本地', d: '在地出生長大的本地族裔', fx: '國家隊徵召門檻 −3，在地認同高', ab: 0, potTop: 0, callAdj: -3, windowAdj: 0 },
   mixed:     { n: '混血',   d: '雙重血統，父母來自不同國家', fx: '最高潛力 +3；18 歲時可選擇代表哪一國', ab: 0, potTop: 3, callAdj: 0, windowAdj: 0 },
-  immigrant: { n: '移民',   d: '移民／僑民家庭，在異鄉長大', fx: '起始能力 −2、15 歲前少一顆骰；旅外年齡窗口 +3', ab: -2, potTop: 0, callAdj: 2, windowAdj: 3 },
+  immigrant: { n: '移民',   d: '移民／僑民家庭，在異鄉長大（部分國家不適用）', fx: '起始能力 −2、15 歲前少一顆骰；旅外年齡窗口 +3', ab: -2, potTop: 0, callAdj: 2, windowAdj: 3 },
 };
 
 /* ==================================================================== */
@@ -166,6 +174,7 @@ export const LV = {
   USL2:   { n: '美國業餘聯賽',     tier: 1, region: 'NAM',  par: 55, min: 50, g: 24, base: 75, coef: 24, top: 'HOME' },
   EUR_D5: { n: '歐洲第五級聯賽',   tier: 1, region: 'EUR',  par: 55, min: 50, g: 34, base: 70, coef: 24, top: 'HOME' },
   SAM_D3: { n: '南美地區聯賽',     tier: 1, region: 'SAM',  par: 55, min: 50, g: 26, base: 50, coef: 18, top: 'HOME' },
+  AFR_D3: { n: '非洲地區聯賽',     tier: 1, region: 'AFR',  par: 55, min: 50, g: 26, base: 45, coef: 16, top: 'HOME' },
 
   /* --- T2 低階職業 --- */
   J3:     { n: 'J3 聯賽',          tier: 2, region: 'ASIA', par: 61, min: 63, g: 38, base: 180, coef: 60 },
@@ -174,6 +183,8 @@ export const LV = {
   EUR_D4: { n: '歐洲第四級聯賽',   tier: 2, region: 'EUR',  par: 61, min: 63, g: 42, base: 190, coef: 62 },
   BRA_C:  { n: '巴西丙級聯賽',     tier: 2, region: 'SAM',  par: 61, min: 63, g: 30, base: 150, coef: 52 },
   ARG_B:  { n: '阿根廷乙級聯賽',   tier: 2, region: 'SAM',  par: 61, min: 63, g: 34, base: 150, coef: 52 },
+  NPFL:   { n: '奈及利亞職業聯賽', tier: 2, region: 'AFR',  par: 61, min: 63, g: 34, base: 130, coef: 46 },
+  CIV1:   { n: '象牙海岸甲級聯賽', tier: 2, region: 'AFR',  par: 61, min: 63, g: 30, base: 125, coef: 44 },
 
   /* --- T3 次級職業 --- */
   J2:     { n: 'J2 聯賽',          tier: 3, region: 'ASIA', par: 66, min: 72, g: 42, base: 420, coef: 150 },
@@ -225,24 +236,28 @@ export const YOUTH_CLUBS = {
     EUR:  ['磨坊鎮中學', '舊城區學園', '北岸文法學校', '灰岩村中學'],
     SAM:  ['紅土區學校', '港灣社區學校', '山谷市立中學'],
     NAM:  ['橡樹嶺中學', '湖畔初中', '大草原中學'],
+    AFR:  ['紅土區小學隊', '港市第一中學', '草原市立中學'],
   },
   HS: {
     ASIA: ['海線工商', '中山高中', '仁義高中', '北港高工', '花東體中'],
     EUR:  ['聖橡樹公學', '運河區高校', '鐵道城中學', '南丘學園'],
     SAM:  ['紅土技術學校', '海岸市立高中', '內陸農牧學校'],
     NAM:  ['橡樹嶺高中', '湖畔高中', '大草原高中', '海灣預校'],
+    AFR:  ['港市技術學校', '首都體育中學', '內陸農校'],
   },
   ACADEMY: {
     ASIA: ['東方之星足球學院', '青嶺足球學校', '黑潮青訓中心'],
     EUR:  ['白鹿角青訓學院', '運河少年學院', '鐵砧山足球學校', '南岸青訓營'],
     SAM:  ['紅土少年學院', '河岸貧民區球場', '綠松青訓工廠'],
     NAM:  ['大湖區發展學院', '陽光帶青訓中心', '西岸足球學園'],
+    AFR:  ['海岸青訓學院', '首都足球工廠', '紅土少年營'],
   },
   UNI: {
     ASIA: ['臨海大學', '中州科大', '國立體大', '南方大學'],
     EUR:  ['舊石橋大學', '北方理工學院'],
     SAM:  ['首都大學', '河岸聯邦大學'],
     NAM:  ['大湖州立大學', '橡樹嶺大學', '西岸理工學院'],
+    AFR:  ['首都大學', '海岸理工學院'],
   },
 };
 
@@ -274,6 +289,10 @@ export const CLUBS = {
     { n: '紅土河競技', t: 3 }, { n: '山谷礦工', t: 2 }, { n: '港區藍白', t: 3 },
     { n: '甘蔗田聯合', t: 2 }, { n: '高原銀星', t: 1 }, { n: '雨林綠隊', t: 4 },
   ],
+  AFR_D3: [
+    { n: '紅土大道聯', t: 3 }, { n: '港口倉庫隊', t: 2 }, { n: '草原獵豹', t: 3 },
+    { n: '棕櫚林體育會', t: 2 }, { n: '首都電力隊', t: 1 }, { n: '礦區鐵鎚', t: 4 },
+  ],
 
   /* T2 低階職業 */
   J3: [
@@ -300,6 +319,15 @@ export const CLUBS = {
   ARG_B: [
     { n: '拉普拉塔白條', t: 2 }, { n: '探戈區鐵匠', t: 3 }, { n: '南風競技', t: 3 },
     { n: '牧場紅星', t: 2 }, { n: '安地斯石城', t: 1 }, { n: '碼頭區聯', t: 4 },
+  ],
+  NPFL: [
+    { n: '拉各斯海鷗', t: 1 }, { n: '卡諾風暴', t: 2 }, { n: '河州石油人', t: 2 },
+    { n: '伊巴丹綠鷹', t: 3 }, { n: '阿布加中央', t: 1 }, { n: '三角洲聯', t: 3 },
+    { n: '約斯高原隊', t: 4 },
+  ],
+  CIV1: [
+    { n: '阿比讓黃綠', t: 1 }, { n: '象牙港競技', t: 2 }, { n: '亞穆蘇克羅王城', t: 2 },
+    { n: '可可田聯合', t: 3 }, { n: '瀉湖藍星', t: 1 }, { n: '布瓦凱北方隊', t: 3 },
   ],
 
   /* T3 次級職業 */
@@ -468,13 +496,13 @@ export const TRAINING = {
   sprint:   { n: '衝刺訓練',     ab: { pac: 1.00, sta: 0.40 } },
   tactics:  { n: '戰術訓練',     ab: { vis: 1.00, def: 0.20, pas: 0.20 } },
   passing:  { n: '傳球練習',     ab: { pas: 1.00, vis: 0.30, fin: 0.10 } },
-  shooting: { n: '射門練習',     ab: { fin: 1.00, pas: 0.20 } },
-  setpiece: { n: '罰球練習',   ab: { fin: 0.70, pas: 0.60, hea: 0.30 } },
+  shooting: { n: '射門練習',     ab: { fin: 1.00, pas: 0.30 } },
+  setpiece: { n: '罰球練習',   ab: { fin: 0.80, pas: 0.30, hea: 0.30 } },
   marking:  { n: '盯防訓練',   ab: { def: 1.00, phy: 0.40 } },
   aerial:   { n: '空中對抗',     ab: { hea: 1.00, phy: 0.50 } },
-  rondo:    { n: '搶圈抓鬼', ab: { pas: 0.70, dri: 0.50, vis: 0.50 } },
-  juggling: { n: '挑球訓練',     ab: { dri: 1.00, fin: 0.30, pas: 0.30 } },
-  dribble:  { n: '過人練習',   ab: { dri: 0.90, pac: 0.40, fin: 0.10 } },
+  rondo:    { n: '搶圈抓鬼', ab: { pas: 0.80, dri: 0.20, vis: 0.30, def: 0.20 } },
+  juggling: { n: '挑球訓練',     ab: { dri: 0.80, fin: 0.20, pas: 0.30, vis: 0.20 } },
+  dribble:  { n: '過人練習',   ab: { dri: 1.00, pac: 0.30, fin: 0.10 } },
 };
 
 /**
@@ -823,7 +851,7 @@ export const EVENTS = [
   { n: '和教練公開頂嘴', acts: ['私下溝通', '在會議上表態', '直接嗆回去'], for: 'PRO', cond: s => role(s) <= 2,
     gt: '教練反而欣賞你的火氣，給了你機會', bt: '你被丟進了不會上場的那份名單',
     g: {}, b: {},
-    fx: (s, win, api) => { if (win) api.shiftRole(1); else { s.club.minutes = 0.05; api.card('bad', '冷宮', '本季出場率剩下 5%。'); } } },
+    fx: (s, win, api) => { if (win) api.shiftRole(1); else { s.club.minutes = 0.05; api.card('bad', '冷宮，球鞋飛過來', '本季出場率剩下 5%。'); } } },
   { n: '爭主罰點球', acts: ['讓給隊上一號射手', '照排定順序', '搶過球自己罰'], for: 'PRO', cond: atPos('ST', 'AM', 'W'),
     gt: '你搶過球，罰進了', bt: '你搶過球，然後罰丟了',
     g: { fin: 2, fanRep: 8 }, b: { fanRep: -12 } },
@@ -989,6 +1017,109 @@ export const EVENTS = [
     gt: '「不要撲球，等球來找你。」你的站位從此不一樣了',
     bt: '你太急著表現，反而養成了壞習慣',
     g: { pos: 6, ref: 5, aer: 3, fanRep: 7 }, b: { ref: -2, fanRep: -3 } },
+
+  { n: '葡萄牙武僧的體能課', for: 'PRO', once: true, weight: 0.22,
+    cond: s => LV[s.club.lv].region === 'EUR' || s.player.nation === 'PT',
+    acts: ['跟著跑就好', '照他的菜單練', '加倍訓練量'],
+    gt: '他四十歲還在跑十二公里。你終於懂了什麼叫做「自律不是天賦」',
+    bt: '你照著他的量練，第三週就倒下了',
+    g: { sta: 6, phy: 4, pac: 2, fanRep: 5 }, b: { sta: -3, inj: 10 } },
+  { n: '巴西外星人的門前嗅覺', for: 'PRO', once: true, weight: 0.2,
+    cond: s => LV[s.club.lv].region === 'SAM' || s.player.nation === 'BR',
+    acts: ['看影片研究', '一對一請教', '整季跟著他練射門'],
+    gt: '「不要想怎麼射，想門將會往哪邊倒。」那年你的射正率翻倍',
+    bt: '你學了動作，沒學到那半秒的判斷',
+    g: { fin: 7, pac: 3, dri: 2, fanRep: 8 }, b: { fanRep: -3 } },
+  { n: '英國追風少年的加速課', for: 'PRO', once: true, weight: 0.22,
+    cond: s => LV[s.club.lv].region === 'EUR' || s.player.nation === 'GB',
+    acts: ['做基礎爆發訓練', '跟他對跑', '每天加練衝刺'],
+    gt: '他教你的不是跑得快，是第一步怎麼比別人早半拍',
+    bt: '你在對跑的第四趟拉傷了大腿',
+    g: { pac: 7, dri: 3, sta: 2, fanRep: 6 }, b: { pac: -2, inj: 12 } },
+  { n: '英國圓月彎刀的傳中課', for: 'PRO', once: true, weight: 0.22,
+    cond: s => LV[s.club.lv].region === 'EUR' || s.player.nation === 'GB',
+    acts: ['練基本弧線', '每天加練兩百球', '把定位球全接下來'],
+    gt: '球在空中拐了一個彎，落在你想要的那平方公尺裡',
+    bt: '兩百球下來，腳背腫了，弧線還是沒出來',
+    g: { pas: 7, fin: 3, vis: 2, fanRep: 6 }, b: { pas: -2, sta: -2 } },
+  { n: '象牙海岸魔獸的對抗課', for: 'PRO', once: true, weight: 0.22,
+    cond: s => LV[s.club.lv].region === 'AFR' || ['NG', 'CI'].includes(s.player.nation),
+    acts: ['先練核心', '跟他做對抗', '直接要求肉搏對練'],
+    gt: '「背身的時候，你要讓對方覺得他在推一面牆。」',
+    bt: '你被他撞飛了三次，肋骨痛了一個月',
+    g: { phy: 7, hea: 4, fin: 2, fanRep: 7 }, b: { phy: -2, inj: 12 } },
+  { n: '荷蘭冰王子的冷靜', for: 'PRO', once: true, weight: 0.2,
+    cond: s => LV[s.club.lv].region === 'EUR' || s.player.nation === 'NL',
+    acts: ['聽他講就好', '模擬單刀練習', '要求高壓情境特訓'],
+    gt: '「單刀的時候，時間是你的，不是門將的。」你的心跳從此慢了下來',
+    bt: '你太在意技巧，反而更緊張了',
+    g: { fin: 6, vis: 4, pos: 2, fanRep: 6 }, b: { fin: -3 } },
+  { n: '飛翔的荷蘭人的轉身', for: 'PRO', once: true, weight: 0.2,
+    cond: s => LV[s.club.lv].region === 'EUR' || s.player.nation === 'NL',
+    acts: ['分解動作慢練', '全速練習', '在對抗中直接用'],
+    gt: '那個轉身你練了半年，用出來只要 0.4 秒',
+    bt: '你在正式比賽用了，然後把球轉丟了',
+    g: { dri: 6, pac: 3, vis: 3, fanRep: 8 }, b: { dri: -3, fanRep: -4 } },
+  { n: '台灣魔獸的重訓菜單', for: 'PRO', once: true, weight: 0.25,
+    cond: s => s.player.nation === 'TW' || s.player.natlPick === 'TW',
+    acts: ['照一般課表', '跟著他的量', '再加一倍'],
+    gt: '在資源最少的地方，他用重訓房把自己練成了另一種球員',
+    bt: '你練壞了肩膀',
+    g: { phy: 6, sta: 4, hea: 2, fanRep: 8 }, b: { phy: -2, inj: 10 } },
+  { n: '土耳其火槍兵的遠射', for: 'PRO', once: true, weight: 0.2,
+    cond: s => LV[s.club.lv].region === 'EUR',
+    acts: ['先練腳背觸球', '每天五十球', '比賽裡直接開火'],
+    gt: '三十碼外，球在他腳下像被點燃一樣',
+    bt: '你射了十七次，十六次飛出球場',
+    g: { fin: 6, phy: 3, pac: 2, fanRep: 7 }, b: { fin: -3, fanRep: -4 } },
+  { n: '台灣隊長的更衣室課', for: 'PRO', once: true, weight: 0.25,
+    cond: s => s.player.nation === 'TW' || s.player.natlPick === 'TW',
+    acts: ['安靜觀察', '學著開口', '主動接下責任'],
+    gt: '「在這裡當隊長，要先讓大家相信這件事值得做。」',
+    bt: '你想學他，但沒有人聽你的',
+    g: { vis: 5, pas: 3, sta: 2, fanRep: 12 }, b: { fanRep: -8 },
+    fx: (s, win, api) => { if (win && s.player.age >= 24) api.unlock('captain'); } },
+  { n: '阿根廷風之子的節奏', for: 'PRO', once: true, weight: 0.2,
+    cond: s => LV[s.club.lv].region === 'SAM' || s.player.nation === 'AR',
+    acts: ['練變速跑', '跟著他帶球', '在對抗中硬過'],
+    gt: '他不是跑得比較快，是他知道什麼時候該慢下來',
+    bt: '你只學會了快，沒學會慢',
+    g: { dri: 6, pac: 4, vis: 2, fanRep: 7 }, b: { dri: -2 } },
+  { n: '韓國三肺的跑動課', for: 'PRO', once: true, weight: 0.22,
+    cond: s => LV[s.club.lv].region === 'ASIA' || s.player.nation === 'KR',
+    acts: ['照隊上的量', '跟著他跑滿全場', '賽後再加練'],
+    gt: '別人跑十公里，他跑十三公里，而且第九十分鐘還在衝',
+    bt: '你跟了兩個月，然後過度訓練',
+    g: { sta: 7, def: 3, pac: 2, fanRep: 6 }, b: { sta: -4, inj: 10 } },
+  { n: '德國獅王的指揮', for: 'GK', once: true, weight: 0.28,
+    acts: ['觀摩站位', '接受指揮訓練', '整季由你喊防線'],
+    gt: '「門將不是最後一道防線，是第一個發動的人。」',
+    bt: '你喊錯了兩次，後衛開始不聽你的',
+    g: { pos: 6, aer: 4, lng: 3, fanRep: 8 }, b: { pos: -3, fanRep: -5 } },
+  { n: '法國槍王的跑位', for: 'PRO', once: true, weight: 0.2,
+    cond: s => LV[s.club.lv].region === 'EUR' || s.player.nation === 'FR',
+    acts: ['看錄影學跑位', '跟著練無球移動', '整季照他的方式跑'],
+    gt: '他在越位線上待了九十分鐘，然後只用了一次就贏下比賽',
+    bt: '你越位了十一次',
+    g: { fin: 6, vis: 4, pac: 2, fanRep: 7 }, b: { fin: -2, fanRep: -4 } },
+  { n: '法國忍者龜的攔截', for: 'PRO', once: true, weight: 0.2,
+    cond: s => LV[s.club.lv].region === 'EUR' || s.player.nation === 'FR',
+    acts: ['練基本站位', '跟著練搶斷時機', '整季貼身盯人'],
+    gt: '他不用鏟球，因為球總是自己滾到他腳下',
+    bt: '你搶了十次，犯規八次',
+    g: { def: 7, sta: 3, phy: 2, fanRep: 6 }, b: { def: -2, inj: 8 } },
+  { n: '西班牙小白的第一腳觸球', for: 'PRO', once: true, weight: 0.2,
+    cond: s => LV[s.club.lv].region === 'EUR' || s.player.nation === 'ES',
+    acts: ['練停球', '練接球轉身', '在逼搶中練'],
+    gt: '「第一腳決定了下一腳。」他接球的方向永遠已經是出球的方向',
+    bt: '你在逼搶中丟了太多球，信心掉了',
+    g: { pas: 6, vis: 4, dri: 3, fanRep: 7 }, b: { pas: -3, fanRep: -3 } },
+  { n: '葡萄牙山羊的自我要求', for: 'PRO', once: true, weight: 0.18,
+    cond: s => LV[s.club.lv].region === 'EUR' || s.player.nation === 'PT',
+    acts: ['跟著練', '照他的作息過一季', '把整個生活方式換掉'],
+    gt: '他的訓練沒有什麼祕密，只是每一天都做到最後一組',
+    bt: '你撐了三個月，然後回到原本的作息',
+    g: { fin: 5, phy: 4, sta: 4, pac: 2, fanRep: 12 }, b: { sta: -3, fanRep: -5 } },
 
   { n: '伴侶與隊友的背叛', for: 'PRO', once: true, weight: 0.18,
     cond: s => s.player.age >= 24 && s.career.fanRep >= 40,
