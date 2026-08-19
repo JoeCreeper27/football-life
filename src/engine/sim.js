@@ -29,9 +29,9 @@ export function dValue(s) {
 }
 
 const STYLE = {
-  '全場壓迫': { d: 1.4, out: 1.08, load: 1.25 },
+  '全場壓迫': { d: 1.4, out: 1.08, load: 1.45 },
   '標準':     { d: 0, out: 1.00, load: 1.00 },
-  '節省體力': { d: -1.4, out: 0.94, load: 0.70 },
+  '節省體力': { d: -1.4, out: 0.94, load: 0.62 },
 };
 
 export function simSeason(s, rng) {
@@ -84,7 +84,7 @@ export function injuryRisk(s) {
   let risk = CONF.baseInjury + p.injury.nextRisk + (s._extraRisk || 0);
   risk += c.minutes * 6;
   if (p.age >= 33) risk += 10; else if (p.age >= 30) risk += 5;
-  if (p.style === '全場壓迫') risk += 4;
+  if (p.style === '全場壓迫') risk += 9;
   if (p.traits.glass) risk = Math.max(risk, 40);
   if (p.traits.iron) risk = Math.min(risk, 10);
   return clamp(risk, 3, 75);

@@ -16,7 +16,11 @@ export function createState(seed, { name, number, group, nation = 'TW', origin =
   const rng = new Rng(seed);
   const keys = GROUP_ABIL[group];
   const nat = NATIONS[nation] || NATIONS.TW;
+  // 有些國家沒有移民這條路，防呆一律落回本地
+  if (origin === 'immigrant' && nat.noImmigrant) origin = 'local';
   const org = ORIGINS[origin] || ORIGINS.local;
+  // 該國本地／混血出身的潛力加成
+  const natPot = nat.potBonus && origin !== 'immigrant' ? nat.potBonus : 0;
 
   // 體型開局隨機，影響初始值與潛力上限（不是玩家選的）
   const build = rng.pick(BUILD_ROLL);
@@ -51,7 +55,7 @@ export function createState(seed, { name, number, group, nation = 'TW', origin =
   const pot = {};
   shuffled.forEach((k, i) => {
     const [lo, hi] = BAND[Math.min(i, BAND.length - 1)];
-    pot[k] = clamp(Math.round(rng.int(lo, hi) + talent * 24 + nat.dev + buildPot(k)), 25, MAX_ABIL);
+    pot[k] = clamp(Math.round(rng.int(lo, hi) + talent * 24 + nat.dev + natPot + buildPot(k)), 25, MAX_ABIL);
   });
   pot[shuffled[0]] = clamp(pot[shuffled[0]] + org.potTop, 35, MAX_ABIL);
 
@@ -82,7 +86,7 @@ export function createState(seed, { name, number, group, nation = 'TW', origin =
       arch: null, archEvolved: null, archSwitched: false,
       decay: {},
       traits: {}, removed: [],
-      injury: { load: 0, aclCount: 0, bigCount: 0, nextRisk: 0, rehab: 0, seasonFactor: 1 },
+      injury: { load: 0, aclCount: 0, bigCount: 0, nextRisk: 0, rehab: 0, restNext: 0, seasonFactor: 1 },
       service: 0,
       style: '標準',
     },
@@ -103,6 +107,8 @@ export function createState(seed, { name, number, group, nation = 'TW', origin =
       clubTally: {},
       pool: 0,
       fromAcademy: false,
+      wentUni: false,
+      coach: null,
       fanRep: CONF.fanRepStart,
       seenEvents: [],
       clubHistory: [],
@@ -257,8 +263,13 @@ export function subAb(p, k, points) {
 
 /** 依目前位置（未定位則取該大類的預設位置）算加權綜合 */
 export function ovr(p) {
-  const dp = p.dpos || defaultPos(p.group);
-  const w = POS_WEIGHT[dp];
+  return ovrAt(p, p.dpos || defaultPos(p.group));
+}
+
+/** 如果改踢某個位置，綜合評價會是多少 —— 位置轉型判斷用 */
+export function ovrAt(p, dpos) {
+  const w = POS_WEIGHT[dpos];
+  if (!w) return 0;
   let v = 0;
   for (const k in w) v += (p.ab[k] ?? 30) * w[k];
   return Math.round(v);

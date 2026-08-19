@@ -3,12 +3,13 @@ import {
   LV, CLUBS, YOUTH_CLUBS, TIER, DPOS, EVENTS, TRAITS, ABIL, CONF, POS_GROUP,
   NATIONS, ORIGINS, REGION, MAX_TIER, leaguesAt,
   ARCHETYPE, ARCH_SWITCH, ROLE_RANK, SQUAD, PHYSICAL, PHYSICAL_LOCK_AGE, growthPhase, STAGE_TRAIN,
+  POS_WEIGHT,
   BUILD,
   trainingTable, trainingFor,
 } from './data.js';
 import {
   rngOf, syncCursor, addAb, subAb, abCost, ovr, defaultPos, posQualified, squadGap,
-  nationOf, regionOf, isHomeLeague, isAbroad, ageWindow, isGrowable, addFanRep,
+  nationOf, regionOf, isHomeLeague, isAbroad, ageWindow, isGrowable, addFanRep, ovrAt,
 } from './state.js';
 import {
   rollMinutes, simSeason, injuryRisk, accrueLoad, loadCap,
@@ -127,6 +128,7 @@ function diceSpec(s, rng) {
   if (p.traits.benched) n -= 1;
   if (p.origin === 'immigrant' && p.age <= 15) n -= 1;   // 適應期
   if (s._diceDebuff) { n -= s._diceDebuff; s._diceDebuff = undefined; }
+  if (p.injury.restNext) { n -= 1; p.injury.restNext = 0; }   // 上季受傷，季前要先養
   return {
     n: Math.max(1, n),
     lo: p.traits.golden ? Math.max(g.lo, 4) : g.lo,
@@ -245,9 +247,9 @@ STEPS.PRE_STYLE = (s, ctx, input) => {
     return ask(s, {
       type: 'choice', title: '本季踢法',
       options: [
-        { v: '全場壓迫', t: '全場壓迫', s: '表現 +1、產能 +8%｜身體負荷 ×1.25' },
+        { v: '全場壓迫', t: '全場壓迫', s: '表現 +1、產能 +8%｜受傷率 +9、負荷 ×1.45' },
         { v: '標準', t: '標準', s: '標準表現與負荷', main: true },
-        { v: '節省體力', t: '節省體力', s: '表現 −1｜負荷 ×0.7，延長生涯' },
+        { v: '節省體力', t: '節省體力', s: '表現 −1｜負荷 ×0.62，延長生涯' },
       ],
     }, 'PRE_STYLE');
   }
@@ -470,18 +472,34 @@ STEPS.MID_INJURY = (s, ctx) => {
 
   const risk = injuryRisk(s);
   if (ctx.rng.chance(risk)) {
-    const big = ctx.rng.chance(p.age >= 32 ? 24 : 13);
-    if (big) {
+    // 三級傷勢：輕傷只是休息、中傷砍數據、重傷報銷整季並留下後遺症
+    const roll = ctx.rng.int(1, 100);
+    const bigLine = p.age >= 32 ? 22 : 12;
+    if (roll <= bigLine) {
       p.injury.bigCount++;
       p.injury.seasonFactor = 0;
-      subAb(p, 'pac', 7); subAb(p, 'sta', 4);
-      card(ctx, 'bad', '重傷', `一次落地讓整個賽季結束。速度 ${dn(-7)}、體能 ${dn(-4)}。`);
+      subAb(p, 'pac', 10); subAb(p, 'sta', 6); subAb(p, 'phy', 3);
+      p.injury.restNext = 1;
+      card(ctx, 'bad', '重傷',
+        `一次落地讓整個賽季結束。速度 ${dn(-10)}、體能 ${dn(-6)}、對抗 ${dn(-3)}。<br>` +
+        `復健要一整年，回來之後身體不會跟以前一樣。`);
       if (p.age < 30 && p.injury.bigCount >= 2) unlock(s, ctx, 'glass');
       s.career.counters.ironStreak = 0;
+    } else if (roll <= bigLine + 42) {
+      const weeks = ctx.rng.int(5, 12);
+      p.injury.seasonFactor = clamp(1 - weeks / 32, 0.35, 0.92);
+      subAb(p, 'sta', 2);
+      card(ctx, 'bad', ctx.rng.pick(['肌肉拉傷', '腿後肌拉傷', '鼠蹊部傷勢']),
+        `缺陣約 ${weeks} 週。本季出場與數據都會打折，體能 ${dn(-2)}。`);
+      s.career.counters.ironStreak = 0;
     } else {
-      const weeks = ctx.rng.int(4, 10);
-      p.injury.seasonFactor = clamp(1 - weeks / 34, 0.4, 0.95);
-      card(ctx, 'bad', '傷勢', `肌肉拉傷，缺陣約 ${weeks} 週。本季出場與數據都會打折。`);
+      // 輕傷：能力不掉，但要休息，下一季少一次訓練
+      const weeks = ctx.rng.int(2, 5);
+      p.injury.seasonFactor = clamp(1 - weeks / 40, 0.85, 0.97);
+      p.injury.restNext = 1;
+      card(ctx, 'info', ctx.rng.pick(['腳踝扭傷', '膝蓋挫傷', '腳趾骨裂', '背部僵硬']),
+        `缺陣約 ${weeks} 週。能力沒有受損，但接下來得先養傷 ——<br>` +
+        `下個季前少一次訓練。`);
       s.career.counters.ironStreak = 0;
     }
   } else {
@@ -626,7 +644,7 @@ STEPS.END_ARCH_EVO = (s, ctx, input) => {
     const to = ARCHETYPE[sw.to];
     if (input === undefined) {
       return ask(s, {
-        type: 'choice', title: `位置會議：${a.n} 已經跑不動了`,
+        type: 'choice', title: `打法會議：${a.n} 已經跑不動了`,
         options: [
           { v: 'switch', t: `轉型為 ${to.n}`, main: true,
             s: `${sw.t}｜主修改為 ${to.major.map(k => ABIL[k]).join('、')}、潛力 +3、生涯延長` },
@@ -786,7 +804,7 @@ STEPS.END_INTL = (s, ctx) => {
 /** 混血限定：18 歲決定代表哪一國，這一步會改寫整個世界盃劇本 */
 STEPS.END_NATION = (s, ctx, input) => {
   const p = s.player;
-  if (p.natlPicked || !p.altNation || p.age < 18) { s.step = 'END_MOVE'; return; }
+  if (p.natlPicked || !p.altNation || p.age < 18) { s.step = 'END_POS'; return; }
   const home = NATIONS[p.nation], alt = NATIONS[p.altNation];
   if (input === undefined) {
     return ask(s, {
@@ -806,6 +824,71 @@ STEPS.END_NATION = (s, ctx, input) => {
     unlock(s, ctx, 'naturalized');
   } else {
     card(ctx, '', '國籍抉擇', `你選擇留在 ${hl(home.n)} 代表隊。這裡才是家。`);
+  }
+  s.step = 'END_POS';
+};
+
+/**
+ * 位置轉型：能力長歪了就換個位置踢。
+ * 邊鋒掉速轉前腰、後衛長出傳球轉後腰、中場長出對抗轉中鋒支點 ——
+ * 這是「能力發展決定你是什麼球員」而不是反過來。
+ */
+STEPS.END_POS = (s, ctx, input) => {
+  const p = s.player;
+  const cd = s.career.counters.posSwitch || 0;
+  if (!isPro(s) || !p.dpos || p.group === 'GK' || p.age < 21 || s.career.year - cd < 4) {
+    s.step = 'END_SERVICE'; return;
+  }
+  const cur = ovr(p);
+  const alt = Object.keys(DPOS)
+    .filter(k => k !== 'GK' && k !== p.dpos)
+    .map(k => ({ k, v: ovrAt(p, k) }))
+    .sort((a, b) => b.v - a.v)[0];
+  if (!alt || alt.v < cur + 3) { s.step = 'END_SERVICE'; return; }
+
+  // 轉型是賭注，不是免費升級：年紀越大越難改，原型不合更難
+  const arch = ARCHETYPE[p.arch];
+  const fit = arch && arch.pos.includes(alt.k);
+  const odds = clamp(80 - Math.max(0, p.age - 25) * 5 + (fit ? 8 : 0), 30, 88);
+
+  if (input === undefined) {
+    return ask(s, {
+      type: 'choice', title: `位置會議：教練想把你改踢 ${DPOS[alt.k].n}`,
+      options: [
+        { v: 'try', t: `接受轉型（成功率 ${odds}%）`, warn: true,
+          s: `成功可到綜合 ${alt.v} 上下；失敗則白費半個賽季，位置也回不去` },
+        { v: 'keep', t: `繼續踢 ${DPOS[p.dpos].n}`, main: true,
+          s: `守住現在的綜合 ${cur}，不冒險` },
+      ],
+    }, 'END_POS');
+  }
+
+  s.career.counters.posSwitch = s.career.year;
+  if (input !== 'try') {
+    card(ctx, '', '位置會議', `你選擇繼續踢 ${hl(DPOS[p.dpos].n)}。熟悉的位置，熟悉的跑位。`);
+    s.step = 'END_SERVICE'; return;
+  }
+
+  if (ctx.rng.chance(odds)) {
+    const from = DPOS[p.dpos].n;
+    p.dpos = alt.k;
+    if (!fit && p.arch) { p.arch = null; p.archEvolved = null; }
+    // 適應良好：新位置最吃重的能力再長一點
+    const key = Object.entries(POS_WEIGHT[alt.k]).sort((a, b) => b[1] - a[1])[0][0];
+    const got = addAb(p, key, ctx.rng.int(2, 5));
+    unlock(s, ctx, 'secondwind');
+    card(ctx, 'gold', `位置轉型成功：${from} → ${DPOS[alt.k].n}`,
+      `新的跑位一開始很陌生，但你的身體記住了。綜合 ${hl(cur)} → ${hl(ovr(p))}` +
+      (got ? `，${ABIL[key]} ${up(got)}` : '') +
+      (fit ? '' : '<br>原本的原型不再適用，下個賽季結束後會重新確立。'));
+  } else {
+    // 失敗：試了半季還是回到原位，而且這半季白費了
+    p.injury.seasonFactor = Math.min(p.injury.seasonFactor, 0.75);
+    s.club.minutes = clamp(s.club.minutes - 0.12, 0, 0.95);
+    addFanRep(s, -5);
+    card(ctx, 'bad', '轉型失敗',
+      `教練試了半個賽季，最後還是把你放回 ${hl(DPOS[p.dpos].n)}。` +
+      `<br>那半季你兩個位置都沒踢好，出場時間與狀態都受影響。`);
   }
   s.step = 'END_SERVICE';
 };
@@ -984,12 +1067,19 @@ STEPS.END_MOVE = (s, ctx, input) => {
         s: `${where(p, id)}・下修舞台，換取出場時間與數據`,
       });
     }
-    if (p.age >= 30) options.push({ v: 'retire', t: '高掛球鞋', warn: true, s: '就此結束球員生涯' });
+    if (p.age >= 30) {
+      options.push({ v: 'retire', t: '高掛球鞋', warn: true, s: '就此結束球員生涯' });
+      if (coachQualified(s)) {
+        options.push({ v: 'coach', t: '掛靴轉任教練', warn: true,
+          s: `直接接下教鞭（成功率 ${coachOdds(s)}%）｜成功大幅提升收入與聲望，失敗則黯然離開` });
+      }
+    }
 
     return ask(s, { type: 'choice', title: '轉會窗開啟', options }, 'END_MOVE');
   }
 
   if (input === 'retire') return retire(s, ctx, '在還踢得動的時候，自己選擇了告別。');
+  if (input === 'coach') return turnCoach(s, ctx);
   s._forceMove = undefined;
 
   const sep = input.indexOf(':');
@@ -1044,8 +1134,14 @@ STEPS.END_MOVE = (s, ctx, input) => {
 
 function moveTo(s, lv, clubTier, rng, ctx) {
   const pool = CLUBS[lv];
-  const cands = pool.filter(x => x.t === clubTier);
-  const list = cands.length ? cands : pool;
+  // 候選太少就放寬到相鄰等級，並且盡量不要立刻回到同一支球隊 ——
+  // 否則低階聯賽每個等級只有一兩支，玩家會一直看到同一個隊名
+  let list = pool.filter(x => x.t === clubTier && x.n !== s.club.club);
+  if (list.length < 2) {
+    list = pool.filter(x => Math.abs(x.t - clubTier) <= 1 && x.n !== s.club.club);
+  }
+  if (!list.length) list = pool.filter(x => x.n !== s.club.club);
+  if (!list.length) list = pool;
   const chosen = rng ? rng.pick(list) : list[0];
 
   // 離開一支球隊時結算球迷聲望：夠高就永遠留在那座球場的記憶裡
@@ -1134,6 +1230,7 @@ function graduate(s, ctx, input) {
   }
   if (input === 'uni') {
     s.club.stage = 'UNI'; s.club.lv = 'UNI'; s.club.stageYear = 1;
+    s.career.wentUni = true;
     s.club.club = ctx.rng.pick(YOUTH_CLUBS.UNI[nat.region]);
     card(ctx, 'info', '進入大學', `你選擇了 ${hl(s.club.club)}，繼續在校隊磨練。`);
   } else {
@@ -1162,6 +1259,61 @@ STEPS.YEAR_ADVANCE = (s, ctx, input) => {
   s.career.year++;
   s.step = 'YEAR_START';
 };
+
+/* ---------------- 轉任教練 ---------------- */
+
+/**
+ * 帶得動人不等於踢得好：看的是閱讀比賽的能力、更衣室地位與學歷，
+ * 而不是速度或射門。
+ */
+function coachQualified(s) {
+  const p = s.player;
+  const brain = Math.max(p.ab.vis ?? 0, p.ab.pas ?? 0, p.ab.pos ?? 0);
+  return brain >= 68 || !!p.traits.captain || !!s.career.wentUni;
+}
+
+function coachOdds(s) {
+  const p = s.player;
+  const brain = Math.max(p.ab.vis ?? 0, p.ab.pas ?? 0, p.ab.pos ?? 0);
+  let v = 34;
+  v += clamp((brain - 62) * 0.9, 0, 22);          // 閱讀比賽的能力
+  if (p.traits.captain) v += 15;                  // 帶過更衣室
+  if (s.career.wentUni) v += 10;                  // 唸過書、懂得表達
+  if (p.traits.tempo) v += 5;
+  if (p.traits.cancer) v -= 20;                   // 更衣室毒瘤沒人敢用
+  v += clamp((s.career.fanRep - 50) * 0.2, -10, 12);
+  return Math.round(clamp(v, 20, 90));
+}
+
+function turnCoach(s, ctx) {
+  const p = s.player;
+  const odds = coachOdds(s);
+  const win = ctx.rng.chance(odds);
+  const base = annualSalary(s) || 200;
+
+  if (win) {
+    const years = ctx.rng.int(6, 14);
+    const pay = Math.round(base * 0.5 * years);
+    s.career.salaryTotal += pay;
+    addFanRep(s, 18);
+    s.career.honors.push(`${s.career.year} 起執教 ${years} 年`);
+    s.career.coach = { win: true, years, pay };
+    unlock(s, ctx, 'gaffer');
+    card(ctx, 'gold', '掛靴轉任教練',
+      `你把球鞋收進櫃子，換上西裝站到場邊。` +
+      `<br>執教 ${hl(years)} 年，教練生涯收入 ${hl(fmtMoney(pay))}，球迷聲望 ${up(18)}。`);
+    return retire(s, ctx, '以教練的身分留在了這項運動裡。');
+  }
+
+  const pay = Math.round(base * 0.5 * 2);
+  s.career.salaryTotal += pay;
+  addFanRep(s, -12);
+  s.career.coach = { win: false, years: 2, pay };
+  card(ctx, 'bad', '執教失敗',
+    `兩個賽季、一次降級，然後是那通電話。` +
+    `<br>球員時代的名聲沒能換成教練的權威，聲望 ${dn(-12)}。`);
+  return retire(s, ctx, '教鞭只拿了兩年就被收走，你離開了這項運動。');
+}
 
 /* ---------------- 引退與傳奇評分 ---------------- */
 function retire(s, ctx, reason) {
@@ -1230,6 +1382,7 @@ function retire(s, ctx, reason) {
     removed: p.removed,
     natlTeam: (NATIONS[p.natlPick] || nationOf(p)).n,
     abroadSeasons: s.career.seasons.filter(x => x.abroad).length,
+    coach: s.career.coach || null,
     seasons: s.career.seasons.length,
     honors: s.career.honors,
     caps: s.career.caps, intlGoals: s.career.intlGoals,
