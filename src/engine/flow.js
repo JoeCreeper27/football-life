@@ -3,6 +3,7 @@ import {
   LV, CLUBS, YOUTH_CLUBS, TIER, DPOS, EVENTS, TRAITS, ABIL, CONF, POS_GROUP,
   NATIONS, ORIGINS, REGION, MAX_TIER, leaguesAt,
   ARCHETYPE, ARCH_SWITCH, ROLE_RANK, SQUAD, PHYSICAL, PHYSICAL_LOCK_AGE, growthPhase, STAGE_TRAIN,
+  POS_WEIGHT,
   BUILD,
   trainingTable, trainingFor,
 } from './data.js';
@@ -643,7 +644,7 @@ STEPS.END_ARCH_EVO = (s, ctx, input) => {
     const to = ARCHETYPE[sw.to];
     if (input === undefined) {
       return ask(s, {
-        type: 'choice', title: `位置會議：${a.n} 已經跑不動了`,
+        type: 'choice', title: `打法會議：${a.n} 已經跑不動了`,
         options: [
           { v: 'switch', t: `轉型為 ${to.n}`, main: true,
             s: `${sw.t}｜主修改為 ${to.major.map(k => ABIL[k]).join('、')}、潛力 +3、生涯延長` },
@@ -835,7 +836,7 @@ STEPS.END_NATION = (s, ctx, input) => {
 STEPS.END_POS = (s, ctx, input) => {
   const p = s.player;
   const cd = s.career.counters.posSwitch || 0;
-  if (!isPro(s) || !p.dpos || p.group === 'GK' || p.age < 23 || s.career.year - cd < 4) {
+  if (!isPro(s) || !p.dpos || p.group === 'GK' || p.age < 21 || s.career.year - cd < 4) {
     s.step = 'END_SERVICE'; return;
   }
   const cur = ovr(p);
@@ -843,32 +844,51 @@ STEPS.END_POS = (s, ctx, input) => {
     .filter(k => k !== 'GK' && k !== p.dpos)
     .map(k => ({ k, v: ovrAt(p, k) }))
     .sort((a, b) => b.v - a.v)[0];
-  if (!alt || alt.v < cur + 4) { s.step = 'END_SERVICE'; return; }
+  if (!alt || alt.v < cur + 3) { s.step = 'END_SERVICE'; return; }
+
+  // 轉型是賭注，不是免費升級：年紀越大越難改，原型不合更難
+  const arch = ARCHETYPE[p.arch];
+  const fit = arch && arch.pos.includes(alt.k);
+  const odds = clamp(80 - Math.max(0, p.age - 25) * 5 + (fit ? 8 : 0), 30, 88);
 
   if (input === undefined) {
     return ask(s, {
-      type: 'choice', title: '位置會議：教練覺得你可以改踢別的位置',
+      type: 'choice', title: `位置會議：教練想把你改踢 ${DPOS[alt.k].n}`,
       options: [
-        { v: 'switch', t: `改踢 ${DPOS[alt.k].n}`, main: true,
-          s: `你的能力更適合這裡（綜合 ${cur} → ${alt.v}）｜薪資係數 ×${DPOS[alt.k].sal.toFixed(2)}` },
-        { v: 'keep', t: `繼續踢 ${DPOS[p.dpos].n}`,
-          s: '熟悉的位置，熟悉的跑位' },
+        { v: 'try', t: `接受轉型（成功率 ${odds}%）`, warn: true,
+          s: `成功可到綜合 ${alt.v} 上下；失敗則白費半個賽季，位置也回不去` },
+        { v: 'keep', t: `繼續踢 ${DPOS[p.dpos].n}`, main: true,
+          s: `守住現在的綜合 ${cur}，不冒險` },
       ],
     }, 'END_POS');
   }
 
   s.career.counters.posSwitch = s.career.year;
-  if (input === 'switch') {
+  if (input !== 'try') {
+    card(ctx, '', '位置會議', `你選擇繼續踢 ${hl(DPOS[p.dpos].n)}。熟悉的位置，熟悉的跑位。`);
+    s.step = 'END_SERVICE'; return;
+  }
+
+  if (ctx.rng.chance(odds)) {
     const from = DPOS[p.dpos].n;
     p.dpos = alt.k;
-    const arch = ARCHETYPE[p.arch];
-    const keep = arch && arch.pos.includes(alt.k);
-    if (!keep && p.arch) { p.arch = null; p.archEvolved = null; }
-    card(ctx, 'gold', `位置轉型：${from} → ${DPOS[alt.k].n}`,
-      `教練把你往${alt.k === 'CB' || alt.k === 'DM' ? '後' : '前'}挪了一條線。綜合評價 ${hl(cur)} → ${hl(alt.v)}。` +
-      (keep ? '' : '<br>原本的原型不再適用，下個賽季結束後會重新確立。'));
+    if (!fit && p.arch) { p.arch = null; p.archEvolved = null; }
+    // 適應良好：新位置最吃重的能力再長一點
+    const key = Object.entries(POS_WEIGHT[alt.k]).sort((a, b) => b[1] - a[1])[0][0];
+    const got = addAb(p, key, ctx.rng.int(2, 5));
+    unlock(s, ctx, 'secondwind');
+    card(ctx, 'gold', `位置轉型成功：${from} → ${DPOS[alt.k].n}`,
+      `新的跑位一開始很陌生，但你的身體記住了。綜合 ${hl(cur)} → ${hl(ovr(p))}` +
+      (got ? `，${ABIL[key]} ${up(got)}` : '') +
+      (fit ? '' : '<br>原本的原型不再適用，下個賽季結束後會重新確立。'));
   } else {
-    card(ctx, '', '位置會議', `你選擇繼續踢 ${hl(DPOS[p.dpos].n)}。`);
+    // 失敗：試了半季還是回到原位，而且這半季白費了
+    p.injury.seasonFactor = Math.min(p.injury.seasonFactor, 0.75);
+    s.club.minutes = clamp(s.club.minutes - 0.12, 0, 0.95);
+    addFanRep(s, -5);
+    card(ctx, 'bad', '轉型失敗',
+      `教練試了半個賽季，最後還是把你放回 ${hl(DPOS[p.dpos].n)}。` +
+      `<br>那半季你兩個位置都沒踢好，出場時間與狀態都受影響。`);
   }
   s.step = 'END_SERVICE';
 };
