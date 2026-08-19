@@ -82,7 +82,7 @@ export function createState(seed, { name, number, group, nation = 'TW', origin =
       arch: null, archEvolved: null, archSwitched: false,
       decay: {},
       traits: {}, removed: [],
-      injury: { load: 0, aclCount: 0, bigCount: 0, nextRisk: 0, rehab: 0, seasonFactor: 1 },
+      injury: { load: 0, aclCount: 0, bigCount: 0, nextRisk: 0, rehab: 0, restNext: 0, seasonFactor: 1 },
       service: 0,
       style: '標準',
     },
@@ -257,8 +257,13 @@ export function subAb(p, k, points) {
 
 /** 依目前位置（未定位則取該大類的預設位置）算加權綜合 */
 export function ovr(p) {
-  const dp = p.dpos || defaultPos(p.group);
-  const w = POS_WEIGHT[dp];
+  return ovrAt(p, p.dpos || defaultPos(p.group));
+}
+
+/** 如果改踢某個位置，綜合評價會是多少 —— 位置轉型判斷用 */
+export function ovrAt(p, dpos) {
+  const w = POS_WEIGHT[dpos];
+  if (!w) return 0;
   let v = 0;
   for (const k in w) v += (p.ab[k] ?? 30) * w[k];
   return Math.round(v);

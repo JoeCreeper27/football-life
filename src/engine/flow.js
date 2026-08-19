@@ -8,7 +8,7 @@ import {
 } from './data.js';
 import {
   rngOf, syncCursor, addAb, subAb, abCost, ovr, defaultPos, posQualified, squadGap,
-  nationOf, regionOf, isHomeLeague, isAbroad, ageWindow, isGrowable, addFanRep,
+  nationOf, regionOf, isHomeLeague, isAbroad, ageWindow, isGrowable, addFanRep, ovrAt,
 } from './state.js';
 import {
   rollMinutes, simSeason, injuryRisk, accrueLoad, loadCap,
@@ -127,6 +127,7 @@ function diceSpec(s, rng) {
   if (p.traits.benched) n -= 1;
   if (p.origin === 'immigrant' && p.age <= 15) n -= 1;   // 適應期
   if (s._diceDebuff) { n -= s._diceDebuff; s._diceDebuff = undefined; }
+  if (p.injury.restNext) { n -= 1; p.injury.restNext = 0; }   // 上季受傷，季前要先養
   return {
     n: Math.max(1, n),
     lo: p.traits.golden ? Math.max(g.lo, 4) : g.lo,
@@ -245,9 +246,9 @@ STEPS.PRE_STYLE = (s, ctx, input) => {
     return ask(s, {
       type: 'choice', title: '本季踢法',
       options: [
-        { v: '全場壓迫', t: '全場壓迫', s: '表現 +1、產能 +8%｜身體負荷 ×1.25' },
+        { v: '全場壓迫', t: '全場壓迫', s: '表現 +1、產能 +8%｜受傷率 +9、負荷 ×1.45' },
         { v: '標準', t: '標準', s: '標準表現與負荷', main: true },
-        { v: '節省體力', t: '節省體力', s: '表現 −1｜負荷 ×0.7，延長生涯' },
+        { v: '節省體力', t: '節省體力', s: '表現 −1｜負荷 ×0.62，延長生涯' },
       ],
     }, 'PRE_STYLE');
   }
@@ -470,18 +471,34 @@ STEPS.MID_INJURY = (s, ctx) => {
 
   const risk = injuryRisk(s);
   if (ctx.rng.chance(risk)) {
-    const big = ctx.rng.chance(p.age >= 32 ? 24 : 13);
-    if (big) {
+    // 三級傷勢：輕傷只是休息、中傷砍數據、重傷報銷整季並留下後遺症
+    const roll = ctx.rng.int(1, 100);
+    const bigLine = p.age >= 32 ? 22 : 12;
+    if (roll <= bigLine) {
       p.injury.bigCount++;
       p.injury.seasonFactor = 0;
-      subAb(p, 'pac', 7); subAb(p, 'sta', 4);
-      card(ctx, 'bad', '重傷', `一次落地讓整個賽季結束。速度 ${dn(-7)}、體能 ${dn(-4)}。`);
+      subAb(p, 'pac', 10); subAb(p, 'sta', 6); subAb(p, 'phy', 3);
+      p.injury.restNext = 1;
+      card(ctx, 'bad', '重傷',
+        `一次落地讓整個賽季結束。速度 ${dn(-10)}、體能 ${dn(-6)}、對抗 ${dn(-3)}。<br>` +
+        `復健要一整年，回來之後身體不會跟以前一樣。`);
       if (p.age < 30 && p.injury.bigCount >= 2) unlock(s, ctx, 'glass');
       s.career.counters.ironStreak = 0;
+    } else if (roll <= bigLine + 42) {
+      const weeks = ctx.rng.int(5, 12);
+      p.injury.seasonFactor = clamp(1 - weeks / 32, 0.35, 0.92);
+      subAb(p, 'sta', 2);
+      card(ctx, 'bad', ctx.rng.pick(['肌肉拉傷', '腿後肌拉傷', '鼠蹊部傷勢']),
+        `缺陣約 ${weeks} 週。本季出場與數據都會打折，體能 ${dn(-2)}。`);
+      s.career.counters.ironStreak = 0;
     } else {
-      const weeks = ctx.rng.int(4, 10);
-      p.injury.seasonFactor = clamp(1 - weeks / 34, 0.4, 0.95);
-      card(ctx, 'bad', '傷勢', `肌肉拉傷，缺陣約 ${weeks} 週。本季出場與數據都會打折。`);
+      // 輕傷：能力不掉，但要休息，下一季少一次訓練
+      const weeks = ctx.rng.int(2, 5);
+      p.injury.seasonFactor = clamp(1 - weeks / 40, 0.85, 0.97);
+      p.injury.restNext = 1;
+      card(ctx, 'info', ctx.rng.pick(['腳踝扭傷', '膝蓋挫傷', '腳趾骨裂', '背部僵硬']),
+        `缺陣約 ${weeks} 週。能力沒有受損，但接下來得先養傷 ——<br>` +
+        `下個季前少一次訓練。`);
       s.career.counters.ironStreak = 0;
     }
   } else {
@@ -786,7 +803,7 @@ STEPS.END_INTL = (s, ctx) => {
 /** 混血限定：18 歲決定代表哪一國，這一步會改寫整個世界盃劇本 */
 STEPS.END_NATION = (s, ctx, input) => {
   const p = s.player;
-  if (p.natlPicked || !p.altNation || p.age < 18) { s.step = 'END_MOVE'; return; }
+  if (p.natlPicked || !p.altNation || p.age < 18) { s.step = 'END_POS'; return; }
   const home = NATIONS[p.nation], alt = NATIONS[p.altNation];
   if (input === undefined) {
     return ask(s, {
@@ -806,6 +823,52 @@ STEPS.END_NATION = (s, ctx, input) => {
     unlock(s, ctx, 'naturalized');
   } else {
     card(ctx, '', '國籍抉擇', `你選擇留在 ${hl(home.n)} 代表隊。這裡才是家。`);
+  }
+  s.step = 'END_POS';
+};
+
+/**
+ * 位置轉型：能力長歪了就換個位置踢。
+ * 邊鋒掉速轉前腰、後衛長出傳球轉後腰、中場長出對抗轉中鋒支點 ——
+ * 這是「能力發展決定你是什麼球員」而不是反過來。
+ */
+STEPS.END_POS = (s, ctx, input) => {
+  const p = s.player;
+  const cd = s.career.counters.posSwitch || 0;
+  if (!isPro(s) || !p.dpos || p.group === 'GK' || p.age < 23 || s.career.year - cd < 4) {
+    s.step = 'END_SERVICE'; return;
+  }
+  const cur = ovr(p);
+  const alt = Object.keys(DPOS)
+    .filter(k => k !== 'GK' && k !== p.dpos)
+    .map(k => ({ k, v: ovrAt(p, k) }))
+    .sort((a, b) => b.v - a.v)[0];
+  if (!alt || alt.v < cur + 4) { s.step = 'END_SERVICE'; return; }
+
+  if (input === undefined) {
+    return ask(s, {
+      type: 'choice', title: '位置會議：教練覺得你可以改踢別的位置',
+      options: [
+        { v: 'switch', t: `改踢 ${DPOS[alt.k].n}`, main: true,
+          s: `你的能力更適合這裡（綜合 ${cur} → ${alt.v}）｜薪資係數 ×${DPOS[alt.k].sal.toFixed(2)}` },
+        { v: 'keep', t: `繼續踢 ${DPOS[p.dpos].n}`,
+          s: '熟悉的位置，熟悉的跑位' },
+      ],
+    }, 'END_POS');
+  }
+
+  s.career.counters.posSwitch = s.career.year;
+  if (input === 'switch') {
+    const from = DPOS[p.dpos].n;
+    p.dpos = alt.k;
+    const arch = ARCHETYPE[p.arch];
+    const keep = arch && arch.pos.includes(alt.k);
+    if (!keep && p.arch) { p.arch = null; p.archEvolved = null; }
+    card(ctx, 'gold', `位置轉型：${from} → ${DPOS[alt.k].n}`,
+      `教練把你往${alt.k === 'CB' || alt.k === 'DM' ? '後' : '前'}挪了一條線。綜合評價 ${hl(cur)} → ${hl(alt.v)}。` +
+      (keep ? '' : '<br>原本的原型不再適用，下個賽季結束後會重新確立。'));
+  } else {
+    card(ctx, '', '位置會議', `你選擇繼續踢 ${hl(DPOS[p.dpos].n)}。`);
   }
   s.step = 'END_SERVICE';
 };
@@ -1044,8 +1107,14 @@ STEPS.END_MOVE = (s, ctx, input) => {
 
 function moveTo(s, lv, clubTier, rng, ctx) {
   const pool = CLUBS[lv];
-  const cands = pool.filter(x => x.t === clubTier);
-  const list = cands.length ? cands : pool;
+  // 候選太少就放寬到相鄰等級，並且盡量不要立刻回到同一支球隊 ——
+  // 否則低階聯賽每個等級只有一兩支，玩家會一直看到同一個隊名
+  let list = pool.filter(x => x.t === clubTier && x.n !== s.club.club);
+  if (list.length < 2) {
+    list = pool.filter(x => Math.abs(x.t - clubTier) <= 1 && x.n !== s.club.club);
+  }
+  if (!list.length) list = pool.filter(x => x.n !== s.club.club);
+  if (!list.length) list = pool;
   const chosen = rng ? rng.pick(list) : list[0];
 
   // 離開一支球隊時結算球迷聲望：夠高就永遠留在那座球場的記憶裡
