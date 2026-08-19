@@ -261,9 +261,21 @@ export function subAb(p, k, points) {
 
 /* ---------------- 綜合評價 ---------------- */
 
-/** 依目前位置（未定位則取該大類的預設位置）算加權綜合 */
+/**
+ * 依目前位置算加權綜合。
+ * 還沒登錄細分位置時（養成期），取「這身能力最適合的位置」而不是固定的預設位置 ——
+ * 否則一個速度 84、盤帶 75、傳球 72 的前鋒會被當成中鋒評價（射門只有 28），
+ * 綜合從 69 掉到 46，然後在畢業時被判定不夠格。教練會把你放在你最強的位置。
+ */
 export function ovr(p) {
-  return ovrAt(p, p.dpos || defaultPos(p.group));
+  return ovrAt(p, p.dpos || bestPos(p));
+}
+
+/** 這身能力最適合該大類裡的哪個位置 */
+export function bestPos(p) {
+  const cands = Object.keys(DPOS).filter(k => DPOS[k].group === p.group);
+  if (!cands.length) return defaultPos(p.group);
+  return cands.reduce((best, k) => (ovrAt(p, k) > ovrAt(p, best) ? k : best), cands[0]);
 }
 
 /** 如果改踢某個位置，綜合評價會是多少 —— 位置轉型判斷用 */

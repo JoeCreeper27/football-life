@@ -1,11 +1,11 @@
 import { randomSeed } from './engine/rng.js';
 import {
-  createState, ovr, abCost, addAb, defaultPos, isAbroad, SCHEMA_VERSION,
+  createState, ovr, abCost, addAb, defaultPos, bestPos, isAbroad, SCHEMA_VERSION,
 } from './engine/state.js';
 import { run, answer } from './engine/flow.js';
 import {
   ABIL, GROUP_ABIL, POS_GROUP, DPOS, LV, TIER, SQUAD,
-  NATIONS, NATION_ORDER, ORIGINS, REGION, ARCHETYPE, MAX_ABIL, ABIL_SHORT, BUILD,
+  NATIONS, NATION_ORDER, ORIGINS, REGION, ARCHETYPE, MAX_ABIL, ABIL_SHORT, BUILD, POS_WEIGHT,
 } from './engine/data.js';
 import { fmtMoney } from './engine/sim.js';
 
@@ -131,7 +131,8 @@ function board() {
   const roleName = (SQUAD.find(r => r.k === c.role) || {}).n || '';
   const archName = ARCHETYPE[p.arch]?.n;
   $('bd-sub').textContent =
-    `${NATIONS[p.nation].n}・${BUILD[p.build]?.n || ''}・${archName || (p.dpos ? DPOS[p.dpos].n : POS_GROUP[p.group])}` +
+    `${NATIONS[p.nation].n}・${BUILD[p.build]?.n || ''}・` +
+    `${archName || (p.dpos ? DPOS[p.dpos].n : DPOS[bestPos(p)].n + '（適性）')}` +
     (c.stage === 'PRO' ? `・${roleName}・出場率 ${Math.round(c.minutes * 100)}%` : '');
   const tier = c.stage === 'PRO' ? `（${TIER[c.tier].n}）` : '';
   const away = c.stage === 'PRO' && isAbroad(S) ? ' ✈' : '';
@@ -169,10 +170,14 @@ function renderAbils() {
     return `<line x1="${CX}" y1="${CY}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--line)" stroke-width="1"/>`;
   }).join('');
   // 縮寫 + 數值；潛力上限不畫在圖上，改到展開的細項裡看
+  // 標出哪些能力計入目前位置的綜合評價 —— 不標的話玩家會練了一堆不算分的東西
+  const counted = POS_WEIGHT[p.dpos || bestPos(p)] || {};
   const labels = keys.map((k, i) => {
     const [x, y] = pt(i, R + 13);
+    const on = counted[k] !== undefined;
     return `<text x="${x.toFixed(1)}" y="${(y + 3).toFixed(1)}" text-anchor="middle" font-size="9"
-      fill="var(--dim)">${ABIL_SHORT[k] || ABIL[k]}<tspan fill="var(--ink)" font-weight="700">${p.ab[k]}</tspan></text>`;
+      fill="${on ? 'var(--amber)' : 'var(--dim)'}" opacity="${on ? 1 : .45}">` +
+      `${ABIL_SHORT[k] || ABIL[k]}<tspan fill="${on ? 'var(--ink)' : 'var(--dim)'}" font-weight="700">${p.ab[k]}</tspan></text>`;
   }).join('');
 
   box.innerHTML =
@@ -193,11 +198,13 @@ function renderAbilDetail() {
   box.hidden = !detailOpen;
   if (!detailOpen) return;
   const p = S.player;
-  box.innerHTML = `<div class="sheet"><h4>能力細項　${p.name}・${p.age} 歲</h4>` +
+  const cw = POS_WEIGHT[p.dpos || bestPos(p)] || {};
+  box.innerHTML = `<div class="sheet"><h4>能力細項　${p.name}・${p.age} 歲` +
+    `<small style="color:var(--dim);font-weight:400">　（★ = 計入 ${DPOS[p.dpos || bestPos(p)].n} 的綜合）</small></h4>` +
     GROUP_ABIL[p.group].map(k => {
       const v = p.ab[k], pk = p.pot[k] ?? 70;
-      return `<div class="abrow">` +
-        `<span class="nm">${ABIL[k]}</span>` +
+      return `<div class="abrow"${cw[k] === undefined ? ' style="opacity:.5"' : ''}>` +
+        `<span class="nm">${ABIL[k]}${cw[k] !== undefined ? '<small style="color:var(--amber)">★</small>' : ''}</span>` +
         `<span class="bar"><i style="width:${v / MAX_ABIL * 100}%"></i>` +
         `<em style="left:${pk / MAX_ABIL * 100}%"></em></span>` +
         `<span class="val">${v}<small>/${pk}</small></span></div>`;
