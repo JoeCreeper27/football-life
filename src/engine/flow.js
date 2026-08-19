@@ -376,6 +376,19 @@ function raisePot(s, ctx, table, mag) {
     p.pot[k] = clamp(p.pot[k] + amt, 25, MAX_ABIL);
     if (p.pot[k] !== before) parts.push(`${ABIL[k]} 上限 ${up(p.pot[k] - before)}`);
   }
+
+  // 跟著大師學到的不只是那一招：其餘能力的天花板也一起往上挪。
+  // 只抬 1~2 項的話，加權平均帶不動 —— 實測峰值只差 1.7 分，等於沒有發生。
+  const blanket = Math.max(1, Math.round(3 * (mag / 2)));
+  let lifted = 0;
+  for (const k of Object.keys(p.pot)) {
+    if (table && table[k] !== undefined) continue;
+    const before = p.pot[k];
+    p.pot[k] = clamp(p.pot[k] + blanket, 25, MAX_ABIL);
+    if (p.pot[k] !== before) lifted++;
+  }
+  if (lifted) parts.push(`其餘 ${lifted} 項 ${up(blanket)}`);
+
   if (parts.length) {
     card(ctx, 'gold', '天賦被打開了',
       `${parts.join('、')}。<br>你原本以為的極限，往上挪了。`);

@@ -168,13 +168,13 @@ export const LV = {
   UNI:     { n: '大學足球隊',       tier: 0, par: 52, min: 0, g: 20, amateur: true },
 
   /* --- T1 半職業／業餘頂點 --- */
-  TPFL:   { n: '台灣企業足球聯賽', tier: 1, region: 'ASIA', par: 55, min: 50, g: 27, base: 60, coef: 20, top: 'HOME' },
-  JFL:    { n: '日本足球聯賽',     tier: 1, region: 'ASIA', par: 55, min: 50, g: 30, base: 70, coef: 24, top: 'HOME' },
-  K4:     { n: 'K4 聯賽',          tier: 1, region: 'ASIA', par: 55, min: 50, g: 28, base: 65, coef: 22, top: 'HOME' },
-  USL2:   { n: '美國業餘聯賽',     tier: 1, region: 'NAM',  par: 55, min: 50, g: 24, base: 75, coef: 24, top: 'HOME' },
-  EUR_D5: { n: '歐洲第五級聯賽',   tier: 1, region: 'EUR',  par: 55, min: 50, g: 34, base: 70, coef: 24, top: 'HOME' },
-  SAM_D3: { n: '南美地區聯賽',     tier: 1, region: 'SAM',  par: 55, min: 50, g: 26, base: 50, coef: 18, top: 'HOME' },
-  AFR_D3: { n: '非洲地區聯賽',     tier: 1, region: 'AFR',  par: 55, min: 50, g: 26, base: 45, coef: 16, top: 'HOME' },
+  TPFL:   { n: '台灣企業足球聯賽', tier: 1, region: 'ASIA', par: 55, min: 45, g: 27, base: 60, coef: 20, top: 'HOME' },
+  JFL:    { n: '日本足球聯賽',     tier: 1, region: 'ASIA', par: 55, min: 45, g: 30, base: 70, coef: 24, top: 'HOME' },
+  K4:     { n: 'K4 聯賽',          tier: 1, region: 'ASIA', par: 55, min: 45, g: 28, base: 65, coef: 22, top: 'HOME' },
+  USL2:   { n: '美國業餘聯賽',     tier: 1, region: 'NAM',  par: 55, min: 45, g: 24, base: 75, coef: 24, top: 'HOME' },
+  EUR_D5: { n: '歐洲第五級聯賽',   tier: 1, region: 'EUR',  par: 55, min: 45, g: 34, base: 70, coef: 24, top: 'HOME' },
+  SAM_D3: { n: '南美地區聯賽',     tier: 1, region: 'SAM',  par: 55, min: 45, g: 26, base: 50, coef: 18, top: 'HOME' },
+  AFR_D3: { n: '非洲地區聯賽',     tier: 1, region: 'AFR',  par: 55, min: 45, g: 26, base: 45, coef: 16, top: 'HOME' },
 
   /* --- T2 低階職業 --- */
   J3:     { n: 'J3 聯賽',          tier: 2, region: 'ASIA', par: 61, min: 63, g: 38, base: 180, coef: 60 },
@@ -194,27 +194,27 @@ export const LV = {
   BRA_B:  { n: '巴西乙級聯賽',     tier: 3, region: 'SAM',  par: 66, min: 72, g: 38, base: 380, coef: 135 },
 
   /* --- T4 洲際頂級 --- */
-  J1:     { n: 'J1 聯賽',              tier: 4, region: 'ASIA', par: 71, min: 80, g: 38, base: 1100, coef: 420, top: 'TOP' },
-  K1:     { n: 'K1 聯賽',              tier: 4, region: 'ASIA', par: 71, min: 80, g: 38, base: 1000, coef: 400, top: 'TOP' },
-  MLS:    { n: '美國職業足球大聯盟',   tier: 4, region: 'NAM',  par: 71, min: 80, g: 34, base: 1500, coef: 520, top: 'TOP' },
-  BRA_A:  { n: '巴西甲級聯賽',         tier: 4, region: 'SAM',  par: 71, min: 80, g: 38, base: 900,  coef: 360, top: 'TOP' },
-  ARG_A:  { n: '阿根廷甲級聯賽',       tier: 4, region: 'SAM',  par: 71, min: 80, g: 30, base: 800,  coef: 330, top: 'TOP' },
+  J1:     { n: 'J1 聯賽',              tier: 4, region: 'ASIA', par: 71, min: 82, g: 38, base: 1100, coef: 420, top: 'TOP' },
+  K1:     { n: 'K1 聯賽',              tier: 4, region: 'ASIA', par: 71, min: 82, g: 38, base: 1000, coef: 400, top: 'TOP' },
+  MLS:    { n: '美國職業足球大聯盟',   tier: 4, region: 'NAM',  par: 71, min: 82, g: 34, base: 1500, coef: 520, top: 'TOP' },
+  BRA_A:  { n: '巴西甲級聯賽',         tier: 4, region: 'SAM',  par: 71, min: 82, g: 38, base: 900,  coef: 360, top: 'TOP' },
+  ARG_A:  { n: '阿根廷甲級聯賽',       tier: 4, region: 'SAM',  par: 71, min: 82, g: 30, base: 800,  coef: 330, top: 'TOP' },
 
   /* --- T5 歐洲跳板 --- */
-  POR:     { n: '葡萄牙超級聯賽',   tier: 5, region: 'EUR', par: 75, min: 81, g: 34, base: 1800, coef: 720, top: 'EUR2' },
-  NED:     { n: '荷蘭甲級聯賽',     tier: 5, region: 'EUR', par: 75, min: 81, g: 34, base: 1900, coef: 760, top: 'EUR2' },
-  EUR_SPR: { n: '歐洲跳板聯賽',     tier: 5, region: 'EUR', par: 75, min: 81, g: 34, base: 1600, coef: 700, top: 'EUR2' },
+  POR:     { n: '葡萄牙超級聯賽',   tier: 5, region: 'EUR', par: 75, min: 84, g: 34, base: 1800, coef: 720, top: 'EUR2' },
+  NED:     { n: '荷蘭甲級聯賽',     tier: 5, region: 'EUR', par: 75, min: 84, g: 34, base: 1900, coef: 760, top: 'EUR2' },
+  EUR_SPR: { n: '歐洲跳板聯賽',     tier: 5, region: 'EUR', par: 75, min: 84, g: 34, base: 1600, coef: 700, top: 'EUR2' },
 
   /* --- T6 五大次級 --- */
-  CHAMP: { n: '英式次級聯賽',   tier: 6, region: 'EUR', par: 77, min: 83, g: 46, base: 2600, coef: 900, top: 'EUR2' },
-  EU_D2: { n: '歐陸次級聯賽',   tier: 6, region: 'EUR', par: 77, min: 83, g: 38, base: 2300, coef: 850, top: 'EUR2' },
+  CHAMP: { n: '英式次級聯賽',   tier: 6, region: 'EUR', par: 77, min: 86, g: 46, base: 2600, coef: 900, top: 'EUR2' },
+  EU_D2: { n: '歐陸次級聯賽',   tier: 6, region: 'EUR', par: 77, min: 86, g: 38, base: 2300, coef: 850, top: 'EUR2' },
 
   /* --- T7 五大聯賽 --- */
-  ENG: { n: '英格蘭超級聯賽', tier: 7, region: 'EUR', par: 80, min: 85, g: 38, base: 4600, coef: 3200, top: 'BIG5' },
-  ESP: { n: '西班牙甲級聯賽', tier: 7, region: 'EUR', par: 80, min: 85, g: 38, base: 4400, coef: 3100, top: 'BIG5' },
-  GER: { n: '德國甲級聯賽',   tier: 7, region: 'EUR', par: 80, min: 85, g: 34, base: 4200, coef: 3000, top: 'BIG5' },
-  ITA: { n: '義大利甲級聯賽', tier: 7, region: 'EUR', par: 80, min: 85, g: 38, base: 3900, coef: 2900, top: 'BIG5' },
-  FRA: { n: '法國甲級聯賽',   tier: 7, region: 'EUR', par: 80, min: 85, g: 34, base: 3800, coef: 2800, top: 'BIG5' },
+  ENG: { n: '英格蘭超級聯賽', tier: 7, region: 'EUR', par: 80, min: 88, g: 38, base: 4600, coef: 3200, top: 'BIG5' },
+  ESP: { n: '西班牙甲級聯賽', tier: 7, region: 'EUR', par: 80, min: 88, g: 38, base: 4400, coef: 3100, top: 'BIG5' },
+  GER: { n: '德國甲級聯賽',   tier: 7, region: 'EUR', par: 80, min: 88, g: 34, base: 4200, coef: 3000, top: 'BIG5' },
+  ITA: { n: '義大利甲級聯賽', tier: 7, region: 'EUR', par: 80, min: 88, g: 38, base: 3900, coef: 2900, top: 'BIG5' },
+  FRA: { n: '法國甲級聯賽',   tier: 7, region: 'EUR', par: 80, min: 88, g: 34, base: 3800, coef: 2800, top: 'BIG5' },
 };
 
 export const MAX_TIER = 7;
