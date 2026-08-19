@@ -1067,12 +1067,19 @@ STEPS.END_MOVE = (s, ctx, input) => {
         s: `${where(p, id)}・下修舞台，換取出場時間與數據`,
       });
     }
-    if (p.age >= 30) options.push({ v: 'retire', t: '高掛球鞋', warn: true, s: '就此結束球員生涯' });
+    if (p.age >= 30) {
+      options.push({ v: 'retire', t: '高掛球鞋', warn: true, s: '就此結束球員生涯' });
+      if (coachQualified(s)) {
+        options.push({ v: 'coach', t: '掛靴轉任教練', warn: true,
+          s: `直接接下教鞭（成功率 ${coachOdds(s)}%）｜成功大幅提升收入與聲望，失敗則黯然離開` });
+      }
+    }
 
     return ask(s, { type: 'choice', title: '轉會窗開啟', options }, 'END_MOVE');
   }
 
   if (input === 'retire') return retire(s, ctx, '在還踢得動的時候，自己選擇了告別。');
+  if (input === 'coach') return turnCoach(s, ctx);
   s._forceMove = undefined;
 
   const sep = input.indexOf(':');
@@ -1223,6 +1230,7 @@ function graduate(s, ctx, input) {
   }
   if (input === 'uni') {
     s.club.stage = 'UNI'; s.club.lv = 'UNI'; s.club.stageYear = 1;
+    s.career.wentUni = true;
     s.club.club = ctx.rng.pick(YOUTH_CLUBS.UNI[nat.region]);
     card(ctx, 'info', '進入大學', `你選擇了 ${hl(s.club.club)}，繼續在校隊磨練。`);
   } else {
@@ -1251,6 +1259,61 @@ STEPS.YEAR_ADVANCE = (s, ctx, input) => {
   s.career.year++;
   s.step = 'YEAR_START';
 };
+
+/* ---------------- 轉任教練 ---------------- */
+
+/**
+ * 帶得動人不等於踢得好：看的是閱讀比賽的能力、更衣室地位與學歷，
+ * 而不是速度或射門。
+ */
+function coachQualified(s) {
+  const p = s.player;
+  const brain = Math.max(p.ab.vis ?? 0, p.ab.pas ?? 0, p.ab.pos ?? 0);
+  return brain >= 68 || !!p.traits.captain || !!s.career.wentUni;
+}
+
+function coachOdds(s) {
+  const p = s.player;
+  const brain = Math.max(p.ab.vis ?? 0, p.ab.pas ?? 0, p.ab.pos ?? 0);
+  let v = 34;
+  v += clamp((brain - 62) * 0.9, 0, 22);          // 閱讀比賽的能力
+  if (p.traits.captain) v += 15;                  // 帶過更衣室
+  if (s.career.wentUni) v += 10;                  // 唸過書、懂得表達
+  if (p.traits.tempo) v += 5;
+  if (p.traits.cancer) v -= 20;                   // 更衣室毒瘤沒人敢用
+  v += clamp((s.career.fanRep - 50) * 0.2, -10, 12);
+  return Math.round(clamp(v, 20, 90));
+}
+
+function turnCoach(s, ctx) {
+  const p = s.player;
+  const odds = coachOdds(s);
+  const win = ctx.rng.chance(odds);
+  const base = annualSalary(s) || 200;
+
+  if (win) {
+    const years = ctx.rng.int(6, 14);
+    const pay = Math.round(base * 0.5 * years);
+    s.career.salaryTotal += pay;
+    addFanRep(s, 18);
+    s.career.honors.push(`${s.career.year} 起執教 ${years} 年`);
+    s.career.coach = { win: true, years, pay };
+    unlock(s, ctx, 'gaffer');
+    card(ctx, 'gold', '掛靴轉任教練',
+      `你把球鞋收進櫃子，換上西裝站到場邊。` +
+      `<br>執教 ${hl(years)} 年，教練生涯收入 ${hl(fmtMoney(pay))}，球迷聲望 ${up(18)}。`);
+    return retire(s, ctx, '以教練的身分留在了這項運動裡。');
+  }
+
+  const pay = Math.round(base * 0.5 * 2);
+  s.career.salaryTotal += pay;
+  addFanRep(s, -12);
+  s.career.coach = { win: false, years: 2, pay };
+  card(ctx, 'bad', '執教失敗',
+    `兩個賽季、一次降級，然後是那通電話。` +
+    `<br>球員時代的名聲沒能換成教練的權威，聲望 ${dn(-12)}。`);
+  return retire(s, ctx, '教鞭只拿了兩年就被收走，你離開了這項運動。');
+}
 
 /* ---------------- 引退與傳奇評分 ---------------- */
 function retire(s, ctx, reason) {
@@ -1319,6 +1382,7 @@ function retire(s, ctx, reason) {
     removed: p.removed,
     natlTeam: (NATIONS[p.natlPick] || nationOf(p)).n,
     abroadSeasons: s.career.seasons.filter(x => x.abroad).length,
+    coach: s.career.coach || null,
     seasons: s.career.seasons.length,
     honors: s.career.honors,
     caps: s.career.caps, intlGoals: s.career.intlGoals,

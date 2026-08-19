@@ -1110,6 +1110,7 @@ export const TRAITS = {
   naturalized: { n: '歸化之路', tone: 'gold', fx: '選擇代表另一個國家出賽' },
   secondwind: { n: '第二春',   tone: 'gold', fx: '成功轉型，生涯延長並重新拿回主力位置' },
   idol:     { n: '看台之神',   tone: 'gold', fx: '球迷聲望 ≥90，這座球場永遠記得你' },
+  gaffer:   { n: '名帥',       tone: 'gold', fx: '掛靴後成功轉任教練，以另一種方式留在場邊' },
   glass:    { n: '玻璃人',     tone: 'bad',  fx: '受傷機率下限 40%' },
   benched:  { n: '板凳生涯',   tone: 'bad',  fx: '能力成長停滯，季初擲骰 −1 顆' },
   cancer:   { n: '更衣室毒瘤', tone: 'bad',  fx: '轉會機率大增、續約條件惡化',

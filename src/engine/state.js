@@ -103,6 +103,8 @@ export function createState(seed, { name, number, group, nation = 'TW', origin =
       clubTally: {},
       pool: 0,
       fromAcademy: false,
+      wentUni: false,
+      coach: null,
       fanRep: CONF.fanRepStart,
       seenEvents: [],
       clubHistory: [],

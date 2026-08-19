@@ -418,6 +418,10 @@ function settlement() {
       `<div>國家隊 ${r.caps} 場、進球 ${r.intlGoals}` +
       `${r.worldCups.length ? `｜<b class="hl">世界盃 ${r.worldCups.join('、')}</b>` : ''}</div>` +
       `<div>生涯薪資 <b class="hl">${fmtMoney(r.salary)}</b></div>` +
+      (r.coach ? `<div style="margin-top:6px;color:${r.coach.win ? 'var(--gold)' : 'var(--dn)'}">` +
+        (r.coach.win
+          ? `執教生涯 ${r.coach.years} 年・教練收入 ${fmtMoney(r.coach.pay)}`
+          : `轉任教練 ${r.coach.years} 年後下台`) + `</div>` : '') +
       (r.shirtRetired ? `<div style="margin-top:6px;color:var(--gold)">★ 球衣退休・球場外立像 ★</div>` : '') +
       (r.legends?.length ? `<div style="margin-top:6px">這些球場永遠記得你：${r.legends.join('、')}</div>` : '') +
       (r.traits.length ? `<div style="margin-top:6px">特性：${r.traits.join('、')}</div>` : '') +
