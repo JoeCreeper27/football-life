@@ -1,7 +1,7 @@
 import { clamp } from './rng.js';
 import {
   LV, CLUBS, YOUTH_CLUBS, TIER, DPOS, EVENTS, TRAITS, ABIL, CONF, POS_GROUP,
-  NATIONS, ORIGINS, REGION, MAX_TIER, leaguesAt,
+  NATIONS, ORIGINS, REGION, MAX_TIER, MAX_ABIL, leaguesAt,
   ARCHETYPE, ARCH_SWITCH, ROLE_RANK, SQUAD, PHYSICAL, PHYSICAL_LOCK_AGE, growthPhase, STAGE_TRAIN,
   POS_WEIGHT,
   BUILD,
@@ -363,6 +363,25 @@ function drawEvent(s, rng) {
 }
 
 /** 套用效果表；能力、受傷率與球迷聲望走同一張表 */
+/**
+ * 抬高天賦上限。這是傳奇球星指導與一般訓練最大的差別 ——
+ * 一般事件只是往天花板底下填，這種機遇是把天花板本身推高。
+ */
+function raisePot(s, ctx, table, mag) {
+  const p = s.player, parts = [];
+  for (const [k, v] of Object.entries(table || {})) {
+    if (!(k in p.pot)) continue;
+    const amt = Math.max(1, Math.round(v * (mag / 2)));
+    const before = p.pot[k];
+    p.pot[k] = clamp(p.pot[k] + amt, 25, MAX_ABIL);
+    if (p.pot[k] !== before) parts.push(`${ABIL[k]} 上限 ${up(p.pot[k] - before)}`);
+  }
+  if (parts.length) {
+    card(ctx, 'gold', '天賦被打開了',
+      `${parts.join('、')}。<br>你原本以為的極限，往上挪了。`);
+  }
+}
+
 function applyEffects(s, ctx, table, mag, win) {
   const p = s.player, parts = [];
   for (const [k, v] of Object.entries(table)) {
@@ -448,6 +467,7 @@ STEPS.MID_EVENTS = (s, ctx, input) => {
   const parts = applyEffects(s, ctx, win ? ev.g : ev.b, mag, win);
   card(ctx, win ? 'good' : 'bad', `${ev.n}｜${win ? '成功' : '失敗'}`,
     `${win ? ev.gt : ev.bt}<br>${parts.join('、') || '沒有明顯影響'}`);
+  if (win && ev.gpot) raisePot(s, ctx, ev.gpot, mag);
   if (ev.fx) ev.fx(s, win, api);
 
   if (!win && ev.n === '社群媒體風波' && ctx.rng.chance(40)) unlock(s, ctx, 'socialko');
