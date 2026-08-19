@@ -1,6 +1,6 @@
 import { clamp } from './rng.js';
 import { LV, TIER, SQUAD, POS_WEIGHT, POS_OUTPUT, DPOS, CONF, ARCHETYPE, DECLINE, TECHNICAL, MAX_ABIL } from './data.js';
-import { ovr, squadGap, defaultPos, isAbroad } from './state.js';
+import { ovr, squadGap, defaultPos, bestPos, isAbroad } from './state.js';
 
 /* ---------------- 陣中地位與出場時間 ---------------- */
 
@@ -21,7 +21,7 @@ export function rollMinutes(s, rng) {
 /** 能力聚合減聯賽基準：整個模擬的支點 */
 export function dValue(s) {
   const p = s.player;
-  const dp = p.dpos || defaultPos(p.group);
+  const dp = p.dpos || bestPos(p);
   const w = POS_WEIGHT[dp];
   let q = 0;
   for (const k in w) q += (p.ab[k] ?? 30) * w[k];
@@ -41,7 +41,7 @@ export function simSeason(s, rng) {
   // 球迷聲望透過主場氣氛回饋到表現上（±2）
   const fanBoost = (s.career.fanRep - 50) / 19;
   const d = dValue(s) + st.d + fanBoost;
-  const dp = p.dpos || defaultPos(p.group);
+  const dp = p.dpos || bestPos(p);
   const base = POS_OUTPUT[dp];
   const arch = ARCHETYPE[p.arch];
   const out = arch
@@ -111,7 +111,7 @@ export function annualSalary(s) {
   const L = LV[s.club.lv];
   if (!L.base) return 0;
   const d = dValue(s);
-  const posCoef = DPOS[s.player.dpos || defaultPos(s.player.group)].sal;
+  const posCoef = DPOS[s.player.dpos || bestPos(s.player)].sal;
   const tierCoef = TIER[s.club.tier].sal;
   // 高聲望是談判籌碼，低聲望球會會想把你賣掉
   const fanCoef = s.career.fanRep >= 75 ? 1.1 : s.career.fanRep <= 25 ? 0.9 : 1;

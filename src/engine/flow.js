@@ -9,7 +9,7 @@ import {
 } from './data.js';
 import {
   rngOf, syncCursor, addAb, subAb, abCost, ovr, defaultPos, posQualified, squadGap,
-  nationOf, regionOf, isHomeLeague, isAbroad, ageWindow, isGrowable, addFanRep, ovrAt,
+  nationOf, regionOf, isHomeLeague, isAbroad, ageWindow, isGrowable, addFanRep, ovrAt, bestPos,
 } from './state.js';
 import {
   rollMinutes, simSeason, injuryRisk, accrueLoad, loadCap,
@@ -587,7 +587,7 @@ STEPS.MID_SEASON = (s, ctx) => {
 
 /** 這個位置能登記的原型，依目前能力分布排出契合度 */
 function archCandidates(p) {
-  const dp = p.dpos || defaultPos(p.group);
+  const dp = p.dpos || bestPos(p);
   const all = Object.entries(ARCHETYPE).filter(([, a]) => a.pos.includes(dp));
   const fit = ([, a]) => a.major.reduce((sum, k) => sum + (p.ab[k] ?? 0), 0) / a.major.length;
   const ok = all.filter(([, a]) => a.req(p)).sort((x, y) => fit(y) - fit(x));
