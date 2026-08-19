@@ -86,7 +86,7 @@ export function createState(seed, { name, number, group, nation = 'TW', origin =
       arch: null, archEvolved: null, archSwitched: false,
       decay: {},
       traits: {}, removed: [],
-      injury: { load: 0, aclCount: 0, bigCount: 0, nextRisk: 0, rehab: 0, restNext: 0, seasonFactor: 1 },
+      injury: { load: 0, aclCount: 0, bigCount: 0, nextRisk: 0, rehab: 0, restNext: 0, lingering: 0, seasonFactor: 1 },
       service: 0,
       style: '標準',
     },

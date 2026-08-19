@@ -1,7 +1,7 @@
 import { clamp } from './rng.js';
 import {
   LV, CLUBS, YOUTH_CLUBS, TIER, DPOS, EVENTS, TRAITS, ABIL, CONF, POS_GROUP,
-  NATIONS, ORIGINS, REGION, MAX_TIER, leaguesAt,
+  NATIONS, ORIGINS, REGION, MAX_TIER, MAX_ABIL, leaguesAt,
   ARCHETYPE, ARCH_SWITCH, ROLE_RANK, SQUAD, PHYSICAL, PHYSICAL_LOCK_AGE, growthPhase, STAGE_TRAIN,
   POS_WEIGHT,
   BUILD,
@@ -84,6 +84,14 @@ STEPS.PRE_DECLINE = (s, ctx) => {
   p.injury.seasonFactor = 1;
 
   if (p.age >= CONF.retireAge) { return retire(s, ctx, '身體已到極限，賽季前宣布掛靴。'); }
+
+  // 重傷隔年：人回來了，狀態還沒
+  if (p.injury.lingering) {
+    p.injury.lingering = 0;
+    p.injury.seasonFactor = 0.72;
+    card(ctx, 'bad', '狀態還沒回來',
+      '傷是好了，但那種「身體會自己反應」的感覺還沒回來。這一季會很辛苦。');
+  }
 
   if (p.service > 0) {
     p.service--;
@@ -363,6 +371,50 @@ function drawEvent(s, rng) {
 }
 
 /** 套用效果表；能力、受傷率與球迷聲望走同一張表 */
+/**
+ * 抬高天賦上限。這是傳奇球星指導與一般訓練最大的差別 ——
+ * 一般事件只是往天花板底下填，這種機遇是把天花板本身推高。
+ */
+/** 壓低天賦上限（重傷專用）。回傳給卡片用的說明文字。 */
+function lowerPot(p, table) {
+  const parts = [];
+  for (const [k, v] of Object.entries(table)) {
+    if (!(k in p.pot)) continue;
+    const before = p.pot[k];
+    p.pot[k] = clamp(p.pot[k] - v, 25, MAX_ABIL);
+    if (p.pot[k] !== before) parts.push(`${ABIL[k]}上限 ${dn(p.pot[k] - before)}`);
+  }
+  return parts.join('、');
+}
+
+function raisePot(s, ctx, table, mag) {
+  const p = s.player, parts = [];
+  for (const [k, v] of Object.entries(table || {})) {
+    if (!(k in p.pot)) continue;
+    const amt = Math.max(1, Math.round(v * (mag / 2)));
+    const before = p.pot[k];
+    p.pot[k] = clamp(p.pot[k] + amt, 25, MAX_ABIL);
+    if (p.pot[k] !== before) parts.push(`${ABIL[k]} 上限 ${up(p.pot[k] - before)}`);
+  }
+
+  // 跟著大師學到的不只是那一招：其餘能力的天花板也一起往上挪。
+  // 只抬 1~2 項的話，加權平均帶不動 —— 實測峰值只差 1.7 分，等於沒有發生。
+  const blanket = Math.max(1, Math.round(2 * (mag / 2)));
+  let lifted = 0;
+  for (const k of Object.keys(p.pot)) {
+    if (table && table[k] !== undefined) continue;
+    const before = p.pot[k];
+    p.pot[k] = clamp(p.pot[k] + blanket, 25, MAX_ABIL);
+    if (p.pot[k] !== before) lifted++;
+  }
+  if (lifted) parts.push(`其餘 ${lifted} 項 ${up(blanket)}`);
+
+  if (parts.length) {
+    card(ctx, 'gold', '天賦被打開了',
+      `${parts.join('、')}。<br>你原本以為的極限，往上挪了。`);
+  }
+}
+
 function applyEffects(s, ctx, table, mag, win) {
   const p = s.player, parts = [];
   for (const [k, v] of Object.entries(table)) {
@@ -448,6 +500,7 @@ STEPS.MID_EVENTS = (s, ctx, input) => {
   const parts = applyEffects(s, ctx, win ? ev.g : ev.b, mag, win);
   card(ctx, win ? 'good' : 'bad', `${ev.n}｜${win ? '成功' : '失敗'}`,
     `${win ? ev.gt : ev.bt}<br>${parts.join('、') || '沒有明顯影響'}`);
+  if (win && ev.gpot) raisePot(s, ctx, ev.gpot, mag);
   if (ev.fx) ev.fx(s, win, api);
 
   if (!win && ev.n === '社群媒體風波' && ctx.rng.chance(40)) unlock(s, ctx, 'socialko');
@@ -474,14 +527,18 @@ STEPS.MID_INJURY = (s, ctx) => {
   if (ctx.rng.chance(risk)) {
     // 三級傷勢：輕傷只是休息、中傷砍數據、重傷報銷整季並留下後遺症
     const roll = ctx.rng.int(1, 100);
-    const bigLine = p.age >= 32 ? 22 : 12;
+    const bigLine = p.age >= 32 ? 26 : 15;
     if (roll <= bigLine) {
       p.injury.bigCount++;
       p.injury.seasonFactor = 0;
-      subAb(p, 'pac', 10); subAb(p, 'sta', 6); subAb(p, 'phy', 3);
+      subAb(p, 'pac', 14); subAb(p, 'sta', 9); subAb(p, 'phy', 5);
+      // 重傷不只是掉能力，是把天花板本身壓下來 —— 爆發力回不到受傷前的水準
+      const capLoss = lowerPot(p, { pac: 7, sta: 5, phy: 3 });
       p.injury.restNext = 1;
+      p.injury.lingering = 1;   // 隔年狀態還是回不來
       card(ctx, 'bad', '重傷',
-        `一次落地讓整個賽季結束。速度 ${dn(-10)}、體能 ${dn(-6)}、對抗 ${dn(-3)}。<br>` +
+        `一次落地讓整個賽季結束。速度 ${dn(-14)}、體能 ${dn(-9)}、對抗 ${dn(-5)}。<br>` +
+        (capLoss ? `而且${capLoss}，這是回不去的。<br>` : '') +
         `復健要一整年，回來之後身體不會跟以前一樣。`);
       if (p.age < 30 && p.injury.bigCount >= 2) unlock(s, ctx, 'glass');
       s.career.counters.ironStreak = 0;
@@ -534,6 +591,7 @@ STEPS.MID_ACL = (s, ctx, input) => {
     const back = ctx.rng.int(4, 11);
     addAb(p, 'pac', back);
     card(ctx, 'bad', '十字韌帶手術', `整季報銷。漫長復健後速度回復 ${up(back)}。`);
+    lowerPot(p, { pac: 6, sta: 3 });
     if (p.injury.aclCount >= 2) {
       Object.keys(p.ab).forEach(k => { if (k === 'pac') p.ab[k] = Math.round(p.ab[k] * 0.55); });
       card(ctx, 'bad', '第二次了', '兩度韌帶重建，爆發力再也回不來。速度直接砍半。');
