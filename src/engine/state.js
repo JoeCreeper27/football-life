@@ -55,7 +55,7 @@ export function createState(seed, { name, number, group, nation = 'TW', origin =
   const pot = {};
   shuffled.forEach((k, i) => {
     const [lo, hi] = BAND[Math.min(i, BAND.length - 1)];
-    pot[k] = clamp(Math.round(rng.int(lo, hi) + talent * 9 + nat.dev + natPot + buildPot(k)),
+    pot[k] = clamp(Math.round(rng.int(lo, hi) + talent * 6 + nat.dev + natPot + buildPot(k)),
       POT_MIN, POT_MAX);
   });
   pot[shuffled[0]] = clamp(pot[shuffled[0]] + org.potTop, POT_MIN, POT_MAX);
@@ -118,7 +118,7 @@ export function createState(seed, { name, number, group, nation = 'TW', origin =
       legends: [],
       counters: {
         six: 0, bold: 0, boldWin: 0, benchStreak: 0, ironStreak: 0,
-        clutch: 0, goodRating: 0, cleanSeasons: 0,
+        clutch: 0, goodRating: 0, cleanSeasons: 0, struggle: 0,
       },
     },
   };
@@ -200,7 +200,7 @@ export function abCost(p, k) {
   // 突破天賦上限不再是天價 —— 擋住你的是衰退，不是成本（見 DECLINE 的 overPull）
   if (cur >= cap) {
     const over = cur - cap;
-    c *= (major ? 1.3 : 1.6) + over * 0.12;
+    c *= (major ? 1.15 : 1.35) + over * 0.055;
   }
   c *= growthPhase(p.age).cost;
   // 26 歲之後體能類練得動但很吃力，技術類不受影響

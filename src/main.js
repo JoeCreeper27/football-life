@@ -286,7 +286,7 @@ function renderTrain({ title, note, dice, fixed, options, extra }) {
       const skip = document.createElement('button');
       skip.className = 'btn main';
       skip.style.textAlign = 'center';
-      skip.textContent = '不加練，好好休息 ▸';
+      skip.innerHTML = '不加練，好好休息 ▸<small>這季多一次際遇（可能是機會，也可能是麻煩）</small>';
       skip.onclick = () => { chosenExtra = null; submit(); };
       a.appendChild(skip);
     }
