@@ -53,6 +53,15 @@ body{margin:0;padding:0;min-height:100vh;background:var(--bg);color:var(--ink);
   padding:14px;width:100%;max-width:360px;max-height:86vh;overflow-y:auto}
 #abils-detail h4{margin:0 0 8px;font-size:13px;color:var(--amber)}
 #abils-detail .abrow{cursor:default;padding:4px 8px;margin:2px 0}
+/* 分享圖浮層：同樣要用 fixed，且作者樣式的 display:flex 要補回 [hidden] */
+#share-ov{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.85);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:16px}
+#share-ov[hidden]{display:none}
+#share-ov img{max-width:min(100%,360px);max-height:72vh;border-radius:12px;
+  border:1px solid var(--line);box-shadow:0 8px 40px rgba(0,0,0,.6)}
+#share-ov .tip{font-size:11px;color:var(--dim);text-align:center;line-height:1.6}
+#share-ov .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+#share-ov .btn{width:auto;padding:8px 16px;text-align:center}
 .radar-key{text-align:center;font-size:10px;color:var(--dim);margin-top:4px}
 /* 已指派的訓練項目：飽和度逐級加深 */
 .btn.picked{color:#0b1a10}
@@ -178,6 +187,7 @@ th{color:var(--dim);font-weight:400}
 </div>
 <!-- 能力細項用固定浮層：放在文件流裡會被 scrollBottom() 捲出畫面 -->
 <div id="abils-detail" hidden></div>
+<div id="share-ov" hidden></div>
 <script type="module" src="./src/main.js"></script>
 </body>
 </html>

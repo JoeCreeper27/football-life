@@ -3,7 +3,7 @@ import {
   GROUP_ABIL, YOUTH_CLUBS, CONF, DPOS, POS_WEIGHT, LV, TIER,
   NATIONS, NATION_ORDER, ORIGINS, ARCHETYPE, SYNERGY, SYNERGY_GK, MAX_ABIL,
   BUILD, BUILD_ROLL, BUILD_ADJ,
-  growthPhase, PHYSICAL, PHYSICAL_HARD_AGE, PHYSICAL_LOCK_AGE,
+  growthPhase, PHYSICAL, PHYSICAL_HARD_AGE, POT_MIN, POT_MAX, POT_STA_MIN, PAC_LOCK_AGE,
 } from './data.js';
 
 export const SCHEMA_VERSION = '0.4.0';
@@ -50,14 +50,17 @@ export function createState(seed, { name, number, group, nation = 'TW', origin =
   const shuffled = weightedOrder(rng, keys, w);
 
   const BAND = group === 'GK'
-    ? [[84, 93], [78, 88], [71, 82], [63, 76]]
-    : [[84, 93], [78, 88], [72, 83], [64, 77], [56, 70]];
+    ? [[76, 88], [70, 82], [63, 75], [56, 68]]
+    : [[76, 88], [70, 82], [64, 76], [58, 70], [52, 64]];
   const pot = {};
   shuffled.forEach((k, i) => {
     const [lo, hi] = BAND[Math.min(i, BAND.length - 1)];
-    pot[k] = clamp(Math.round(rng.int(lo, hi) + talent * 24 + nat.dev + natPot + buildPot(k)), 25, MAX_ABIL);
+    pot[k] = clamp(Math.round(rng.int(lo, hi) + talent * 6 + nat.dev + natPot + buildPot(k)),
+      POT_MIN, POT_MAX);
   });
-  pot[shuffled[0]] = clamp(pot[shuffled[0]] + org.potTop, 35, MAX_ABIL);
+  pot[shuffled[0]] = clamp(pot[shuffled[0]] + org.potTop, POT_MIN, POT_MAX);
+  // 體能是「能不能一直踢下去」的底線，不讓它天生就爛到沒得救
+  if ('sta' in pot) pot.sta = Math.max(pot.sta, POT_STA_MIN);
 
   const carry = {};
   keys.forEach(k => (carry[k] = 0));
@@ -115,7 +118,7 @@ export function createState(seed, { name, number, group, nation = 'TW', origin =
       legends: [],
       counters: {
         six: 0, bold: 0, boldWin: 0, benchStreak: 0, ironStreak: 0,
-        clutch: 0, goodRating: 0, cleanSeasons: 0,
+        clutch: 0, goodRating: 0, cleanSeasons: 0, struggle: 0,
       },
     },
   };
@@ -194,20 +197,26 @@ export function abCost(p, k) {
   // 超過潛力上限：越推越貴，而且是加速的。
   // 這條線是天賦差距的守門員 —— 太便宜的話，低天賦球員照樣爬到頂，
   // 天賦分布再寬也會被抹平（實測曾經平均突破 8 分、P95 突破 22 分）。
+  // 突破天賦上限不再是天價 —— 擋住你的是衰退，不是成本（見 DECLINE 的 overPull）
   if (cur >= cap) {
     const over = cur - cap;
-    c *= (major ? 2.6 : 3.6) + over * 1.15;
+    c *= (major ? 1.15 : 1.35) + over * 0.055;
   }
   c *= growthPhase(p.age).cost;
   // 26 歲之後體能類練得動但很吃力，技術類不受影響
-  if (p.age >= PHYSICAL_HARD_AGE && PHYSICAL.includes(k)) c *= 2;
+  if (p.age >= PHYSICAL_HARD_AGE && PHYSICAL.includes(k)) c *= 1.35;
   if (arch && major) c *= 0.7;   // 主修便宜，非主修維持原價（不再加罰）
   return Math.max(1, Math.ceil(c));
 }
 
-/** 體能類 33 歲後練不動；技術類一輩子都還能練 */
-export function isGrowable(p, k) {
-  return !PHYSICAL.includes(k) || p.age < PHYSICAL_LOCK_AGE;
+/**
+ * 沒有能力是「完全練不動」的 —— 掉了都補得回來，只是體能類越老越吃力。
+ * 真正的限制是能不能「突破天賦上限」：速度過了 30 就只能維持，回不到巔峰。
+ */
+export function isGrowable() { return true; }
+
+export function canExceedCap(p, k) {
+  return !(k === 'pac' && p.age >= PAC_LOCK_AGE);
 }
 
 /** 球迷聲望：0–100，負面事件扣得比正面加得兇 */
@@ -226,7 +235,10 @@ export function addAb(p, k, points, spill = true) {
   if (!(k in p.ab)) return 0;
   const before = p.ab[k];
   let budget = points + (p.carry[k] || 0);
-  while (p.ab[k] < MAX_ABIL) {
+  const ceiling = canExceedCap(p, k)
+    ? MAX_ABIL
+    : Math.max(p.ab[k], p.pot[k] ?? MAX_ABIL);   // 已經超過的不會被硬拉回來
+  while (p.ab[k] < ceiling) {
     const cost = abCost(p, k);
     if (budget < cost) break;
     budget -= cost;

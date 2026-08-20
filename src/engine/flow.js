@@ -2,7 +2,7 @@ import { clamp } from './rng.js';
 import {
   LV, CLUBS, YOUTH_CLUBS, TIER, DPOS, EVENTS, TRAITS, ABIL, CONF, POS_GROUP,
   NATIONS, ORIGINS, REGION, MAX_TIER, MAX_ABIL, leaguesAt,
-  ARCHETYPE, ARCH_SWITCH, ROLE_RANK, SQUAD, PHYSICAL, PHYSICAL_LOCK_AGE, growthPhase, STAGE_TRAIN,
+  ARCHETYPE, ARCH_SWITCH, ROLE_RANK, SQUAD, PHYSICAL, PAC_LOCK_AGE, growthPhase, STAGE_TRAIN,
   POS_WEIGHT,
   BUILD,
   trainingTable, trainingFor,
@@ -151,6 +151,9 @@ function trainBoost(s, k) {
   return PHYSICAL.includes(k) ? env.phy : env.tec;
 }
 
+/** 這個階段能不能自主加練（國中與青訓的課表本來就排滿了） */
+const canExtraTrain = s => isPro(s) || s.club.stage === 'HS' || s.club.stage === 'UNI';
+
 STEPS.PRE_DICE = (s, ctx, input) => {
   const p = s.player;
   const env = STAGE_TRAIN[s.club.stage] || STAGE_TRAIN.PRO;
@@ -202,8 +205,8 @@ STEPS.PRE_DICE = (s, ctx, input) => {
           `：成長成本 ×0.7，其餘維持原價。`
         : '18 歲確立原型後，主修訓練會標成黃框。',
       dice: free, fixed, options,
-      // 自主加練：多一次訓練，代價是受傷風險與身體負荷
-      extra: isPro(s) || s.club.stage === 'HS' || s.club.stage === 'UNI',
+      // 自主加練：多一次訓練，代價是受傷風險與身體負荷；不加練則換一次際遇
+      extra: canExtraTrain(s),
     }, 'PRE_DICE');
   }
 
@@ -227,6 +230,9 @@ STEPS.PRE_DICE = (s, ctx, input) => {
   s._extraRisk = 0;
   (input.fixed || []).forEach(f => apply(f.key, f.die));
   (input.picks || []).forEach(pk => apply(pk.key, pk.die));
+
+  // 沒有加練 → 這季多一次際遇。休息不是空手而歸，是把時間花在別的地方
+  s._restBonus = (!input.extra && canExtraTrain(s)) ? 1 : 0;
 
   if (input.extra) {
     const amt = ctx.rng.int(2, 5);
@@ -399,7 +405,7 @@ function raisePot(s, ctx, table, mag) {
 
   // 跟著大師學到的不只是那一招：其餘能力的天花板也一起往上挪。
   // 只抬 1~2 項的話，加權平均帶不動 —— 實測峰值只差 1.7 分，等於沒有發生。
-  const blanket = Math.max(1, Math.round(2 * (mag / 2)));
+  const blanket = Math.max(1, Math.round(7 * (mag / 2)));
   let lifted = 0;
   for (const k of Object.keys(p.pot)) {
     if (table && table[k] !== undefined) continue;
@@ -448,7 +454,14 @@ function carryTxt(p, k) {
 STEPS.MID_EVENTS = (s, ctx, input) => {
   const p = s.player;
   s.phase = 'MIDSEASON';
-  if (s._ev === undefined) s._ev = isPro(s) ? CONF.eventCards : 2;
+  if (s._ev === undefined) {
+    s._ev = (isPro(s) ? CONF.eventCards : 2) + (s._restBonus || 0);
+    if (s._restBonus) {
+      card(ctx, 'info', '沒有留下來加練',
+        '你準時離開訓練場。多出來的時間，讓你遇上了一些別的事。');
+      s._restBonus = 0;
+    }
+  }
 
   if (input === undefined) {
     if (s._ev <= 0 || p.injury.seasonFactor === 0) {
@@ -527,7 +540,7 @@ STEPS.MID_INJURY = (s, ctx) => {
   if (ctx.rng.chance(risk)) {
     // 三級傷勢：輕傷只是休息、中傷砍數據、重傷報銷整季並留下後遺症
     const roll = ctx.rng.int(1, 100);
-    const bigLine = p.age >= 32 ? 26 : 15;
+    const bigLine = p.age >= 32 ? 22 : 12;
     if (roll <= bigLine) {
       p.injury.bigCount++;
       p.injury.seasonFactor = 0;
@@ -751,9 +764,23 @@ function cureTraits(s, ctx) {
   if (p.traits.benched && n.starterRun >= 2) cure('benched');
 }
 
+/**
+ * 在低階聯賽連續掙扎的季數。年輕球員撐不出來就會被足球淘汰 ——
+ * 沒有這條的話，只要不受重傷，每個人都能一路混到 42 歲。
+ */
+function trackStruggle(s) {
+  const L = s.career.seasons[s.career.seasons.length - 1];
+  const n = s.career.counters;
+  if (!isPro(s) || !L) return;
+  const stuck = LV[s.club.lv].tier <= 2 &&
+    (ROLE_RANK[s.club.role] <= 1 || L.rating < 6.2 || L.apps < 6);
+  n.struggle = stuck ? (n.struggle || 0) + 1 : 0;
+}
+
 /* ---------------- 季末 ---------------- */
 STEPS.END_SALARY = (s, ctx) => {
   cureTraits(s, ctx);
+  trackStruggle(s);
   s.phase = 'SEASON_END';
   if (isPro(s)) {
     const sal = annualSalary(s);
@@ -817,7 +844,7 @@ function callThreshold(p) {
   // 法國這種強國要 ~82（等於得是該國最好的那批），台灣約 60。
   // 這條線一定要跟著 LV 的 par 尺度一起移動 —— 寫死絕對值的話，
   // 尺度一改就會變成「強國永遠選不上、弱國人人是國腳」。
-  const base = clamp(nat.natl * 0.40 + 55, 65, 88);
+  const base = clamp(nat.natl * 0.38 + 52, 62, 84);
   const own = p.natlPick === p.nation ? (ORIGINS[p.origin]?.callAdj || 0) : 2;
   return base + own;
 }
@@ -1178,6 +1205,15 @@ STEPS.END_MOVE = (s, ctx, input) => {
       (abroad ? '<br>行李收好，語言之後再學。' : ''));
     if (LV[to].tier === MAX_TIER && !p.traits.pioneer) unlock(s, ctx, 'pioneer');
     if (LV[to].tier >= 4 && s.career.fromAcademy && !p.traits.academy) unlock(s, ctx, 'academy');
+  }
+
+  // 年輕就在低階聯賽連續掙扎 → 被足球淘汰，這是「第二人生」劇本的主要入口
+  if (p.age <= 24 && (s.career.counters.struggle || 0) >= 3 && ctx.rng.chance(38)) {
+    return retire(s, ctx, '連續幾季都沒有人要你上場。最後一通電話沒有打來，你去找了別的工作。');
+  }
+  // 太年輕就重傷，有些人再也沒有回來
+  if (p.age <= 22 && p.injury.bigCount >= 1 && ctx.rng.chance(12)) {
+    return retire(s, ctx, '那次重傷之後，膝蓋再也撐不住訓練量。二十出頭就結束了。');
   }
 
   // 能力跌破底線就被淘汰（不分年齡：這是「第二人生」劇本的入口）

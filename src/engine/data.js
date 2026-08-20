@@ -162,59 +162,59 @@ export const ORIGINS = {
  */
 export const LV = {
   /* --- 養成階段（非職業） --- */
-  JHS:     { n: '國中足球隊',       tier: 0, par: 34, min: 0, g: 12, amateur: true },
-  HS:      { n: '高中校隊',         tier: 0, par: 44, min: 0, g: 18, amateur: true },
-  ACADEMY: { n: '足球學校青訓梯隊', tier: 0, par: 50, min: 0, g: 24, amateur: true },
-  UNI:     { n: '大學足球隊',       tier: 0, par: 52, min: 0, g: 20, amateur: true },
+  JHS:     { n: '國中足球隊',       tier: 0, par: 32, min: 0, g: 12, amateur: true },
+  HS:      { n: '高中校隊',         tier: 0, par: 42, min: 0, g: 18, amateur: true },
+  ACADEMY: { n: '足球學校青訓梯隊', tier: 0, par: 47, min: 0, g: 24, amateur: true },
+  UNI:     { n: '大學足球隊',       tier: 0, par: 49, min: 0, g: 20, amateur: true },
 
   /* --- T1 半職業／業餘頂點 --- */
-  TPFL:   { n: '台灣企業足球聯賽', tier: 1, region: 'ASIA', par: 55, min: 45, g: 27, base: 60, coef: 20, top: 'HOME' },
-  JFL:    { n: '日本足球聯賽',     tier: 1, region: 'ASIA', par: 55, min: 45, g: 30, base: 70, coef: 24, top: 'HOME' },
-  K4:     { n: 'K4 聯賽',          tier: 1, region: 'ASIA', par: 55, min: 45, g: 28, base: 65, coef: 22, top: 'HOME' },
-  USL2:   { n: '美國業餘聯賽',     tier: 1, region: 'NAM',  par: 55, min: 45, g: 24, base: 75, coef: 24, top: 'HOME' },
-  EUR_D5: { n: '歐洲第五級聯賽',   tier: 1, region: 'EUR',  par: 55, min: 45, g: 34, base: 70, coef: 24, top: 'HOME' },
-  SAM_D3: { n: '南美地區聯賽',     tier: 1, region: 'SAM',  par: 55, min: 45, g: 26, base: 50, coef: 18, top: 'HOME' },
-  AFR_D3: { n: '非洲地區聯賽',     tier: 1, region: 'AFR',  par: 55, min: 45, g: 26, base: 45, coef: 16, top: 'HOME' },
+  TPFL:   { n: '台灣企業足球聯賽', tier: 1, region: 'ASIA', par: 52, min: 45, g: 27, base: 60, coef: 20, top: 'HOME' },
+  JFL:    { n: '日本足球聯賽',     tier: 1, region: 'ASIA', par: 52, min: 45, g: 30, base: 70, coef: 24, top: 'HOME' },
+  K4:     { n: 'K4 聯賽',          tier: 1, region: 'ASIA', par: 52, min: 45, g: 28, base: 65, coef: 22, top: 'HOME' },
+  USL2:   { n: '美國業餘聯賽',     tier: 1, region: 'NAM',  par: 52, min: 45, g: 24, base: 75, coef: 24, top: 'HOME' },
+  EUR_D5: { n: '歐洲第五級聯賽',   tier: 1, region: 'EUR',  par: 52, min: 45, g: 34, base: 70, coef: 24, top: 'HOME' },
+  SAM_D3: { n: '南美地區聯賽',     tier: 1, region: 'SAM',  par: 52, min: 45, g: 26, base: 50, coef: 18, top: 'HOME' },
+  AFR_D3: { n: '非洲地區聯賽',     tier: 1, region: 'AFR',  par: 52, min: 45, g: 26, base: 45, coef: 16, top: 'HOME' },
 
   /* --- T2 低階職業 --- */
-  J3:     { n: 'J3 聯賽',          tier: 2, region: 'ASIA', par: 61, min: 63, g: 38, base: 180, coef: 60 },
-  K3:     { n: 'K3 聯賽',          tier: 2, region: 'ASIA', par: 61, min: 63, g: 32, base: 170, coef: 58 },
-  USL1:   { n: '美國三級聯賽',     tier: 2, region: 'NAM',  par: 61, min: 63, g: 32, base: 200, coef: 65 },
-  EUR_D4: { n: '歐洲第四級聯賽',   tier: 2, region: 'EUR',  par: 61, min: 63, g: 42, base: 190, coef: 62 },
-  BRA_C:  { n: '巴西丙級聯賽',     tier: 2, region: 'SAM',  par: 61, min: 63, g: 30, base: 150, coef: 52 },
-  ARG_B:  { n: '阿根廷乙級聯賽',   tier: 2, region: 'SAM',  par: 61, min: 63, g: 34, base: 150, coef: 52 },
-  NPFL:   { n: '奈及利亞職業聯賽', tier: 2, region: 'AFR',  par: 61, min: 63, g: 34, base: 130, coef: 46 },
-  CIV1:   { n: '象牙海岸甲級聯賽', tier: 2, region: 'AFR',  par: 61, min: 63, g: 30, base: 125, coef: 44 },
+  J3:     { n: 'J3 聯賽',          tier: 2, region: 'ASIA', par: 58, min: 60, g: 38, base: 180, coef: 60 },
+  K3:     { n: 'K3 聯賽',          tier: 2, region: 'ASIA', par: 58, min: 60, g: 32, base: 170, coef: 58 },
+  USL1:   { n: '美國三級聯賽',     tier: 2, region: 'NAM',  par: 58, min: 60, g: 32, base: 200, coef: 65 },
+  EUR_D4: { n: '歐洲第四級聯賽',   tier: 2, region: 'EUR',  par: 58, min: 60, g: 42, base: 190, coef: 62 },
+  BRA_C:  { n: '巴西丙級聯賽',     tier: 2, region: 'SAM',  par: 58, min: 60, g: 30, base: 150, coef: 52 },
+  ARG_B:  { n: '阿根廷乙級聯賽',   tier: 2, region: 'SAM',  par: 58, min: 60, g: 34, base: 150, coef: 52 },
+  NPFL:   { n: '奈及利亞職業聯賽', tier: 2, region: 'AFR',  par: 58, min: 60, g: 34, base: 130, coef: 46 },
+  CIV1:   { n: '象牙海岸甲級聯賽', tier: 2, region: 'AFR',  par: 58, min: 60, g: 30, base: 125, coef: 44 },
 
   /* --- T3 次級職業 --- */
-  J2:     { n: 'J2 聯賽',          tier: 3, region: 'ASIA', par: 66, min: 72, g: 42, base: 420, coef: 150 },
-  K2:     { n: 'K2 聯賽',          tier: 3, region: 'ASIA', par: 66, min: 72, g: 36, base: 400, coef: 145 },
-  USLC:   { n: '美職次級聯賽',     tier: 3, region: 'NAM',  par: 66, min: 72, g: 34, base: 470, coef: 160 },
-  EUR_D3: { n: '歐洲第三級聯賽',   tier: 3, region: 'EUR',  par: 66, min: 72, g: 44, base: 450, coef: 155 },
-  BRA_B:  { n: '巴西乙級聯賽',     tier: 3, region: 'SAM',  par: 66, min: 72, g: 38, base: 380, coef: 135 },
+  J2:     { n: 'J2 聯賽',          tier: 3, region: 'ASIA', par: 63, min: 67, g: 42, base: 420, coef: 150 },
+  K2:     { n: 'K2 聯賽',          tier: 3, region: 'ASIA', par: 63, min: 67, g: 36, base: 400, coef: 145 },
+  USLC:   { n: '美職次級聯賽',     tier: 3, region: 'NAM',  par: 63, min: 67, g: 34, base: 470, coef: 160 },
+  EUR_D3: { n: '歐洲第三級聯賽',   tier: 3, region: 'EUR',  par: 63, min: 67, g: 44, base: 450, coef: 155 },
+  BRA_B:  { n: '巴西乙級聯賽',     tier: 3, region: 'SAM',  par: 63, min: 67, g: 38, base: 380, coef: 135 },
 
   /* --- T4 洲際頂級 --- */
-  J1:     { n: 'J1 聯賽',              tier: 4, region: 'ASIA', par: 71, min: 79, g: 38, base: 1100, coef: 420, top: 'TOP' },
-  K1:     { n: 'K1 聯賽',              tier: 4, region: 'ASIA', par: 71, min: 79, g: 38, base: 1000, coef: 400, top: 'TOP' },
-  MLS:    { n: '美國職業足球大聯盟',   tier: 4, region: 'NAM',  par: 71, min: 79, g: 34, base: 1500, coef: 520, top: 'TOP' },
-  BRA_A:  { n: '巴西甲級聯賽',         tier: 4, region: 'SAM',  par: 71, min: 79, g: 38, base: 900,  coef: 360, top: 'TOP' },
-  ARG_A:  { n: '阿根廷甲級聯賽',       tier: 4, region: 'SAM',  par: 71, min: 79, g: 30, base: 800,  coef: 330, top: 'TOP' },
+  J1:     { n: 'J1 聯賽',              tier: 4, region: 'ASIA', par: 68, min: 78, g: 38, base: 1100, coef: 420, top: 'TOP' },
+  K1:     { n: 'K1 聯賽',              tier: 4, region: 'ASIA', par: 68, min: 78, g: 38, base: 1000, coef: 400, top: 'TOP' },
+  MLS:    { n: '美國職業足球大聯盟',   tier: 4, region: 'NAM',  par: 68, min: 78, g: 34, base: 1500, coef: 520, top: 'TOP' },
+  BRA_A:  { n: '巴西甲級聯賽',         tier: 4, region: 'SAM',  par: 68, min: 78, g: 38, base: 900,  coef: 360, top: 'TOP' },
+  ARG_A:  { n: '阿根廷甲級聯賽',       tier: 4, region: 'SAM',  par: 68, min: 78, g: 30, base: 800,  coef: 330, top: 'TOP' },
 
   /* --- T5 歐洲跳板 --- */
-  POR:     { n: '葡萄牙超級聯賽',   tier: 5, region: 'EUR', par: 75, min: 81, g: 34, base: 1800, coef: 720, top: 'EUR2' },
-  NED:     { n: '荷蘭甲級聯賽',     tier: 5, region: 'EUR', par: 75, min: 81, g: 34, base: 1900, coef: 760, top: 'EUR2' },
-  EUR_SPR: { n: '歐洲跳板聯賽',     tier: 5, region: 'EUR', par: 75, min: 81, g: 34, base: 1600, coef: 700, top: 'EUR2' },
+  POR:     { n: '葡萄牙超級聯賽',   tier: 5, region: 'EUR', par: 74, min: 81, g: 34, base: 1800, coef: 720, top: 'EUR2' },
+  NED:     { n: '荷蘭甲級聯賽',     tier: 5, region: 'EUR', par: 74, min: 81, g: 34, base: 1900, coef: 760, top: 'EUR2' },
+  EUR_SPR: { n: '歐洲跳板聯賽',     tier: 5, region: 'EUR', par: 74, min: 81, g: 34, base: 1600, coef: 700, top: 'EUR2' },
 
   /* --- T6 五大次級 --- */
-  CHAMP: { n: '英式次級聯賽',   tier: 6, region: 'EUR', par: 77, min: 83, g: 46, base: 2600, coef: 900, top: 'EUR2' },
-  EU_D2: { n: '歐陸次級聯賽',   tier: 6, region: 'EUR', par: 77, min: 83, g: 38, base: 2300, coef: 850, top: 'EUR2' },
+  CHAMP: { n: '英式次級聯賽',   tier: 6, region: 'EUR', par: 76, min: 83, g: 46, base: 2600, coef: 900, top: 'EUR2' },
+  EU_D2: { n: '歐陸次級聯賽',   tier: 6, region: 'EUR', par: 76, min: 83, g: 38, base: 2300, coef: 850, top: 'EUR2' },
 
   /* --- T7 五大聯賽 --- */
-  ENG: { n: '英格蘭超級聯賽', tier: 7, region: 'EUR', par: 80, min: 85, g: 38, base: 4600, coef: 3200, top: 'BIG5' },
-  ESP: { n: '西班牙甲級聯賽', tier: 7, region: 'EUR', par: 80, min: 85, g: 38, base: 4400, coef: 3100, top: 'BIG5' },
-  GER: { n: '德國甲級聯賽',   tier: 7, region: 'EUR', par: 80, min: 85, g: 34, base: 4200, coef: 3000, top: 'BIG5' },
-  ITA: { n: '義大利甲級聯賽', tier: 7, region: 'EUR', par: 80, min: 85, g: 38, base: 3900, coef: 2900, top: 'BIG5' },
-  FRA: { n: '法國甲級聯賽',   tier: 7, region: 'EUR', par: 80, min: 85, g: 34, base: 3800, coef: 2800, top: 'BIG5' },
+  ENG: { n: '英格蘭超級聯賽', tier: 7, region: 'EUR', par: 78, min: 84, g: 38, base: 4600, coef: 3200, top: 'BIG5' },
+  ESP: { n: '西班牙甲級聯賽', tier: 7, region: 'EUR', par: 78, min: 84, g: 38, base: 4400, coef: 3100, top: 'BIG5' },
+  GER: { n: '德國甲級聯賽',   tier: 7, region: 'EUR', par: 78, min: 84, g: 34, base: 4200, coef: 3000, top: 'BIG5' },
+  ITA: { n: '義大利甲級聯賽', tier: 7, region: 'EUR', par: 78, min: 84, g: 38, base: 3900, coef: 2900, top: 'BIG5' },
+  FRA: { n: '法國甲級聯賽',   tier: 7, region: 'EUR', par: 78, min: 84, g: 34, base: 3800, coef: 2800, top: 'BIG5' },
 };
 
 export const MAX_TIER = 7;
@@ -472,8 +472,8 @@ export const ROLE_RANK = { KEY: 4, STARTER: 3, ROTATION: 2, BENCH: 1, STAND: 0 }
 export const GROWTH = [
   { until: 18, n: 3, lo: 3, hi: 11, cost: 1.0, n2: '潛力期' },
   { until: 25, n: 3, lo: 2, hi: 8,  cost: 1.3, n2: '成長期' },
-  { until: 31, n: 2, lo: 1, hi: 6,  cost: 2.0, n2: '巔峰期' },
-  { until: 99, n: 1, lo: 1, hi: 5,  cost: 2.6, n2: '維持期' },
+  { until: 31, n: 3, lo: 1, hi: 7,  cost: 2.0, n2: '巔峰期' },
+  { until: 99, n: 2, lo: 1, hi: 6,  cost: 2.6, n2: '維持期' },
 ];
 
 export const growthPhase = age => GROWTH.find(g => age <= g.until);
@@ -545,8 +545,13 @@ export const STAGE_TRAIN = {
   UNI:     { dice: 0,  phy: 0.9, tec: 1.35, fixed: ['tactics'], d: '對抗強度不足，但戰術課排得很滿' },
   PRO:     { dice: 0,  phy: 1.0, tec: 1.0, fixed: [], d: '' },
 };
-export const PHYSICAL_HARD_AGE = 26;   // 起，成本 ×2
-export const PHYSICAL_LOCK_AGE = 33;   // 起，練不動
+export const PHYSICAL_HARD_AGE = 26;   // 起，體能類成本 ×1.35
+export const PAC_LOCK_AGE = 30;        // 起，速度只能練回上限，不能再突破
+
+/** 天賦上限的範圍。壓窄是為了讓「出生那一刻」不再決定整段生涯 */
+export const POT_MIN = 50;
+export const POT_MAX = 90;
+export const POT_STA_MIN = 60;         // 體能保底：決定你能不能一直踢下去
 
 /**
  * 非均勻衰退表：取年齡符合的最後一段，數值是每年掉的點數（小數會累進到滿 1 才扣）。
@@ -555,14 +560,20 @@ export const PHYSICAL_LOCK_AGE = 33;   // 起，練不動
  * 實際掉幅還會再乘上體能修正：體能越好衰退越慢。
  */
 export const DECLINE = [
-  { from: 29, pac: 1.0, sta: 0.8 },
-  { from: 32, pac: 1.2, sta: 1.0, phy: 0.6, dri: 0.4, hea: 0.2, ref: 0.3 },
-  { from: 35, pac: 1.7, sta: 1.3, phy: 0.9, dri: 0.6, hea: 0.4, ref: 0.6, def: 0.3, fin: 0.3, aer: 0.4 },
-  { from: 38, pac: 2.1, sta: 1.6, phy: 1.1, dri: 0.8, hea: 0.5, ref: 0.8, def: 0.4, fin: 0.4, aer: 0.5,
-    pas: 0.20, vis: 0.15, pos: 0.15, lng: 0.20, sht: 0.25 },
+  { from: 25, phys: 0.30, tech: 0.05 },
+  { from: 29, phys: 0.85, tech: 0.15 },
+  { from: 32, phys: 1.30, tech: 0.30 },
+  { from: 35, phys: 1.90, tech: 0.50 },
+  { from: 38, phys: 2.40, tech: 0.75 },
 ];
 
-/** 純技術類：衰退幅度最小，〈節奏大師〉可以完全免疫 */
+/**
+ * 超過天賦上限的部分，每年會被額外拉回這個比例。
+ * 這是 B 方案的核心：突破上限不再靠天價成本擋，而是「推得上去、但守不住」——
+ * 想長期停在 90，就得年年把掉下來的再練回去。
+ */
+export const OVER_CAP_PULL = 0.10;
+
 export const TECHNICAL = ['pas', 'vis', 'pos', 'lng', 'sht'];
 
 /**
@@ -579,7 +590,7 @@ export const SYNERGY = {
   hea: { fin: .20, phy: .20 },   // 頭球 → 射門、對抗
   phy: { hea: .20, sta: .20 },   // 對抗 → 頭球、體能
   // 站位是門將專屬能力，外場沒有這一項，所以原本指向站位的兩條邊改接：
-  def: { phy: .20, hea: .20 },   // 防守 → 對抗、頭球
+  def: { phy: .20, sta: .20 },   // 防守 → 對抗、體能
   vis: { pas: .20, def: .20 },   // 視野 → 傳球、防守（閱讀比賽同時幫出球與補位）
 };
 
@@ -983,118 +994,118 @@ export const EVENTS = [
 
 
   /* ---------- 第七類：命運與機會（觸發率低、影響大） ---------- */
-  { n: '巴西足球精靈的指點', for: 'PRO', once: true, weight: 0.138,
+  { n: '巴西足球精靈的指點', for: 'PRO', once: true, weight: 0.151,
     cond: s => LV[s.club.lv].region === 'SAM' || s.player.nation === 'BR',
     acts: ['遠遠看著學', '訓練後留下來請教', '厚著臉皮天天纏著他'],
     gt: '他只說了一句「球要黏在腳上，不是踩在腳下」，然後你花了三個月才懂',
     bt: '他看了你兩眼就走了，你連話都沒說上',
     gpot: { dri: 6, vis: 3 },
     g: { dri: 6, fin: 4, vis: 3, fanRep: 8 }, b: { fanRep: -3 } },
-  { n: '德國中場大師的私人課', for: 'PRO', once: true, weight: 0.138,
+  { n: '德國中場大師的私人課', for: 'PRO', once: true, weight: 0.151,
     cond: s => LV[s.club.lv].region === 'EUR' || s.player.nation === 'DE',
     acts: ['照課表走', '要求加場', '請他從頭教起'],
     gt: '他要你在腦子裡先跑完整場比賽，再用腳把它踢出來',
     bt: '你跟不上他的節奏，兩堂課之後他就沒再約你',
     gpot: { vis: 6, pas: 4 },
     g: { vis: 6, pas: 5, pos: 3, fanRep: 6 }, b: { fanRep: -3 } },
-  { n: '阿根廷球王的邀請', for: 'PRO', once: true, weight: 0.121,
+  { n: '阿根廷球王的邀請', for: 'PRO', once: true, weight: 0.132,
     cond: s => LV[s.club.lv].region === 'SAM' || s.player.nation === 'AR' || s.player.natlPick === 'AR',
     acts: ['禮貌婉拒', '接受邀約', '主動要求對位單挑'],
     gt: '他在後院的水泥地上跟你一對一。你一次都沒過掉他，但你懂了什麼叫重心',
     bt: '你太緊張，整晚踢得像個外行',
     gpot: { dri: 7, fin: 3 },
     g: { dri: 7, pac: 3, fin: 3, fanRep: 10 }, b: { fanRep: -5, sta: -2 } },
-  { n: '日本三球王的邊路突破', for: 'PRO', once: true, weight: 0.121,
+  { n: '日本三球王的邊路突破', for: 'PRO', once: true, weight: 0.132,
     cond: s => LV[s.club.lv].region === 'ASIA' || ['JP', 'KR', 'TW'].includes(s.player.nation),
     acts: ['先練基本假動作', '一對一實戰練習', '整季只練邊路突破'],
     gt: '「不要看球，看他的重心。」他從邊線切進來的那一步，防守者永遠慢半拍',
     bt: '你把動作學了個形，實戰裡一次都沒過掉人',
     gpot: { dri: 6, fin: 3 },
     g: { dri: 7, fin: 4, pac: 2, fanRep: 8 }, b: { dri: -3, fanRep: -3 } },
-  { n: '義大利鏈式防守的傳人', for: 'PRO', once: true, weight: 0.121,
+  { n: '義大利鏈式防守的傳人', for: 'PRO', once: true, weight: 0.132,
     cond: s => LV[s.club.lv].region === 'EUR' || s.player.nation === 'IT',
     acts: ['看錄影就好', '跟著跑位練習', '整季當他的影子'],
     gt: '他教你的不是怎麼搶球，是怎麼讓對方無球可傳',
     bt: '你學得太表面，反而站錯了好幾次位',
     gpot: { def: 6, pos: 3 },
     g: { def: 6, pos: 4, hea: 3, fanRep: 5 }, b: { def: -2, fanRep: -3 } },
-  { n: '義大利小將的門線課', for: 'GK', once: true, weight: 0.165,
+  { n: '義大利小將的門線課', for: 'GK', once: true, weight: 0.18,
     acts: ['觀摩就好', '接受特訓', '要求加倍訓練量'],
     gt: '「不要撲球，等球來找你。」十七歲就先發的人，教你的第一課是耐心',
     bt: '你太急著表現，反而養成了壞習慣',
     gpot: { pos: 6, ref: 4 },
     g: { pos: 6, ref: 5, aer: 3, fanRep: 7 }, b: { ref: -2, fanRep: -3 } },
-  { n: '葡萄牙武僧的體能課', for: 'PRO', once: true, weight: 0.121,
+  { n: '葡萄牙武僧的體能課', for: 'PRO', once: true, weight: 0.132,
     cond: s => LV[s.club.lv].region === 'EUR' || s.player.nation === 'PT',
     acts: ['跟著跑就好', '照他的菜單練', '加倍訓練量'],
     gt: '他四十歲還在跑十二公里。你終於懂了什麼叫做「自律不是天賦」',
     bt: '你照著他的量練，第三週就倒下了',
     gpot: { sta: 6, phy: 3 },
     g: { sta: 6, phy: 4, pac: 2, fanRep: 5 }, b: { sta: -3, inj: 10 } },
-  { n: '巴西外星人的門前嗅覺', for: 'PRO', once: true, weight: 0.11,
+  { n: '巴西外星人的門前嗅覺', for: 'PRO', once: true, weight: 0.12,
     cond: s => LV[s.club.lv].region === 'SAM' || s.player.nation === 'BR',
     acts: ['看影片研究', '一對一請教', '整季跟著他練射門'],
     gt: '「不要想怎麼射，想門將會往哪邊倒。」那年你的射正率翻倍',
     bt: '你學了動作，沒學到那半秒的判斷',
     gpot: { fin: 7, pac: 3 },
     g: { fin: 7, pac: 3, dri: 2, fanRep: 8 }, b: { fanRep: -3 } },
-  { n: '英國追風少年的加速課', for: 'PRO', once: true, weight: 0.121,
+  { n: '英國追風少年的加速課', for: 'PRO', once: true, weight: 0.132,
     cond: s => LV[s.club.lv].region === 'EUR' || s.player.nation === 'GB',
     acts: ['做基礎爆發訓練', '跟他對跑', '每天加練衝刺'],
     gt: '他教你的不是跑得快，是第一步怎麼比別人早半拍',
     bt: '你在對跑的第四趟拉傷了大腿',
     gpot: { pac: 7, dri: 3 },
     g: { pac: 7, dri: 3, sta: 2, fanRep: 6 }, b: { pac: -2, inj: 12 } },
-  { n: '英國圓月彎刀的傳中課', for: 'PRO', once: true, weight: 0.121,
+  { n: '英國圓月彎刀的傳中課', for: 'PRO', once: true, weight: 0.132,
     cond: s => LV[s.club.lv].region === 'EUR' || s.player.nation === 'GB',
     acts: ['練基本弧線', '每天加練兩百球', '把定位球全接下來'],
     gt: '球在空中拐了一個彎，落在你想要的那平方公尺裡',
     bt: '兩百球下來，腳背腫了，弧線還是沒出來',
     gpot: { pas: 7, fin: 3 },
     g: { pas: 7, fin: 3, vis: 2, fanRep: 6 }, b: { pas: -2, sta: -2 } },
-  { n: '埃及法老的內切', for: 'PRO', once: true, weight: 0.121,
+  { n: '埃及法老的內切', for: 'PRO', once: true, weight: 0.132,
     cond: s => LV[s.club.lv].region === 'AFR' || ['NG', 'CI'].includes(s.player.nation),
     acts: ['練慣用腳收球', '練內切起腳', '整季只走同一邊'],
     gt: '從邊路內切、左腳一收，球就往遠角去了。這條路他走了上千次',
     bt: '防守者早就知道你要內切，你被逼到底線',
     gpot: { fin: 6, dri: 4 },
     g: { fin: 7, dri: 5, pac: 2, fanRep: 9 }, b: { dri: -3, fanRep: -3 } },
-  { n: '象牙海岸魔獸的對抗課', for: 'PRO', once: true, weight: 0.121,
+  { n: '象牙海岸魔獸的對抗課', for: 'PRO', once: true, weight: 0.132,
     cond: s => LV[s.club.lv].region === 'AFR' || ['NG', 'CI'].includes(s.player.nation),
     acts: ['先練核心', '跟他做對抗', '直接要求肉搏對練'],
     gt: '「背身的時候，你要讓對方覺得他在推一面牆。」',
     bt: '你被他撞飛了三次，肋骨痛了一個月',
     gpot: { phy: 7, hea: 3 },
     g: { phy: 7, hea: 4, fin: 2, fanRep: 7 }, b: { phy: -2, inj: 12 } },
-  { n: '荷蘭冰王子的冷靜', for: 'PRO', once: true, weight: 0.11,
+  { n: '荷蘭冰王子的冷靜', for: 'PRO', once: true, weight: 0.12,
     cond: s => LV[s.club.lv].region === 'EUR' || s.player.nation === 'NL',
     acts: ['聽他講就好', '模擬單刀練習', '要求高壓情境特訓'],
     gt: '「單刀的時候，時間是你的，不是門將的。」你的心跳從此慢了下來',
     bt: '你太在意技巧，反而更緊張了',
     gpot: { fin: 6, vis: 3 },
     g: { fin: 6, vis: 4, pos: 2, fanRep: 6 }, b: { fin: -3 } },
-  { n: '飛翔的荷蘭人的凌空', for: 'PRO', once: true, weight: 0.11,
+  { n: '飛翔的荷蘭人的凌空', for: 'PRO', once: true, weight: 0.12,
     cond: s => LV[s.club.lv].region === 'EUR' || s.player.nation === 'NL',
     acts: ['練基本停球', '練凌空抽射', '在比賽裡直接試'],
     gt: '球還在空中，他已經知道自己要往哪裡倒。那一球飛了二十年',
     bt: '你在正式比賽試了凌空，球飛到了看台',
     gpot: { fin: 6, vis: 3 },
     g: { fin: 7, vis: 4, hea: 2, fanRep: 8 }, b: { fin: -3, fanRep: -4 } },
-  { n: '台灣魔獸的重訓菜單', for: 'PRO', once: true, weight: 0.138,
+  { n: '台灣魔獸的重訓菜單', for: 'PRO', once: true, weight: 0.151,
     cond: s => s.player.nation === 'TW' || s.player.natlPick === 'TW',
     acts: ['照一般課表', '跟著他的量', '再加一倍'],
     gt: '在資源最少的地方，他用重訓房把自己練成了另一種球員',
     bt: '你練壞了肩膀',
     gpot: { phy: 6, sta: 3 },
     g: { phy: 6, sta: 4, hea: 2, fanRep: 8 }, b: { phy: -2, inj: 10 } },
-  { n: '土耳其火槍兵的遠射', for: 'PRO', once: true, weight: 0.11,
+  { n: '土耳其火槍兵的遠射', for: 'PRO', once: true, weight: 0.12,
     cond: s => LV[s.club.lv].region === 'EUR',
     acts: ['先練腳背觸球', '每天五十球', '比賽裡直接開火'],
     gt: '三十碼外，球在他腳下像被點燃一樣',
     bt: '你射了十七次，十六次飛出球場',
     gpot: { fin: 6, phy: 3 },
     g: { fin: 6, phy: 3, pac: 2, fanRep: 7 }, b: { fin: -3, fanRep: -4 } },
-  { n: '台灣隊長的更衣室課', for: 'PRO', once: true, weight: 0.138,
+  { n: '台灣隊長的更衣室課', for: 'PRO', once: true, weight: 0.151,
     cond: s => s.player.nation === 'TW' || s.player.natlPick === 'TW',
     acts: ['安靜觀察', '學著開口', '主動接下責任'],
     gt: '「在這裡當隊長，要先讓大家相信這件事值得做。」',
@@ -1102,48 +1113,48 @@ export const EVENTS = [
     gpot: { vis: 5, pas: 3 },
     g: { vis: 5, pas: 3, sta: 2, fanRep: 12 }, b: { fanRep: -8 },
     fx: (s, win, api) => { if (win && s.player.age >= 24) api.unlock('captain'); } },
-  { n: '阿根廷風之子的節奏', for: 'PRO', once: true, weight: 0.11,
+  { n: '阿根廷風之子的節奏', for: 'PRO', once: true, weight: 0.12,
     cond: s => LV[s.club.lv].region === 'SAM' || s.player.nation === 'AR',
     acts: ['練變速跑', '跟著他帶球', '在對抗中硬過'],
     gt: '他不是跑得比較快，是他知道什麼時候該慢下來',
     bt: '你只學會了快，沒學會慢',
     gpot: { dri: 6, pac: 3 },
     g: { dri: 6, pac: 4, vis: 2, fanRep: 7 }, b: { dri: -2 } },
-  { n: '韓國三肺的跑動課', for: 'PRO', once: true, weight: 0.121,
+  { n: '韓國三肺的跑動課', for: 'PRO', once: true, weight: 0.132,
     cond: s => LV[s.club.lv].region === 'ASIA' || s.player.nation === 'KR',
     acts: ['照隊上的量', '跟著他跑滿全場', '賽後再加練'],
     gt: '別人跑十公里，他跑十三公里，而且第九十分鐘還在衝',
     bt: '你跟了兩個月，然後過度訓練',
     gpot: { sta: 7, def: 3 },
     g: { sta: 7, def: 3, pac: 2, fanRep: 6 }, b: { sta: -4, inj: 10 } },
-  { n: '德國獅王的指揮', for: 'GK', once: true, weight: 0.154,
+  { n: '德國獅王的指揮', for: 'GK', once: true, weight: 0.168,
     acts: ['觀摩站位', '接受指揮訓練', '整季由你喊防線'],
     gt: '「門將不是最後一道防線，是第一個發動的人。」',
     bt: '你喊錯了兩次，後衛開始不聽你的',
     gpot: { pos: 6, aer: 4 },
     g: { pos: 6, aer: 4, lng: 3, fanRep: 8 }, b: { pos: -3, fanRep: -5 } },
-  { n: '法國槍王的跑位', for: 'PRO', once: true, weight: 0.11,
+  { n: '法國槍王的跑位', for: 'PRO', once: true, weight: 0.12,
     cond: s => LV[s.club.lv].region === 'EUR' || s.player.nation === 'FR',
     acts: ['看錄影學跑位', '跟著練無球移動', '整季照他的方式跑'],
     gt: '他在越位線上待了九十分鐘，然後只用了一次就贏下比賽',
     bt: '你越位了十一次',
     gpot: { fin: 6, vis: 3 },
     g: { fin: 6, vis: 4, pac: 2, fanRep: 7 }, b: { fin: -2, fanRep: -4 } },
-  { n: '法國忍者龜的第一步', for: 'PRO', once: true, weight: 0.11,
+  { n: '法國忍者龜的第一步', for: 'PRO', once: true, weight: 0.12,
     cond: s => LV[s.club.lv].region === 'EUR' || s.player.nation === 'FR',
     acts: ['練起步姿勢', '跟他對跑', '直接在對抗中衝'],
     gt: '他的前十公尺沒有人跟得上，而且到了門前還能冷靜收腳',
     bt: '你跟著衝了三次，三次都被追上，還拉傷了',
     gpot: { pac: 7, fin: 4 },
     g: { pac: 7, fin: 5, dri: 2, fanRep: 8 }, b: { pac: -2, inj: 10 } },
-  { n: '西班牙小白的第一腳觸球', for: 'PRO', once: true, weight: 0.11,
+  { n: '西班牙小白的第一腳觸球', for: 'PRO', once: true, weight: 0.12,
     cond: s => LV[s.club.lv].region === 'EUR' || s.player.nation === 'ES',
     acts: ['練停球', '練接球轉身', '在逼搶中練'],
     gt: '「第一腳決定了下一腳。」他接球的方向永遠已經是出球的方向',
     bt: '你在逼搶中丟了太多球，信心掉了',
     gpot: { pas: 6, vis: 4 },
     g: { pas: 6, vis: 4, dri: 3, fanRep: 7 }, b: { pas: -3, fanRep: -3 } },
-  { n: '葡萄牙山羊的自我要求', for: 'PRO', once: true, weight: 0.099,
+  { n: '葡萄牙山羊的自我要求', for: 'PRO', once: true, weight: 0.108,
     cond: s => LV[s.club.lv].region === 'EUR' || s.player.nation === 'PT',
     acts: ['跟著練', '照他的作息過一季', '把整個生活方式換掉'],
     gt: '他的訓練沒有什麼祕密，只是每一天都做到最後一組',
@@ -1278,6 +1289,87 @@ export const EVENTS = [
     g: { fanRep: 3 }, b: { sta: -2 },
     fx: (s, win, api) => { if (!win) api.shiftRole(-1); } },
 
+  /* ---------------- 第九類：商業與形象 ---------------- */
+  { n: '球鞋合約', for: 'PRO', weight: 0.9,
+    cond: s => s.career.fanRep >= 55 && LV[s.club.lv].tier >= 3,
+    acts: ['簽保守的短約', '照經紀人建議簽', '押注個人聯名款'],
+    gt: '你的名字被印在鞋側，那雙鞋在球場外也有人穿',
+    bt: '合約綁死了三年，隔年市場價漲了一倍你也動不了',
+    g: { fanRep: 10 }, b: { fanRep: -3 },
+    fx: (s, win, api) => {
+      const cut = Math.round(api.salary * (win ? 0.35 : 0.08));
+      s.career.salaryTotal += cut;
+      api.card(win ? 'good' : '', '合約金', `入袋 ${cut} 萬。`);
+    } },
+  { n: '經紀公司挖角', for: 'PRO', weight: 0.8,
+    cond: s => s.player.age >= 21 && s.career.fanRep >= 50,
+    acts: ['留在原本的經紀人', '談完再決定', '直接跳槽大公司'],
+    gt: '新團隊把你的行程排得更好，也把報價談高了',
+    bt: '換了人之後，原本談好的兩份合約都沒了',
+    g: { fanRep: 8 }, b: { fanRep: -10 },
+    fx: (s, win, api) => { if (!win) api.unlock('puppet'); } },
+  { n: '運動飲料廣告', for: 'PRO', weight: 1.0,
+    cond: s => s.career.fanRep >= 60,
+    acts: ['只拍平面', '拍完整支廣告', '接下整年度代言'],
+    gt: '那句台詞被做成迷因，你紅到球場外',
+    bt: '拍攝佔掉整個休賽期，季前你比別人慢了兩拍',
+    g: { fanRep: 14 }, b: { sta: -3, fanRep: -2 },
+    fx: (s, win, api) => {
+      const cut = Math.round(api.salary * (win ? 0.25 : 0.1));
+      s.career.salaryTotal += cut;
+      api.card('', '代言收入', `入袋 ${cut} 萬。`);
+    } },
+  { n: '自傳出版邀約', for: 'PRO', weight: 0.7,
+    cond: s => s.player.age >= 28 && s.career.fanRep >= 65,
+    acts: ['交給代筆', '自己口述整理', '把更衣室的事全寫進去'],
+    gt: '那本書賣得比誰都好，因為你真的把話講開了',
+    bt: '書裡點名了兩個前隊友，更衣室從此對你冷淡',
+    g: { fanRep: 16, vis: 2 }, b: { fanRep: -18 },
+    fx: (s, win, api) => { if (win) s.career.salaryTotal += Math.round(api.salary * 0.3); } },
+  { n: '紀錄片跟拍', for: 'PRO', weight: 0.8,
+    cond: s => s.career.fanRep >= 62,
+    acts: ['只讓他們拍比賽', '開放訓練日常', '連家裡都讓拍'],
+    gt: '觀眾看見了訓練場上沒人看見的那部分，你被理解了',
+    bt: '鏡頭拍到你跟教練爭執的三十秒，只有那三十秒被剪出去',
+    g: { fanRep: 18 }, b: { fanRep: -14 } },
+  { n: '電玩封面人選', for: 'PRO', weight: 0.6,
+    cond: s => s.career.fanRep >= 72 && LV[s.club.lv].tier >= 5,
+    acts: ['低調配合', '全力配合宣傳', '要求加碼談分潤'],
+    gt: '你的臉出現在每一間電玩店的櫥窗上',
+    bt: '談判拖太久，最後他們找了別人',
+    g: { fanRep: 22 }, b: { fanRep: -6 },
+    fx: (s, win, api) => { if (win) s.career.salaryTotal += Math.round(api.salary * 0.45); } },
+  { n: '慈善義賽邀請', for: 'PRO', weight: 1.0,
+    acts: ['捐錢但不出席', '出席並上場', '自己辦一場'],
+    gt: '你把整場的收入捐給了家鄉的球場整修',
+    bt: '義賽中拉傷，回去被教練念了一個月',
+    g: { fanRep: 15, sta: -1 }, b: { inj: 12, fanRep: 4 },
+    fx: (s, win, api) => { if (win) api.fine(0.05); } },
+  { n: '家鄉球場以你命名', for: 'PRO', once: true, weight: 0.5,
+    cond: s => s.career.fanRep >= 78 && s.player.age >= 30,
+    acts: ['婉拒', '接受並出席揭牌', '出錢把整座球場翻新'],
+    gt: '那座你小時候翻牆進去踢的球場，現在掛著你的名字',
+    bt: '市議會吵了半年，最後不了了之',
+    g: { fanRep: 25 }, b: { fanRep: -4 },
+    fx: (s, win, api) => { if (win) api.fine(0.12); } },
+  { n: '社群經營團隊提案', for: 'PRO', weight: 0.9,
+    cond: s => s.player.age <= 30,
+    acts: ['自己隨便發', '交給團隊管', '走真實路線親自經營'],
+    gt: '你親自回覆球迷留言，那種真實感是團隊做不出來的',
+    bt: '團隊代發的貼文用錯了梗，被酸了整週',
+    g: { fanRep: 12 }, b: { fanRep: -9 } },
+  { n: '球衣號碼被搶購一空', for: 'PRO', weight: 0.8,
+    cond: s => s.career.fanRep >= 68,
+    acts: ['照球會分潤', '要求重談分潤', '自己開線上商店'],
+    gt: '你那件球衣的銷量比隊上其他人加起來還多',
+    bt: '球會的合約寫死了，你一毛分潤都拿不到',
+    g: { fanRep: 8 }, b: { fanRep: -5 },
+    fx: (s, win, api) => {
+      const cut = Math.round(api.salary * (win ? 0.3 : 0.02));
+      s.career.salaryTotal += cut;
+      api.card('', '球衣分潤', `入袋 ${cut} 萬。`);
+    } },
+
   /* ---------- 第六類：原型專屬 ---------- */
   { n: '越位線上的博弈', for: 'PRO', weight: 1.5, cond: isArch('poacher'),
     gt: '你比防線早半步啟動了六次，中了四次', bt: '六次啟動，五次越位',
@@ -1365,7 +1457,7 @@ export const CONF = {
   startYear: 2026,
   retireAge: 42,
   // declineAge 已由 DECLINE 表取代
-  baseInjury: 9,
+  baseInjury: 5,
   eventCards: 3,
   aclCap: 120,
   abilScale: 1.35,   // 事件卡與衰退的能力增減換算到 1–99 尺度
