@@ -1,5 +1,5 @@
 import { clamp } from './rng.js';
-import { LV, TIER, SQUAD, POS_WEIGHT, POS_OUTPUT, DPOS, CONF, ARCHETYPE, DECLINE, TECHNICAL, MAX_ABIL } from './data.js';
+import { LV, TIER, SQUAD, POS_WEIGHT, POS_OUTPUT, DPOS, CONF, ARCHETYPE, DECLINE, TECHNICAL, PHYSICAL, OVER_CAP_PULL, MAX_ABIL } from './data.js';
 import { ovr, squadGap, defaultPos, bestPos, isAbroad } from './state.js';
 
 /* ---------------- 陣中地位與出場時間 ---------------- */
@@ -130,19 +130,24 @@ export function applyDecline(s) {
   const band = DECLINE.filter(d => p.age >= d.from).pop();
   if (!band) return null;
 
-  // 掉幅 = 體能修正 × 年齡修正
+  // 掉幅 = 基礎速率 × 體能修正 × 年齡修正
+  //   體能類（速度／體能／對抗）掉得快，技術類慢一個量級，但**每一項都會掉**
   //   體能越好掉得越慢（0.55 ~ 1.45 倍）—— 保養身體是有回報的長期投資
-  //   35 歲之後每年再加成，40 歲約 1.4 倍、42 歲約 1.6 倍
+  //   35 歲之後每年再加成，40 歲約 1.4 倍
   // 體能本身也在掉，兩條乘起來就是老將的斷崖式衰退。
   const fit = clamp(1.35 - ((p.ab.sta ?? 60) - 50) / 60, 0.55, 1.45)
             * (1 + Math.max(0, p.age - 35) * 0.08);
 
   p.decay = p.decay || {};
   const changes = {};
-  for (const [k, v] of Object.entries(band)) {
-    if (k === 'from' || !(k in p.ab)) continue;
-    if (p.traits.tempo && TECHNICAL.includes(k)) continue; // 節奏大師：技術類免疫
-    p.decay[k] = (p.decay[k] || 0) + v * fit;
+  for (const k of Object.keys(p.ab)) {
+    if (p.traits.tempo && TECHNICAL.includes(k)) continue;   // 節奏大師：技術類免疫
+    const base = PHYSICAL.includes(k) ? band.phys : band.tech;
+    // 超過天賦上限的部分會被額外拉回 —— 這是軟上限，不是硬牆
+    const over = Math.max(0, p.ab[k] - (p.pot[k] ?? MAX_ABIL));
+    const rate = base * fit + over * OVER_CAP_PULL;
+    if (rate <= 0) continue;
+    p.decay[k] = (p.decay[k] || 0) + rate;
     const drop = Math.floor(p.decay[k]);
     if (drop <= 0) continue;
     p.decay[k] -= drop;
