@@ -1,13 +1,13 @@
 {
   "name": "football-life",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "description": "足球人生模擬器 — 種子化的足球員生涯模擬",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "sim": "node tools/balance-sim.js 2000 balanced"
+    "sim": "node tools/balance-sim.js 1000 balanced"
   },
   "devDependencies": {
     "vite": "^5.4.0",
