@@ -1,6 +1,6 @@
 import { randomSeed } from './engine/rng.js';
 import {
-  createState, ovr, abCost, addAb, defaultPos, bestPos, isAbroad, SCHEMA_VERSION,
+  createState, ovr, abCost, addAb, defaultPos, bestPos, isAbroad, originAllowed, SCHEMA_VERSION,
 } from './engine/state.js';
 import { run, answer } from './engine/flow.js';
 import {
@@ -50,16 +50,16 @@ function nationNote() {
   return `<b>${nat.n}</b>（${REGION[nat.region]}）　青訓水準 ${nat.dev > 0 ? '+' + nat.dev : nat.dev}｜代表隊實力 ${nat.natl}<br>` +
     `國內起點：${entry.n}　國內天花板：${ceiling.n}${tiers[tiers.length - 1] < 7 ? '（要踢五大聯賽必須旅外）' : ''}<br>` +
     `${nat.uni ? '有大學足球這條升學路線' : '沒有大學足球，高中之後只能走職業'}` +
-    `${nat.potBonus ? `　<b class="hl">本地／混血出身潛力 +${nat.potBonus}</b>` : ''}<br>` +
+    `${nat.localPhysPot ? `　<b class="hl">純本地出身體能類潛力上限 +${nat.localPhysPot}</b>` : ''}<br>` +
     `<b>${org.n}</b>：${org.fx}`;
 }
 
 function setup() {
   pickRow('pos-row', Object.entries(POS_GROUP).map(([k, n]) => [k, n]), pickedGroup, k => (pickedGroup = k));
   pickRow('nation-row', NATION_ORDER.map(k => [k, NATIONS[k].n]), pickedNation, k => (pickedNation = k));
-  // 有些國家沒有移民這條路
+  // 移民與原住民都只有部分國家有（非洲兩國兩個都沒有，只剩純本地與混血）
   const originList = Object.entries(ORIGINS)
-    .filter(([k]) => !(k === 'immigrant' && NATIONS[pickedNation].noImmigrant));
+    .filter(([k]) => originAllowed(k, NATIONS[pickedNation]));
   if (!originList.some(([k]) => k === pickedOrigin)) pickedOrigin = 'local';
   pickRow('origin-row', originList.map(([k, o]) => [k, o.n, o.d]), pickedOrigin, k => (pickedOrigin = k));
   $('setup-note').innerHTML = nationNote();

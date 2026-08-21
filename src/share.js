@@ -338,7 +338,7 @@ export function openShareImage(S) {
   /** 重畫 → 換圖 → 重新塞剪貼簿。換底色等於換一張圖，剪貼簿也要跟著換 */
   const paint = () => {
     const [stage, name] = STAGE_THEMES[ti];
-    skin.textContent = `換底色 ▸ ${name}`;
+    skin.textContent = `換底色`;
     tip.textContent = '產生中…';
     const cv = buildShareCanvas(S, stage);
     img.src = cv.toDataURL('image/png');

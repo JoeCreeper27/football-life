@@ -96,38 +96,52 @@ export const POS_OUTPUT = {
  */
 export const NATIONS = {
   TW: { n: '台灣',   region: 'ASIA', dev: -3, natl: 34, uni: true, service: true,
+        hasImmigrant: true, indigenous: true,
         home: { 1: 'TPFL' } },
   JP: { n: '日本',   region: 'ASIA', dev: 1,  natl: 62, uni: true,
+        hasImmigrant: true,
         home: { 1: 'JFL', 2: 'J3', 3: 'J2', 4: 'J1' } },
   KR: { n: '韓國',   region: 'ASIA', dev: 1,  natl: 58, uni: true, service: true,
+        hasImmigrant: true,
         home: { 1: 'K4', 2: 'K3', 3: 'K2', 4: 'K1' } },
   US: { n: '美國',   region: 'NAM',  dev: 1,  natl: 60, uni: true,
+        hasImmigrant: true, indigenous: true,
         home: { 1: 'USL2', 2: 'USL1', 3: 'USLC', 4: 'MLS' } },
   BR: { n: '巴西',   region: 'SAM',  dev: 3,  natl: 88, uni: false,
+        hasImmigrant: true, indigenous: true,
         home: { 1: 'SAM_D3', 2: 'BRA_C', 3: 'BRA_B', 4: 'BRA_A' } },
   AR: { n: '阿根廷', region: 'SAM',  dev: 3,  natl: 86, uni: false,
+        hasImmigrant: true, indigenous: true,
         home: { 1: 'SAM_D3', 2: 'ARG_B', 4: 'ARG_A' } },
   GB: { n: '英國',   region: 'EUR',  dev: 2,  natl: 80, uni: false,
+        hasImmigrant: true,
         home: { 1: 'EUR_D5', 2: 'EUR_D4', 3: 'EUR_D3', 6: 'CHAMP', 7: 'ENG' } },
   ES: { n: '西班牙', region: 'EUR',  dev: 3,  natl: 86, uni: false,
+        hasImmigrant: true,
         home: { 1: 'EUR_D5', 2: 'EUR_D4', 3: 'EUR_D3', 6: 'EU_D2', 7: 'ESP' } },
   DE: { n: '德國',   region: 'EUR',  dev: 3,  natl: 84, uni: false,
+        hasImmigrant: true,
         home: { 1: 'EUR_D5', 2: 'EUR_D4', 3: 'EUR_D3', 6: 'EU_D2', 7: 'GER' } },
   IT: { n: '義大利', region: 'EUR',  dev: 2,  natl: 82, uni: false,
+        hasImmigrant: true,
         home: { 1: 'EUR_D5', 2: 'EUR_D4', 3: 'EUR_D3', 6: 'EU_D2', 7: 'ITA' } },
   FR: { n: '法國',   region: 'EUR',  dev: 3,  natl: 85, uni: false,
+        hasImmigrant: true,
         home: { 1: 'EUR_D5', 2: 'EUR_D4', 3: 'EUR_D3', 6: 'EU_D2', 7: 'FRA' } },
   PT: { n: '葡萄牙', region: 'EUR',  dev: 2,  natl: 78, uni: false,
+        hasImmigrant: true,
         home: { 1: 'EUR_D5', 2: 'EUR_D4', 3: 'EUR_D3', 5: 'POR' } },
   NL: { n: '荷蘭',   region: 'EUR',  dev: 2,  natl: 76, uni: false,
+        hasImmigrant: true,
         home: { 1: 'EUR_D5', 2: 'EUR_D4', 3: 'EUR_D3', 5: 'NED' } },
   // 非洲：國內階梯只到第 2 層，想再往上一定得旅外（與台灣同樣的設計）。
-  // 沒有移民選項；本地與混血出身享有潛力加成（街頭足球文化與身體素質傳統）。
+  // 沒有移民、也沒有原住民這兩個選項 —— 只有純本地與混血。
+  // 純本地本身就吃體能類上限 +3（等同其他國家的原住民／移民），混血則是一般的最高潛力 +3。
   NG: { n: '奈及利亞', region: 'AFR', dev: 1,  natl: 66, uni: false,
-        noImmigrant: true, potBonus: 5,
+        localPhysPot: 3,
         home: { 1: 'AFR_D3', 2: 'NPFL' } },
   CI: { n: '象牙海岸', region: 'AFR', dev: 1,  natl: 64, uni: false,
-        noImmigrant: true, potBonus: 5,
+        localPhysPot: 3,
         home: { 1: 'AFR_D3', 2: 'CIV1' } },
 };
 
@@ -143,11 +157,22 @@ export const REGION = { ASIA: '亞洲', EUR: '歐洲', SAM: '南美', NAM: '北�
  *   callAdj   國家隊徵召門檻調整（負數 = 更容易入選）
  *   windowAdj 旅外年齡窗口調整
  */
+/**
+ * 出身背景。四個欄位各管一件事：
+ *   ab       起始能力加減
+ *   potTop   最高的那一項潛力加成（混血：強項更強）
+ *   potPhys  體能類潛力上限加成（原住民／移民：身體素質，見 PHYS_POT_KEYS）
+ *   callAdj  國家隊徵召門檻加減（負數＝比較容易被徵召）
+ *   windowAdj 旅外年齡窗口加成
+ * `only` 限定哪些國家出得了這個選項（值是 NATIONS 上的旗標名）。
+ */
 export const ORIGINS = {
-  local:     { n: '純本地', d: '在地出生長大的本地族裔', fx: '國家隊徵召門檻 −3，在地認同高', ab: 0, potTop: 0, callAdj: -3, windowAdj: 0 },
-  mixed:     { n: '混血',   d: '雙重血統，父母來自不同國家', fx: '最高潛力 +3；18 歲時可選擇代表哪一國', ab: 0, potTop: 3, callAdj: 0, windowAdj: 0 },
-  immigrant: { n: '移民',   d: '移民／僑民家庭，在異鄉長大（部分國家不適用）', fx: '起始能力 −2、15 歲前少一顆骰；旅外年齡窗口 +3', ab: -2, potTop: 0, callAdj: 2, windowAdj: 3 },
+  local:      { n: '純本地', d: '在地出生長大的本地族裔', fx: '國家隊徵召門檻 −3，在地認同高', ab: 0, potTop: 0, potPhys: 0, callAdj: -3, windowAdj: 0 },
+  indigenous: { n: '原住民', d: '原住民族群（僅部分國家）', fx: '體能類潛力上限 +3；國家隊徵召門檻不變', ab: 0, potTop: 0, potPhys: 3, callAdj: 0, windowAdj: 0, only: 'indigenous' },
+  mixed:      { n: '混血',   d: '雙重血統，父母來自不同國家', fx: '最高潛力 +3；18 歲時可選擇代表哪一國', ab: 0, potTop: 3, potPhys: 0, callAdj: 0, windowAdj: 0 },
+  immigrant:  { n: '移民',   d: '移民／僑民家庭，在異鄉長大（部分國家不適用）', fx: '起始能力 −2；體能類潛力上限 +3；國家隊徵召門檻 +3；旅外年齡窗口 +3', ab: -2, potTop: 0, potPhys: 3, callAdj: 3, windowAdj: 3, only: 'hasImmigrant' },
 };
+
 
 /* ==================================================================== */
 /* 聯賽階梯：tier 1–7，同一層可以有多個地區的聯賽                          */
@@ -484,6 +509,12 @@ export const growthPhase = age => GROWTH.find(g => age <= g.until);
  * 這就是為什麼技術型中場四十歲還能先發，而速度型邊鋒三十出頭就得轉型。
  */
 export const PHYSICAL = ['pac', 'sta', 'phy'];
+
+/**
+ * 「體能類潛力」在門將身上不能只算體能 —— 門將的能力表沒有速度與對抗，
+ * 只加體能等於這條加成對門將幾乎無效，所以把制空（跳躍與身體對抗）算進去。
+ */
+export const PHYS_POT_KEYS = { GK: ['sta', 'aer'], OUT: PHYSICAL };
 
 /**
  * 訓練項目：玩家不再直接點能力，而是選「這一季要練什麼」。
@@ -1457,6 +1488,11 @@ export const CONF = {
   startYear: 2026,
   retireAge: 42,
   // declineAge 已由 DECLINE 表取代
+  // 世界足球先生：五大 ＋ 同年歐冠 ＋ 評分門檻，再過一次隨評分爬升的機率
+  wfpRating: 7.0,
+  wfpBase: 45,
+  wfpSlope: 100,
+
   baseInjury: 5,
   // 巔峰期（GROWTH 第三段，到 31 歲）之後身體開始還債：每多一歲固定加。
   // 舊版是 33 歲一次 +10 的階梯，35 歲跟 42 歲一樣安全，很不像話。

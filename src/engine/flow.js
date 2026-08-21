@@ -827,7 +827,13 @@ STEPS.END_AWARDS = (s, ctx) => {
   if (last.rating >= 7.7 && d >= 4 && ctx.rng.chance(clamp(8 + d * 2, 2, 35))) {
     honors.push(`${s.career.year} ${L.n}年度最佳球員`);
   }
-  if (L.top === 'BIG5' && last.rating >= 8.0 && honors.some(h => h.includes('歐洲冠軍賽')) && ctx.rng.chance(25)) {
+  // 世界足球先生：保留「五大 ＋ 同年拿歐冠」這兩個硬條件，門檻改吃評分。
+  // 舊版要 8.0，但實測歐冠當季的評分最高只到 7.79（P99 7.5）—— 那是一條沒人跨得過的線，
+  // 實測 6000 局 0 人。改成 7.0 起跳、機率隨評分爬升，目標是生涯層級 ~1%。
+  // 數值在 CONF.wfpRating / wfpBase / wfpSlope。
+  if (L.top === 'BIG5' && last.rating >= CONF.wfpRating
+      && honors.some(h => h.includes('歐洲冠軍賽'))
+      && ctx.rng.chance(clamp(CONF.wfpBase + (last.rating - CONF.wfpRating) * CONF.wfpSlope + d * 2, 20, 88))) {
     honors.push(`${s.career.year} 世界足球先生`);
   }
 
