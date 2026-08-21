@@ -48,14 +48,22 @@ export function buildShareCanvas(S) {
   const peak = S.career?.peakAb || p.ab;
   const peakOvr = Math.round(S.career?.peakOvr || 0);
 
-  // 先用一張暫時的 canvas 量文字，決定最終高度 —— 榮譽列數是變動的
+  // 先用一張暫時的 canvas 量文字，決定最終高度 —— 榮譽列數與賽季數都是變動的
   const m = document.createElement('canvas').getContext('2d');
-  m.font = shFont(400, 19);
-  const honors = r.honors.slice(0, 7);
-  const honorLines = honors.reduce((a, h) => a + wrapLines(m, h, INNER - 26).length, 0);
-  const moreHonors = r.honors.length - honors.length;
+
+  // 榮譽排兩欄，所以是照「半欄寬」斷行，不是整個內容寬
+  const HON_W = (INNER - 20) / 2;
   m.font = shFont(400, 17);
+  const honors = r.honors.slice(0, 12);
+  const honorRows = [];
+  honors.forEach(h => wrapLines(m, h, HON_W - 26).forEach((ln, i) => {
+    honorRows.push(i ? `　${ln}` : `🏆 ${ln}`);
+  }));
+  const honPerCol = Math.ceil(honorRows.length / 2);
+  const moreHonors = r.honors.length - honors.length;
+
   const traitLines = r.traits.length ? wrapLines(m, `特性　${r.traits.join('、')}`, INNER).length : 0;
+  const seasons = S.career?.seasons || [];
 
   // 雷達圖與四列數據並排成一塊（跟遊戲裡的狀態列一樣），左數據右雷達
   const RADAR_R = 96;
@@ -64,9 +72,10 @@ export function buildShareCanvas(S) {
     + BLOCK_H                                     // 數據 ＋ 雷達圖
     + (r.worldCups.length ? 40 : 0)
     + (r.shirtRetired ? 40 : 0)
-    + (honorLines ? 34 + honorLines * 30 : 0)
+    + (honPerCol ? 34 + honPerCol * 26 : 0)
     + (moreHonors > 0 ? 26 : 0)
     + (traitLines ? 18 + traitLines * 26 : 0)
+    + (seasons.length ? 64 + seasons.length * 26 : 0)   // 歷年成績表
     + 120;                                        // 頁尾
 
   const cv = document.createElement('canvas');
@@ -182,13 +191,8 @@ export function buildShareCanvas(S) {
 
   // 圓心壓上巔峰綜合。半透明底盤，能力很低的人多邊形還看得見一點輪廓。
   if (peakOvr) {
-    c.globalAlpha = 0.84; c.fillStyle = T.bg;
-    c.beginPath(); c.arc(CX, CY, 30, 0, Math.PI * 2); c.fill();
-    c.globalAlpha = 1;
-    c.strokeStyle = T.amber; c.lineWidth = 1;
-    c.beginPath(); c.arc(CX, CY, 30, 0, Math.PI * 2); c.stroke();
-    text('巔峰', CX, CY - 6, { size: 11, color: T.dim, align: 'center' });
-    text(String(peakOvr), CX, CY + 18, { size: 22, weight: 700, color: T.amber, align: 'center' });
+    text('巔峰', CX, CY - 12, { size: 12, color: T.dim, align: 'center' });
+    text(String(peakOvr), CX, CY + 18, { size: 30, weight: 700, color: T.amber, align: 'center' });
   }
 
   // 左邊：四列數據
@@ -216,16 +220,16 @@ export function buildShareCanvas(S) {
     y += 40;
     text('★ 球衣退休・球場外立像', PAD, y, { size: 20, weight: 700, color: T.gold });
   }
-  if (honorLines) {
+  // 榮譽排兩欄：一輩子的獎盃排成一長條會把圖拉得又細又長
+  if (honPerCol) {
     y += 34;
     text('生涯榮譽', PAD, y, { size: 14, color: T.dim });
-    c.font = shFont(400, 19);
-    honors.forEach(h => {
-      wrapLines(c, h, INNER - 26).forEach((ln, i) => {
-        y += 30;
-        text(i ? `　${ln}` : `🏆 ${ln}`, PAD, y, { size: 19, color: T.gold });
-      });
+    honorRows.forEach((ln, i) => {
+      const cx = i < honPerCol ? PAD : PAD + HON_W + 20;
+      const row = i < honPerCol ? i : i - honPerCol;
+      text(ln, cx, y + 26 * (row + 1), { size: 17, color: T.gold });
     });
+    y += 26 * honPerCol;
     if (moreHonors > 0) { y += 26; text(`…等 ${r.honors.length} 項`, PAD, y, { size: 16, color: T.dim }); }
   }
   if (traitLines) {
@@ -234,6 +238,44 @@ export function buildShareCanvas(S) {
     wrapLines(c, `特性　${r.traits.join('、')}`, INNER).forEach(ln => {
       y += 26; text(ln, PAD, y, { size: 17, color: T.dim });
     });
+  }
+
+  // 歷年成績：分享圖最主要的「證據」—— 名次和獎盃是結論，這張表才是過程
+  if (seasons.length) {
+    y += 34;
+    text('歷年成績', PAD, y, { size: 14, color: T.dim });
+    y += 22;
+    const RIGHT = SHARE_W - PAD;
+    const X_YEAR = PAD, X_CLUB = PAD + 56, X_LV = PAD + 236;
+    const X_APP = RIGHT - 206, X_G = RIGHT - 148, X_A = RIGHT - 92, X_R = RIGHT;
+    const head = (str, x, align) => text(str, x, y, { size: 12, color: T.dim, align });
+    head('年', X_YEAR); head('球會', X_CLUB); head('聯賽', X_LV);
+    head('場', X_APP, 'right'); head(isGK ? '零封' : '進球', X_G, 'right');
+    head('助攻', X_A, 'right'); head('評分', X_R, 'right');
+    c.strokeStyle = T.line; c.lineWidth = 1;
+    c.beginPath(); c.moveTo(PAD, y + 8); c.lineTo(RIGHT, y + 8); c.stroke();
+    y += 8;
+
+    seasons.forEach((x, i) => {
+      const top = y + i * 26;
+      if (i % 2) {                       // 斑馬紋：一整排數字沒有這個很難對行
+        c.globalAlpha = 0.05; c.fillStyle = T.ink;
+        c.fillRect(PAD, top, INNER, 26); c.globalAlpha = 1;
+      }
+      const b = top + 18;
+      text(String(x.year), X_YEAR, b, { size: 14, color: T.dim });
+      const club = `${x.club}${x.abroad ? ' ✈' : ''}`;
+      // 兩個文字欄的可用寬度是「到下一欄起點再退一段」算出來的，
+      // 寫死寬度的話球會名一長就會頂到聯賽、聯賽頂到場次
+      text(club, X_CLUB, b, { size: fit(club, X_LV - X_CLUB - 12, 14, 400) });
+      text(x.lvName || '', X_LV, b, { size: fit(x.lvName || '', X_APP - X_LV - 46, 13, 400), color: T.dim });
+      text(String(x.apps), X_APP, b, { size: 14, align: 'right' });
+      text(String(isGK ? x.cs : x.goals), X_G, b, { size: 14, align: 'right' });
+      text(String(x.assists), X_A, b, { size: 14, align: 'right' });
+      text(x.rating ? String(x.rating) : '—', X_R, b,
+        { size: 14, weight: 700, align: 'right', color: x.rating >= 7.2 ? T.amber : T.ink });
+    });
+    y += seasons.length * 26;
   }
 
   // 頁尾：把種子碼寫進圖裡，看到圖的人才能踢到同一段人生

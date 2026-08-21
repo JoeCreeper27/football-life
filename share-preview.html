@@ -118,6 +118,9 @@ body{margin:0;background:#0a0a0a;color:var(--ink);
   <label>能力水準 <b id="powerN">78</b></label>
   <input type="range" id="power" min="30" max="95" value="78">
 
+  <label>賽季數 <b id="seasonsN">18</b> 季</label>
+  <input type="range" id="seasons" min="0" max="30" value="18">
+
   <div class="chk"><input type="checkbox" id="wc" checked><span>踢進世界盃</span></div>
   <div class="chk"><input type="checkbox" id="shirt"><span>球衣退休</span></div>
   <div class="chk"><input type="checkbox" id="abroad" checked><span>有旅外</span></div>
@@ -152,11 +155,35 @@ const HONORS = [
   '歐洲冠軍賽 冠軍', '英格蘭超級聯賽 冠軍',
 ];
 const LONG_HONOR = '南美解放者盃暨洲際俱樂部錦標賽 最佳陣容、賽事最有價值球員兼最佳射手';
+const CLUBS = [
+  ['市立青訓', '國中球隊', false], ['海線高中', '高中聯賽', false],
+  ['港都潮汐', '台灣企業聯賽', false], ['多瑙河藍衫', '歐洲第四級', true],
+  ['低地紡織城', '歐洲跳板聯賽', true], ['泰晤士紅軍', '英格蘭超級聯賽', true],
+  ['馬德里白衫', '西班牙甲級聯賽', true], ['亞平寧藍黑', '義大利甲級聯賽', true],
+];
+
 const TRAITS = ['玻璃體質', '大心臟', '更衣室領袖', '媒體寵兒', '慢熱', '鐵人', '任意球專家', '暴躁'];
 
 let abSeed = 1;
 /* 只給預覽用的簡易亂數；引擎的決定論跟這裡無關 */
 const rnd = () => (abSeed = (abSeed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+
+/** 假的歷年成績：球會逐年往上爬，數據隨賽季波動 */
+function mockSeasons(n) {
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const [club, lvName, abroad] = CLUBS[Math.min(CLUBS.length - 1, Math.floor(i / n * CLUBS.length))];
+    const apps = Math.round(6 + rnd() * 32);
+    out.push({
+      year: 2029 + i, club, lvName, abroad, apps,
+      goals: Math.round(rnd() * apps * 0.6),
+      assists: Math.round(rnd() * apps * 0.35),
+      cs: Math.round(rnd() * apps * 0.4),
+      rating: +(6.1 + rnd() * 1.6).toFixed(2),
+    });
+  }
+  return out;
+}
 
 function mockState() {
   const group = $('group').value;
@@ -179,7 +206,7 @@ function mockState() {
 
   return {
     seed: 'prev1234',
-    career: { peakAb, peakOvr: power + 4, peakAge: 27 },
+    career: { peakAb, peakOvr: power + 4, peakAge: 27, seasons: mockSeasons(+$('seasons').value) },
     player: {
       name: $('name').value || '無名氏',
       number: 10, group, dpos: DPOS_OF[group], age: 34, ab, pot,
@@ -227,6 +254,7 @@ function render() {
   $('honorsN').textContent = $('honors').value;
   $('traitsN').textContent = $('traits').value;
   $('powerN').textContent = $('power').value;
+  $('seasonsN').textContent = $('seasons').value;
   document.body.dataset.stage = $('stageSel').value;
 
   const stage = $('stage');
