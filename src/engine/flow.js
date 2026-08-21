@@ -3,6 +3,7 @@ import {
   LV, CLUBS, YOUTH_CLUBS, TIER, DPOS, EVENTS, TRAITS, ABIL, CONF, POS_GROUP,
   NATIONS, ORIGINS, REGION, MAX_TIER, MAX_ABIL, leaguesAt,
   ARCHETYPE, ARCH_SWITCH, ROLE_RANK, SQUAD, PHYSICAL, PAC_LOCK_AGE, growthPhase, STAGE_TRAIN,
+  TRANSFER, AGENTS, AGENT_ORDER, contractYears, agentAvailable,
   POS_WEIGHT,
   BUILD,
   trainingTable, trainingFor,
@@ -14,6 +15,7 @@ import {
 import {
   rollMinutes, simSeason, injuryRisk, accrueLoad, loadCap,
   annualSalary, applyDecline, dValue, fmtMoney,
+  playerValue, transferFee, feePressure,
 } from './sim.js';
 
 /**
@@ -342,6 +344,26 @@ function fxApi(s, ctx) {
       s.club.minutes = Math.max(0, s.club.minutes - games / (L.g || 34));
       card(ctx, 'bad', '禁賽', `禁賽 ${games} 場，本季出場時間縮水。`);
     },
+    // 合約與轉會故事線用的鉤子：讓 data.js 的事件卡不用知道 flow 的內部結構
+    contract: yrs => {
+      const c = s.club;
+      if (!c.contract) return;
+      c.contract.years = Math.max(0, c.contract.years + yrs);
+      card(ctx, yrs > 0 ? 'good' : 'bad', '合約異動',
+        `合約剩餘年限變成 ${hl(c.contract.years)} 年。`);
+    },
+    forceMove: () => { s._forceMove = 1; },
+    setAgent: key => {
+      s.career.agent = key;
+      card(ctx, 'info', '經紀人異動', `現在代理你的是 ${hl(AGENTS[key].n)}。`);
+    },
+    pay: amt => {
+      s.career.salaryTotal = Math.max(0, s.career.salaryTotal + amt);
+      card(ctx, amt >= 0 ? 'good' : 'bad', amt >= 0 ? '入帳' : '損失',
+        `${amt >= 0 ? '+' : '-'}${fmtMoney(Math.abs(amt))}（生涯累計 ${fmtMoney(s.career.salaryTotal)}）`);
+    },
+    // 這一次轉會窗的門檻放寬（解約金條款、經紀人談來的門路）
+    offer: slack => { s._offerSlack = Math.max(s._offerSlack || 0, slack); },
     shiftRole: dir => {
       const idx = SQUAD.findIndex(r => r.k === s.club.role);
       const next = SQUAD[clamp(idx - dir, 0, SQUAD.length - 1)];
@@ -785,12 +807,15 @@ STEPS.END_SALARY = (s, ctx) => {
   s.phase = 'SEASON_END';
   if (isPro(s)) {
     const sal = annualSalary(s);
-    s.career.salaryTotal += sal;
     const bonus = s.career.fanRep >= 70 ? Math.round(sal * 0.1) : 0;
-    if (bonus) s.career.salaryTotal += bonus;
+    // 經紀人抽成：門路是要付錢買的，這是 AGENTS 那張表唯一的固定代價
+    const ag = AGENTS[s.career.agent] || AGENTS.none;
+    const cut = Math.round((sal + bonus) * (ag.cut + (s.player.traits.puppet ? 0.05 : 0)));
+    s.career.salaryTotal += sal + bonus - cut;
     card(ctx, '', '季末結算',
       `本年度薪資 ${hl(fmtMoney(sal))}` +
       (bonus ? `＋球衣分紅 ${fmtMoney(bonus)}` : '') +
+      (cut ? `　經紀人抽成 ${dn('-' + fmtMoney(cut))}（${ag.n}）` : '') +
       `（生涯累計 ${fmtMoney(s.career.salaryTotal)}）<br>球迷聲望 ${hl(Math.round(s.career.fanRep))}`);
   }
   s.step = 'END_ARCH';
@@ -989,7 +1014,7 @@ STEPS.END_POS = (s, ctx, input) => {
 STEPS.END_SERVICE = (s, ctx, input) => {
   const p = s.player, nat = nationOf(p);
   const done = s.career.counters.service;
-  if (done || !nat.service || p.age < 20 || p.age > 24 || !isPro(s)) { s.step = 'END_MOVE'; return; }
+  if (done || !nat.service || p.age < 20 || p.age > 24 || !isPro(s)) { s.step = 'END_CONTRACT'; return; }
 
   if (input === undefined) {
     const options = [];
@@ -1027,6 +1052,164 @@ STEPS.END_SERVICE = (s, ctx, input) => {
 
 const where = (p, id) => (isHomeLeague(p, id) ? '國內' : REGION[LV[id].region]);
 
+/* ---------------- 合約、身價與經紀人 ---------------- */
+
+/**
+ * 生涯最高身價。**不走 rng**，所以加它不會讓舊種子漂移。
+ * 呼叫點是每年 END_CONTRACT（季末、轉會窗之前），拿到的是這一季踢完的市場評價。
+ */
+function trackValue(s) {
+  const v = playerValue(s);
+  if (v > (s.career.peakValue || 0)) s.career.peakValue = v;
+  return v;
+}
+
+function signContract(s, years) {
+  s.club.contract = { years: years ?? contractYears(s.player.age) };
+}
+
+function isFree(s) { return (s.club.contract?.years ?? 0) <= 0; }
+
+/**
+ * 季末合約結算。這是「轉會費故事線」的樞紐：
+ * 期待壓力結清 → 合約倒數一年 → 被釋出？ → 到期就要在續約與自由身之間選。
+ *
+ * 續約與自由身是一組真正的對賭：自由身沒有轉會費綁著你（門檻放寬、簽字費入袋），
+ * 但**不能留隊**，而且沒花錢買你的球會不會把你當招牌（球會等級低一級）。
+ */
+STEPS.END_CONTRACT = (s, ctx, input) => {
+  const p = s.player, c = s.club, n = s.career.counters;
+  if (!isPro(s)) { s.step = 'END_MOVE'; return; }
+
+  if (input === undefined) {
+    // 買貴了的期待只壓一季，踢完就結清
+    if (c.pressure) {
+      const last = s.career.seasons[s.career.seasons.length - 1];
+      const met = last && last.apps > 0 && last.rating >= 6.8;
+      addFanRep(s, met ? 5 : -5);
+      card(ctx, met ? 'good' : 'bad', met ? '證明了那筆轉會費' : '轉會費的重量',
+        met ? '沒有人再提你值多少錢，他們只記得你怎麼踢球。'
+            : '每次拿球，看台上都有人在算你值多少。這股壓力今年結束，但今年很難熬。');
+      c.pressure = 0;
+    }
+
+    if (!c.contract) signContract(s);
+    c.contract.years = Math.max(0, c.contract.years - 1);
+
+    const val = trackValue(s);
+    const ag = AGENTS[s.career.agent] || AGENTS.none;
+
+    // 球隊釋出：合約還沒到期，球會決定提前把你清掉（付補償金換薪水停損）
+    const outcast = !c.loanFrom &&
+      (s._forceMove || s.career.fanRep <= 20 || ovr(p) < LV[c.lv].min - 3);
+    if (outcast && c.contract.years > 0) {
+      const pay = Math.round(annualSalary(s) * TRANSFER.releasePay);
+      s.career.salaryTotal += pay;
+      c.contract.years = 0;
+      n.released = (n.released || 0) + 1;
+      addFanRep(s, -4);
+      card(ctx, 'bad', '球隊釋出',
+        `${hl(c.club)} 提前解除了你的合約，付了 ${hl(fmtMoney(pay))} 補償金。<br>` +
+        '你現在是自由身 —— 沒有轉會費綁著你，也沒有人非要你不可。');
+    }
+
+    const free = isFree(s);
+    card(ctx, free ? 'info' : '', '身價評估',
+      `目前身價 ${hl(fmtMoney(val))}` +
+      (free ? '｜<b class="hl">合約到期・自由身</b>'
+            : `｜合約剩 ${hl(c.contract.years)} 年（轉會費約 ${fmtMoney(transferFee(s, 'side'))}）`) +
+      `<br>經紀人：${ag.n}（抽成 ${Math.round(ag.cut * 100)}%）`);
+
+    if (!free) { s.step = 'END_AGENT'; return; }
+    n.freeAgent = 1;
+
+    const options = [];
+    const renewOk = !outcast && ovr(p) >= LV[c.lv].min - 6 && s.career.fanRep > 25;
+    if (renewOk) {
+      options.push({
+        v: 'renew', t: '在原隊續約', main: true,
+        s: `再簽 ${contractYears(p.age)} 年，簽字費 ${fmtMoney(Math.round(annualSalary(s) * TRANSFER.renewSign))}`,
+      });
+    } else if (!outcast) {
+      card(ctx, 'bad', '沒有等到新合約', `${hl(c.club)} 沒有把續約書推到你面前。`);
+    }
+    options.push({
+      v: 'free', t: renewOk ? '拒絕續約，以自由身測試市場' : '以自由身尋找下一支球隊',
+      warn: renewOk,
+      s: `免轉會費：往上一層門檻放寬 ${TRANSFER.freeSlack} 分、簽字費入袋；` +
+         '但不能留隊，而且沒花錢買你的球會不會把你當招牌',
+    });
+    return ask(s, { type: 'choice', title: '合約到期', options }, 'END_CONTRACT');
+  }
+
+  if (input === 'renew') {
+    signContract(s);
+    const pay = Math.round(annualSalary(s) * TRANSFER.renewSign);
+    s.career.salaryTotal += pay;
+    n.freeAgent = 0;
+    addFanRep(s, 3);
+    card(ctx, 'good', '續約',
+      `你在 ${hl(c.club)} 的隊徽前拍了照，再簽 ${hl(c.contract.years)} 年，` +
+      `簽字費 ${fmtMoney(pay)} 入袋。`);
+  } else {
+    card(ctx, 'info', '成為自由身',
+      '你沒有在那份合約上簽字。七月一日起你不屬於任何人 —— 那是籌碼，也是懸崖。');
+  }
+  s.step = 'END_AGENT';
+};
+
+/**
+ * 更換經紀人。只在人生轉折點問：剛成為自由身、剛被釋出，或打出一個會引來電話的球季。
+ * 抽成與門路是綁在一起的（AGENTS），所以這不是「變強按鈕」而是一次押注。
+ */
+STEPS.END_AGENT = (s, ctx, input) => {
+  const p = s.player, c = s.club, n = s.career.counters;
+  if (!isPro(s)) { s.step = 'END_MOVE'; return; }
+  const cur = s.career.agent;
+  const quitFee = cur === 'none' ? 0 : Math.round(annualSalary(s) * TRANSFER.agentQuit);
+
+  if (input === undefined) {
+    const last = s.career.seasons[s.career.seasons.length - 1];
+    const hot = last && last.apps > 0 && last.rating >= 7.2;
+    const cooled = s.career.year - (n.agentYear || 0) >= 3;
+    if (p.age < 18 || !(isFree(s) || (hot && cooled))) { s.step = 'END_MOVE'; return; }
+
+    const tier = LV[c.lv].tier;
+    const cands = AGENT_ORDER
+      .filter(k => k !== cur && agentAvailable(k, s, tier))
+      .sort((a, b) => Math.abs(AGENT_ORDER.indexOf(a) - AGENT_ORDER.indexOf(cur))
+                    - Math.abs(AGENT_ORDER.indexOf(b) - AGENT_ORDER.indexOf(cur)))
+      .slice(0, 3);
+    if (!cands.length) { s.step = 'END_MOVE'; return; }
+
+    return ask(s, {
+      type: 'choice',
+      title: isFree(s) ? '自由身：先找一個願意幫你打電話的人' : '有人想代理你',
+      options: [
+        { v: 'keep', t: `續用 ${AGENTS[cur].n}`, main: true, s: AGENTS[cur].s },
+        ...cands.map(k => ({
+          v: 'agent:' + k, t: `改簽 ${AGENTS[k].n}`,
+          s: AGENTS[k].s + (quitFee ? `｜解約費 ${fmtMoney(quitFee)}` : ''),
+        })),
+      ],
+    }, 'END_AGENT');
+  }
+
+  if (String(input).startsWith('agent:')) {
+    const k = String(input).slice(6);
+    s.career.salaryTotal = Math.max(0, s.career.salaryTotal - quitFee);
+    s.career.agent = k;
+    n.agentSwitch = (n.agentSwitch || 0) + 1;
+    n.agentYear = s.career.year;
+    card(ctx, 'info', '更換經紀人',
+      `從今天起，${hl(AGENTS[k].n)} 負責你的合約 —— ${AGENTS[k].s}。` +
+      (quitFee ? `<br>解約費 ${fmtMoney(quitFee)}。` : ''));
+    // 一直換人＝把生涯交到別人手上
+    if (n.agentSwitch >= 3) unlock(s, ctx, 'puppet');
+  }
+  s.step = 'END_MOVE';
+};
+
 /**
  * 國內優先，其餘各地區輪流各取一個。
  * 重點是選單不能全是同一洲 —— 「要去哪個地區」本身就是這個遊戲的主要決策。
@@ -1050,24 +1233,37 @@ function diversify(p, ids, rng, limit) {
   return out.slice(0, limit);
 }
 
-/** 某一層級中能力與年齡窗口都過得去的聯賽 */
-function reachable(s, tier) {
-  const p = s.player, o = ovr(p);
+/** 某一層級中能力與年齡窗口都過得去的聯賽（slack = 談判把門檻談鬆了幾分） */
+function reachable(s, tier, slack = 0) {
+  const p = s.player, o = ovr(p) + slack;
   return leaguesAt(tier).filter(id =>
     id !== s.club.lv && o >= LV[id].min && ageWindow(p, id));
+}
+
+/**
+ * 談判籌碼：自由身（不用付轉會費，球會敢賭）＋ 事件卡談來的機會。
+ *
+ * **經紀人不在這裡** —— 經紀人給的是門路（候選聯賽的數量），不是把能力門檻談掉。
+ * 兩者都給的話，換一次經紀人就能把五大登陸率從 16.8% 推到 20.9%，
+ * 等於用談判繞過整個能力門檻，洲際頂級也一起失控（實測 61.7% → 66.6%）。
+ */
+function moveSlack(s) {
+  const raw = (isFree(s) ? TRANSFER.freeSlack : 0) + (s._offerSlack || 0);
+  return clamp(raw, -TRANSFER.slackCap, TRANSFER.slackCap);
 }
 
 /** 往上一層 */
 function upDests(s, rng) {
   const tier = LV[s.club.lv].tier;
   if (tier >= MAX_TIER) return [];
-  return diversify(s.player, reachable(s, tier + 1), rng, 4);
+  const ag = AGENTS[s.career.agent] || AGENTS.none;
+  return diversify(s.player, reachable(s, tier + 1, moveSlack(s)), rng, clamp(4 + ag.reach, 2, 6));
 }
 
 /** 同級橫向轉會：換一個地區試試，薪水與聯賽風格都不一樣 */
 function sideDests(s, rng) {
   const cur = LV[s.club.lv];
-  const ids = reachable(s, cur.tier).filter(id => LV[id].region !== cur.region);
+  const ids = reachable(s, cur.tier, moveSlack(s)).filter(id => LV[id].region !== cur.region);
   return diversify(s.player, ids, rng, 2);
 }
 
@@ -1113,20 +1309,26 @@ STEPS.END_MOVE = (s, ctx, input) => {
 
   // 職業
   const tier = LV[c.lv].tier;
+  const free = isFree(s);
+  // 每個目的地都先報價：轉會費是這一格選單上最重要的一行字
+  const feeTxt = kind => free ? '自由轉會・免轉會費'
+    : `轉會費約 ${fmtMoney(transferFee(s, kind))}`;
+
   if (input === undefined) {
     const o = ovr(p);
     const options = [];
 
-    const forced = s._forceMove || o < LV[c.lv].min - 3 || s.career.fanRep <= 20;
-    if (forced) {
-      card(ctx, 'bad', '戰力外通知',
-        s.career.fanRep <= 20
-          ? '球會受不了看台的壓力，決定把你賣掉。你必須找下一站。'
-          : '球會告知不會續約，你必須找下一站。');
+    // 自由身沒有留隊這個選項 —— 這就是拒絕續約的代價
+    const forced = free || s._forceMove;
+    if (forced && !free) {
+      card(ctx, 'bad', '戰力外通知', '球會告知你不在計畫內，必須找下一站。');
     }
 
     if (!forced) {
-      options.push({ v: 'stay', t: '留隊競爭', main: true, s: `續留 ${c.club}，爭取更高的陣中地位` });
+      options.push({
+        v: 'stay', t: '留隊競爭', main: true,
+        s: `續留 ${c.club}，爭取更高的陣中地位｜合約剩 ${c.contract?.years ?? 0} 年`,
+      });
     }
 
     if (c.role === 'BENCH' || c.role === 'STAND') {
@@ -1135,13 +1337,13 @@ STEPS.END_MOVE = (s, ctx, input) => {
     for (const id of upDests(s, ctx.rng)) {
       options.push({
         v: 'up:' + id, t: `挑戰 ${LV[id].n}`,
-        s: `${where(p, id)}・門檻 ${LV[id].min}（你 ${o}）`,
+        s: `${where(p, id)}・門檻 ${LV[id].min}（你 ${o}）｜${feeTxt('up')}`,
       });
     }
     for (const id of sideDests(s, ctx.rng)) {
       options.push({
         v: 'side:' + id, t: `轉戰 ${LV[id].n}`,
-        s: `${where(p, id)}・同級別，換個地區重新開始`,
+        s: `${where(p, id)}・同級別，換個地區重新開始｜${feeTxt('side')}`,
       });
     }
     // 選了海外役男延期的人，30 歲前回國會被兵役卡住
@@ -1150,13 +1352,13 @@ STEPS.END_MOVE = (s, ctx, input) => {
       const back = homeDest(s);
       options.push({
         v: 'home:' + back, t: '返回家鄉',
-        s: `回到 ${LV[back].n}，在熟悉的地方踢完剩下的日子`,
+        s: `回到 ${LV[back].n}，在熟悉的地方踢完剩下的日子｜${feeTxt('home')}`,
       });
     }
     for (const id of downDests(s, ctx.rng)) {
       options.push({
         v: 'down:' + id, t: `降級加盟 ${LV[id].n}`,
-        s: `${where(p, id)}・下修舞台，換取出場時間與數據`,
+        s: `${where(p, id)}・下修舞台，換取出場時間與數據｜${feeTxt('down')}`,
       });
     }
     if (p.age >= 30) {
@@ -1188,31 +1390,33 @@ STEPS.END_MOVE = (s, ctx, input) => {
     const dest = pickLeague(s, Math.max(1, tier - 1), ctx.rng);
     c.loanFrom = c.club;
     moveTo(s, dest, 3, ctx.rng, ctx);
-    card(ctx, 'info', '外租', `以外租身分加盟 ${hl(c.club)}（${LV[dest].n}），母隊 ${c.loanFrom}。去踢球吧。`);
+    card(ctx, 'info', '外租', `以外租身分加盟 ${hl(c.club)}（${LV[dest].n}），母隊 ${c.loanFrom}。去踢球吧。` +
+      '<br>外租不產生轉會費，合約也還在母隊手上。');
   } else if (kind === 'down') {
-    moveTo(s, to, ctx.rng.chance(50) ? 2 : 3, ctx.rng, ctx);
+    settleTransfer(s, ctx, 'down', to, ctx.rng.chance(50) ? 2 : 3);
     card(ctx, 'info', '轉會', `你放棄了更高的舞台，換來 ${hl(c.club)}（${LV[to].n}）的核心位置。`);
   } else if (kind === 'home') {
     const drop = LV[to].tier < tier;
-    moveTo(s, to, ctx.rng.chance(40) ? 1 : 2, ctx.rng, ctx);
+    settleTransfer(s, ctx, 'home', to, ctx.rng.chance(40) ? 1 : 2);
     card(ctx, 'info', '返鄉',
       `你回來了。${hl(c.club)}（${LV[to].n}）把 ${p.number} 號球衣留給你，` +
       `機場有球迷等著。${drop ? '層級是降了，但這裡有人記得你的名字。' : ''}`);
   } else if (kind === 'side') {
     const clubTier = ovr(p) >= LV[to].par + 4 ? (ctx.rng.chance(40) ? 1 : 2) : (ctx.rng.chance(55) ? 2 : 3);
-    moveTo(s, to, clubTier, ctx.rng, ctx);
+    settleTransfer(s, ctx, 'side', to, clubTier);
     card(ctx, 'info', '轉戰他鄉',
-      `同一個級別，換一片天。你加盟了 ${hl(c.club)}（${LV[to].n}・${TIER[clubTier].n}）。`);
+      `同一個級別，換一片天。你加盟了 ${hl(c.club)}（${LV[to].n}・${TIER[c.tier].n}）。`);
   } else if (kind === 'up') {
     const clubTier = ovr(p) >= LV[to].par + 5 ? (ctx.rng.chance(45) ? 1 : 2) : (ctx.rng.chance(50) ? 2 : 3);
     const abroad = !isHomeLeague(p, to);
-    moveTo(s, to, clubTier, ctx.rng, ctx);
+    settleTransfer(s, ctx, 'up', to, clubTier);
     card(ctx, 'gold', abroad ? '海外轉會成功' : '轉會成功',
-      `你加盟了 ${hl(c.club)}（${LV[to].n}・${TIER[clubTier].n}）。` +
+      `你加盟了 ${hl(c.club)}（${LV[to].n}・${TIER[c.tier].n}）。` +
       (abroad ? '<br>行李收好，語言之後再學。' : ''));
     if (LV[to].tier === MAX_TIER && !p.traits.pioneer) unlock(s, ctx, 'pioneer');
     if (LV[to].tier >= 4 && s.career.fromAcademy && !p.traits.academy) unlock(s, ctx, 'academy');
   }
+  s._offerSlack = undefined;
 
   // 年輕就在低階聯賽連續掙扎 → 被足球淘汰，這是「第二人生」劇本的主要入口
   if (p.age <= 24 && (s.career.counters.struggle || 0) >= 3 && ctx.rng.chance(38)) {
@@ -1232,6 +1436,44 @@ STEPS.END_MOVE = (s, ctx, input) => {
   }
   s.step = 'YEAR_ADVANCE';
 };
+
+/**
+ * 轉會結算：轉會費、簽字費與期待壓力。
+ *
+ * 轉會費本身不進玩家口袋（跟現實一樣），真正會影響玩法的只有兩件事：
+ *   1. 簽字費 —— 有合約走 signCut、自由身走新東家年薪的 freeSign
+ *   2. 期待壓力 —— 買貴了，第一年的 squadGap 被扣，位置要自己搶回來
+ * 自由身少了一筆轉會費，代價是球會等級往下挪一級（沒花錢買你，不會把你當招牌）。
+ */
+function settleTransfer(s, ctx, kind, to, clubTier) {
+  const free = isFree(s);
+  const fee = free ? 0 : transferFee(s, kind);
+  const from = s.club.club;
+
+  if (free) clubTier = clamp(clubTier + TRANSFER.freeTierDrop, 1, 4);
+  moveTo(s, to, clubTier, ctx.rng, ctx);
+  signContract(s);
+  s.club.pressure = feePressure(fee, to, s.club.tier);
+
+  const sign = fee > 0
+    ? Math.round(fee * TRANSFER.signCut)
+    : Math.round(annualSalary(s) * TRANSFER.freeSign);
+  s.career.salaryTotal += sign;
+  s.career.feeTotal += fee;
+  s.career.transfers.push({ year: s.career.year, from, to: s.club.club, fee });
+  // 這筆轉會是不是自由身談成的：事件卡〈自由身的冬天〉靠這個旗標，不清掉會一直誤觸發
+  s.career.counters.freeAgent = fee > 0 ? 0 : 1;
+
+  card(ctx, fee > 0 ? 'gold' : 'info', fee > 0 ? '轉會費敲定' : '自由轉會',
+    (fee > 0
+      ? `${hl(s.club.club)} 付了 ${hl(fmtMoney(fee))} 把你買下來。`
+      : `沒有人需要付轉會費 —— ${hl(s.club.club)} 只需要說服你。`) +
+    `<br>簽字費 ${hl(fmtMoney(sign))} 入袋，合約 ${hl(s.club.contract.years)} 年。` +
+    (s.club.pressure
+      ? `<br><b class="dn">這筆錢遠超過他們原本的預算：第一年陣中地位 −${s.club.pressure}，位置要自己搶。</b>`
+      : ''));
+  return fee;
+}
 
 function moveTo(s, lv, clubTier, rng, ctx) {
   const pool = CLUBS[lv];
@@ -1337,8 +1579,11 @@ function graduate(s, ctx, input) {
   } else {
     const lv = input.slice(4);
     moveTo(s, lv, 3, ctx.rng, ctx);
+    signContract(s);
+    s.career.agent = 'local';     // 第一份職業合約才會有人願意代理你
     card(ctx, 'gold', '職業生涯開始',
-      `你與 ${hl(s.club.club)}（${LV[lv].n}）簽下第一份職業合約。` +
+      `你與 ${hl(s.club.club)}（${LV[lv].n}）簽下第一份職業合約，年限 ${hl(s.club.contract.years)} 年。` +
+      `<br>${hl(AGENTS.local.n)} 遞來名片，從今天起由他處理你的合約。` +
       (isAbroad(s) ? '<br>第一次一個人出國，行李比想像中輕。' : ''));
   }
   s.step = 'YEAR_ADVANCE';
@@ -1490,6 +1735,10 @@ function retire(s, ctx, reason) {
     caps: s.career.caps, intlGoals: s.career.intlGoals,
     worldCups: s.career.worldCups,
     salary: s.career.salaryTotal,
+    peakValue: s.career.peakValue,
+    feeTotal: s.career.feeTotal,
+    transfers: s.career.transfers.length,
+    agent: (AGENTS[s.career.agent] || AGENTS.none).n,
     traits: Object.keys(p.traits).filter(k => p.traits[k]).map(k => TRAITS[k]?.n).filter(Boolean),
   };
   card(ctx, 'gold', '生涯結束', reason);

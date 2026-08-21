@@ -7,7 +7,7 @@ import {
   ABIL, GROUP_ABIL, POS_GROUP, DPOS, LV, TIER, SQUAD,
   NATIONS, NATION_ORDER, ORIGINS, REGION, ARCHETYPE, MAX_ABIL, ABIL_SHORT, BUILD, POS_WEIGHT,
 } from './engine/data.js';
-import { fmtMoney } from './engine/sim.js';
+import { fmtMoney, playerValue } from './engine/sim.js';
 import { openShareImage } from './share.js';
 import { VERSION } from './version.js';
 
@@ -146,6 +146,11 @@ function board() {
   $('bd-ovr').textContent = ovr(p);
   $('bd-fan').textContent = Math.round(S.career.fanRep);
   $('bd-sal').textContent = Math.round(S.career.salaryTotal).toLocaleString('zh-TW');
+  // 身價與合約：職業期才有意義，養成期直接留白
+  const val = c.stage === 'PRO' ? playerValue(S) : 0;
+  $('bd-val').textContent = val ? fmtMoney(val) : '—';
+  const yrs = c.contract?.years ?? 0;
+  $('bd-ct').textContent = c.stage !== 'PRO' ? '—' : yrs > 0 ? `${yrs} 年` : '自由身';
   document.body.dataset.stage =
     c.stage === 'PRO' ? `PRO_${LV[c.lv].region || 'ASIA'}` : c.stage;
   $('bd-phase').textContent =
@@ -433,7 +438,9 @@ function settlement() {
       `<div>生涯 ${r.sum.apps} 場｜進球 ${r.sum.goals}｜助攻 ${r.sum.assists}｜零封 ${r.sum.cs}</div>` +
       `<div>國家隊 ${r.caps} 場、進球 ${r.intlGoals}` +
       `${r.worldCups.length ? `｜<b class="hl">世界盃 ${r.worldCups.join('、')}</b>` : ''}</div>` +
-      `<div>生涯薪資 <b class="hl">${fmtMoney(r.salary)}</b></div>` +
+      `<div>生涯薪資 <b class="hl">${fmtMoney(r.salary)}</b>（已扣經紀人抽成）</div>` +
+      (r.peakValue ? `<div>生涯最高身價 <b class="hl">${fmtMoney(r.peakValue)}</b>` +
+        `｜轉會 ${r.transfers} 次、累計轉會費 ${fmtMoney(r.feeTotal)}｜最後的經紀人：${r.agent}</div>` : '') +
       (r.coach ? `<div style="margin-top:6px;color:${r.coach.win ? 'var(--gold)' : 'var(--dn)'}">` +
         (r.coach.win
           ? `執教生涯 ${r.coach.years} 年・教練收入 ${fmtMoney(r.coach.pay)}`

@@ -86,7 +86,7 @@ export function buildShareCanvas(S, stage) {
 
   // 雷達圖與四列數據並排成一塊（跟遊戲裡的狀態列一樣），左數據右雷達
   const RADAR_R = 96;
-  const STAT_W = 320, BLOCK_GAP = 16, BLOCK_H = 288;
+  const STAT_W = 320, BLOCK_GAP = 16, BLOCK_H = 354;   // 五列數據（最後一列是身價與轉會）
   const H = 294                                   // 抬頭 + 名次橫幅 + 間距
     + BLOCK_H                                     // 數據 ＋ 雷達圖
     + (r.worldCups.length ? 40 : 0)
@@ -220,6 +220,8 @@ export function buildShareCanvas(S, stage) {
     ['出場', `${r.sum.apps} 場`], [isGK ? '零封' : '進球', String(isGK ? r.sum.cs : r.sum.goals)],
     ['助攻', String(r.sum.assists)], ['旅外', r.abroadSeasons ? `${r.abroadSeasons} 季` : '從未旅外'],
     [`國家隊・${r.natlTeam}`, `${r.caps} 場・${r.intlGoals} 球`], ['球迷聲望', String(r.fanRep)],
+    ['巔峰身價', r.peakValue ? fmtMoney(r.peakValue) : '—'],
+    ['轉會', r.transfers ? `${r.transfers} 次・${fmtMoney(r.feeTotal || 0)}` : '未曾轉會'],
   ];
   const colW = STAT_W / 2;
   stats.forEach(([label, val], i) => {

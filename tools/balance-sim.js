@@ -111,6 +111,18 @@ function botChoice(state, pending) {
   if (has('academy')) return STRAT === 'safe' ? 'hs' : 'academy';
   // 分岔型事件卡：積極派挑第二條路
   if (has('opt0')) return STRAT === 'aggressive' && has('opt1') ? 'opt1' : 'opt0';
+  // 合約到期：積極派賭自由身（免轉會費、門檻放寬），其餘續約
+  if (has('renew')) return STRAT === 'aggressive' ? 'free' : 'renew';
+  if (has('free') && vals.length === 1) return 'free';
+  // 經紀人：積極派換門路最廣的，保守派留任
+  const ag = withPrefix('agent:');
+  if (ag.length) {
+    if (STRAT === 'safe') return 'keep';
+    const rank = ['agent:firm', 'agent:vet', 'agent:local', 'agent:family', 'agent:none'];
+    if (STRAT === 'aggressive') return rank.find(v => ag.includes(v)) || 'keep';
+    // 平衡派：一半機率換到門路稍廣的一位（否則這條分支永遠量不到）
+    return Math.random() < 0.5 ? (['agent:vet', 'agent:local'].find(v => ag.includes(v)) || 'keep') : 'keep';
+  }
   // 兵役：能免則免
   if (has('sub')) return 'sub';
   if (has('defer')) return 'defer';
@@ -173,6 +185,8 @@ function playOne(seed) {
 const acc = {};
 const bump = k => (acc[k] = (acc[k] || 0) + 1);
 const legacies = [];
+const values = [];   // 生涯最高身價
+const fees = [];     // 生涯累計轉會費
 const byNation = {};
 let t0 = Date.now();
 
@@ -211,6 +225,12 @@ for (let i = 0; i < N; i++) {
   if (s.career.fromAcademy) bump('進足球學校');
   if (s.player.arch) bump('確立原型');
   if (s.career.fanRep >= 80) bump('球迷聲望 ≥80');
+  // 轉會故事線：這幾條沒有目標區間，只是用來看劇情有沒有真的跑起來
+  if ((s.career.counters.released || 0) > 0) bump('被球隊釋出過');
+  if (s.career.transfers?.some(x => x.fee === 0)) bump('以自由身轉會過');
+  if ((s.career.counters.agentSwitch || 0) > 0) bump('換過經紀人');
+  values.push(s.career.peakValue || 0);
+  fees.push(s.career.feeTotal || 0);
   bump('_total');
 }
 
@@ -218,6 +238,9 @@ const total = acc._total || 1;
 const pct = k => ((acc[k] || 0) / total * 100);
 legacies.sort((a, b) => a - b);
 const q = p => legacies[Math.floor(legacies.length * p)] ?? 0;
+values.sort((a, b) => a - b);
+fees.sort((a, b) => a - b);
+const qv = (arr, p) => arr[Math.floor(arr.length * p)] ?? 0;
 
 console.log(`\n跑了 ${N} 局（策略：${STRAT}，國家：${NATION || '隨機'}，耗時 ${Date.now() - t0}ms）\n`);
 console.log('指標'.padEnd(22), '實際'.padStart(8), '目標'.padStart(12), '  狀態');
@@ -230,6 +253,12 @@ for (const [k, [lo, hi]] of Object.entries(TARGETS)) {
 }
 console.log('-'.repeat(58));
 console.log(`傳奇評分 P25/P50/P75/P95：${q(.25)} / ${q(.5)} / ${q(.75)} / ${q(.95)}`);
+const money = v => (v >= 10000 ? (v / 10000).toFixed(2) + ' 億' : Math.round(v) + ' 萬');
+console.log(`生涯最高身價 P25/P50/P75/P95：${[.25, .5, .75, .95].map(x => money(qv(values, x))).join(' / ')}`);
+console.log(`生涯累計轉會費 P50/P95：${money(qv(fees, .5))} / ${money(qv(fees, .95))}`
+  + `　被釋出 ${pct('被球隊釋出過').toFixed(1)}%`
+  + `　自由身轉會 ${pct('以自由身轉會過').toFixed(1)}%`
+  + `　換過經紀人 ${pct('換過經紀人').toFixed(1)}%`);
 if (!NATION) {
   const line = NATION_ORDER
     .filter(k => byNation[k])

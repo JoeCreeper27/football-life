@@ -177,6 +177,35 @@ UI 端有對應的提示（雷達圖亮黃色的軸才計入綜合），改動�
 `abCost` 主修 ×0.7／非主修 ×1.3、主修 `pot` +4、`sim.js` 的 `POS_OUTPUT` 乘上 `out`、
 解鎖 `cond: isArch('key')` 的專屬事件卡。`ageBias: 'early'` 的原型 31 歲後產能斷崖。
 
+### 轉會費、合約與經紀人
+
+一條故事線，三張表（全部在 `data.js`）：`TRANSFER`（估價與費用係數）、
+`AGENTS`（經紀人）、`contractYears(age)`（簽約年限）。狀態放在
+`club.contract.years` / `club.pressure` / `career.agent`，
+流程在 `flow.js` 的 `END_CONTRACT` → `END_AGENT` → `END_MOVE` 三步。
+
+`sim.js:playerValue` 是身價，**所有係數都乘在 `annualSalary` 上**——
+這樣能力尺度、`LV.base`、`TIER.sal` 一改，身價會自動跟著走，不用兩邊對表。
+`transferFee` 再乘上剩餘合約係數（到期＝0）與轉會方向係數。
+
+**轉會費本身不進玩家口袋**（跟現實一樣）。真正影響玩法的只有兩個出口：
+
+1. **簽字費** —— 有合約走 `signCut`，自由身走新東家年薪的 `freeSign`。
+2. **期待壓力** —— `feePressure()` 把「超出買家預算的倍數」換成 `club.pressure`，
+   由 `state.js:squadGap` 扣掉，只壓轉會後第一年，`END_CONTRACT` 結清。
+
+續約 vs 自由身是刻意設計成一組對賭（呼應「沒有代價的選項就是假選擇」）：
+自由身免轉會費、往上一層門檻放寬 `freeSlack`、簽字費入袋，**但不能留隊**，
+而且球會等級被 `freeTierDrop` 往下挪一級。
+
+**經紀人只給門路（`reach` ＝ 往上一層看得到幾個聯賽），不放寬能力門檻。**
+兩個都給的話，換一次經紀人就能把五大登陸率從 16.8% 推到 20.9%、
+洲際頂級從 61.7% 推到 66.6% —— 等於用談判繞過整個能力門檻。
+`moveSlack()` 裡只留自由身與事件卡談來的機會，並且有 `slackCap` 封頂。
+
+`career.peakValue` 由 `trackValue(s)` 維護（**不走 `rng`**，加它不會讓舊種子漂移），
+呼叫點是每年 `END_CONTRACT`，畫在分享圖上的是這一份。
+
 ### 事件卡
 
 抽卡在 `flow.js:drawEvent`：先過 `for` 與 `cond`，再依 `weight` 加權抽樣，`once` 卡記在

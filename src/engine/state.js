@@ -6,7 +6,7 @@ import {
   growthPhase, PHYSICAL, PHYS_POT_KEYS, PHYSICAL_HARD_AGE, POT_MIN, POT_MAX, POT_STA_MIN, PAC_LOCK_AGE,
 } from './data.js';
 
-export const SCHEMA_VERSION = '0.5.0';
+export const SCHEMA_VERSION = '0.6.0';
 
 /**
  * 建立一局新生涯。所有隨機都吃 rng，因此同種子同設定必得同一個開局。
@@ -106,7 +106,9 @@ export function createState(seed, { name, number, group, nation = 'TW', origin =
       stage: 'JHS', lv: 'JHS', stageYear: 1,
       club: school, tier: 3,
       role: 'STARTER', minutes: 0.8,
-      contract: null, yearsAtClub: 0, loanFrom: null,
+      // contract: { years } —— 剩餘合約年限，養成階段沒有合約
+      // pressure: 買貴了的期待壓力，只壓轉會後第一年的 squadGap
+      contract: null, pressure: 0, yearsAtClub: 0, loanFrom: null,
     },
 
     career: {
@@ -115,6 +117,11 @@ export function createState(seed, { name, number, group, nation = 'TW', origin =
       honors: [],
       caps: 0, intlGoals: 0, worldCups: [],
       salaryTotal: 0,
+      // 轉會故事線：經紀人、生涯最高身價、生涯累計轉會費
+      agent: 'none',
+      peakValue: 0,
+      feeTotal: 0,
+      transfers: [],
       clubTally: {},
       pool: 0,
       fromAcademy: false,
@@ -127,6 +134,7 @@ export function createState(seed, { name, number, group, nation = 'TW', origin =
       counters: {
         six: 0, bold: 0, boldWin: 0, benchStreak: 0, ironStreak: 0,
         clutch: 0, goodRating: 0, cleanSeasons: 0, struggle: 0,
+        released: 0, freeAgent: 0, agentSwitch: 0, agentYear: 0,
       },
       // 生涯巔峰：每年衰退之前記一次高水位。結算分享圖畫的是這一份，
       // 不是引退當下那份被歲月啃過的能力。
@@ -356,5 +364,7 @@ export function squadGap(s) {
   if (player.traits.onetool) gap -= 5;
   // 剛到異國的第一年，教練對外籍球員的期待值更高
   if (isAbroad(s) && club.yearsAtClub === 0) gap -= 3;
+  // 花大錢買來的人要先證明自己：轉會費超出新東家預算越多，第一年的位置越難搶
+  gap -= club.pressure || 0;
   return gap;
 }

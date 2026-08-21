@@ -1445,6 +1445,47 @@ export const EVENTS = [
     gt: '球隊的每一次進攻都從你腳下開始', bt: '球隊的每一次失敗也都算在你頭上',
     g: {}, b: { fanRep: -16 },
     fx: (s, win, api) => { if (win) { api.shiftRole(1); s.club.minutes = Math.min(0.95, s.club.minutes + 0.1); } } },
+  /* ---------------- 第十類：合約與轉會市場 ---------------- */
+  /* 這一組卡片全部掛在 club.contract 與 career.agent 上，
+     和季末的 END_CONTRACT / END_AGENT 串成同一條故事線：
+     談判破裂 → 被釋出 → 自由身的冬天 → 換經紀人 → 下一份合約。 */
+  { n: '續約談判', for: 'PRO', weight: 1.6,
+    cond: s => s.player.age >= 20 && !s.club.loanFrom && (s.club.contract?.years ?? 9) <= 1,
+    acts: ['接受球會開的第一版條件', '照經紀人的版本來回談', '要求大幅加薪與解約金條款'],
+    gt: '桌子對面的人先眨了眼，合約多加一年',
+    bt: '談到最後對方收起了資料夾：「那我們就到這裡。」',
+    g: { fanRep: 6 }, b: { fanRep: -6 },
+    fx: (s, win, api) => { if (win) api.contract(1); else api.forceMove(); } },
+  { n: '解約金條款被激活', for: 'PRO', weight: 0.8,
+    cond: s => (s.club.contract?.years ?? 0) >= 2 && s.career.fanRep >= 55 && LV[s.club.lv].tier >= 3,
+    acts: ['當作沒這回事，把球季踢完', '讓經紀人去把條件談清楚', '自己直接飛過去體檢'],
+    gt: '有人把你的解約金整筆付清，門開著',
+    bt: '消息見了報，更衣室裡沒有人再跟你講話',
+    g: { fanRep: 6 }, b: { fanRep: -10 },
+    fx: (s, win, api) => { if (win) api.offer(3); else api.shiftRole(-1); } },
+  { n: '經紀公司的帳目', for: 'PRO', weight: 0.7, once: true,
+    cond: s => s.career.agent === 'firm',
+    acts: ['請會計師看一遍', '相信他們，簽了', '當面把每一筆問清楚'],
+    gt: '你在其中一頁上找到了不該有的數字，錢要了回來',
+    bt: '那家公司換了地址，你的簽字費也一起換了地址',
+    g: { fanRep: 4 }, b: { fanRep: -6 },
+    fx: (s, win, api) => {
+      if (win) api.pay(Math.round(api.salary * 0.15));
+      else { api.pay(-Math.round(api.salary * 0.4)); api.setAgent('none'); }
+    } },
+  { n: '自由身的冬天', for: 'PRO', weight: 1.4,
+    cond: s => s.career.counters.freeAgent && s.club.yearsAtClub === 0,
+    acts: ['跟著私人教練練', '自己去公園跑', '硬撐著等大俱樂部的電話'],
+    gt: '沒有球隊的那兩個月，你反而練回了最好的身體',
+    bt: '兩個月沒有正式訓練，回到球場時你比誰都慢',
+    g: { sta: 3, fanRep: 4 }, b: { sta: -3, inj: 8 } },
+  { n: '對手是把你釋出的那支球隊', for: 'PRO', weight: 1.2,
+    cond: s => (s.career.counters.released || 0) > 0 && s.club.yearsAtClub === 0,
+    acts: ['當成普通的一場比賽', '賽前不接受任何訪問', '公開說要進球給他們看'],
+    gt: '你進了，然後轉身面向客隊看台，沒有慶祝',
+    bt: '那場你太想證明什麼，整場都在丟球',
+    g: { fanRep: 14 }, b: { fanRep: -8, sho: -1 } },
+
   { n: '為隊友做球而非自己射門', for: 'PRO', weight: 1.5, cond: isArch('complete'),
     gt: '你把空門讓給了狀態低迷的隊友', bt: '你該傳的時候自己射了',
     g: { pas: 2, fanRep: 8 }, b: { fanRep: -6 } },
@@ -1481,6 +1522,72 @@ export const TRAITS = {
   puppet:   { n: '經紀人傀儡', tone: 'bad',  fx: '轉會被經紀人牽著走，簽約條件變差',
               cure: '自己主動談成一次轉會' },
 };
+
+/* ==================================================================== */
+/* 轉會費、合約與經紀人                                                    */
+/* ==================================================================== */
+
+/**
+ * 身價不是新開一條軸，而是把既有的軸乘起來：
+ * 年薪（已經吃過 d、聯賽 par、球會等級）× 年齡曲線 × 剩餘合約 × 上季狀態 × 聲望。
+ * 掛在年薪上是刻意的 —— 能力尺度或 LV.base 一改，身價會自動跟著走，不用兩邊對表。
+ *
+ * **轉會費只有兩個地方會真的影響玩法**：簽字費（進口袋）與期待壓力
+ * （買貴了第一年 squadGap 被扣，＝要更強才搶得到位置）。其餘都是敘事。
+ */
+export const TRANSFER = {
+  mul: 3.2,                  // 身價 ≒ 年薪 × 3.2 × 各項係數
+  // 年齡曲線：23 歲的潛力股比 30 歲的即戰力貴，這是轉會市場最反直覺、也最真實的一段
+  age: [[20, 1.30], [23, 1.60], [26, 1.45], [29, 1.00], [31, 0.60], [33, 0.30], [35, 0.12], [99, 0.04]],
+  // 剩餘合約年限 → 係數（index = 年限，5 年以上取最後一格）。0 年＝自由身＝沒有轉會費
+  ct: [0, 0.55, 0.85, 1.05, 1.15, 1.20],
+  formLo: 0.60, formHi: 1.60,    // 上季評分 6.0 → 0.60 倍、7.5 → 1.60 倍
+  repLo: 0.85, repHi: 1.20,      // 球迷聲望 20 → 0.85 倍、90 → 1.20 倍
+  upFee: 1.25,               // 往上一層挖人的溢價
+  sideFee: 1.00,
+  downFee: 0.70,             // 降級接手是撿便宜
+
+  signCut: 0.06,             // 轉會費的 6% 以簽字費形式進球員口袋
+  freeSign: 0.80,            // 自由身沒有轉會費，改拿新東家年薪 ×0.80 的簽字費
+  renewSign: 0.15,           // 續約簽字費
+  releasePay: 0.50,          // 被提前解約的補償金 = 年薪 ×0.50
+  agentQuit: 0.10,           // 中途換經紀人的解約費 = 年薪 ×0.10
+
+  // 買家花了大錢就會有期待：轉會後第一年 squadGap 被扣掉這個值
+  budgetMul: 7.0,            // 新東家的「合理預算」≒ 該聯賽年薪基準 × 球會等級 × 7（≒ 一筆正常的補強）
+  pressurePer: 1.6,          // 每超出預算 1 倍扣 1.6
+  pressureMax: 4,
+  freeTierDrop: 1,           // 自由身簽約時球會等級往下挪一級（沒花錢買你，不會把你當招牌）
+  freeSlack: 2,              // 自由身談判：往上一層的門檻放寬 2 分（不用付轉會費，球會敢賭）
+  slackCap: 3,               // 談判籌碼加起來最多把門檻談鬆 3 分
+};
+
+/** 合約年限：越老簽越短，這是老將「一年一簽」焦慮的來源 */
+export function contractYears(age) {
+  return age <= 23 ? 4 : age <= 29 ? 3 : age <= 33 ? 2 : 1;
+}
+
+/**
+ * 經紀人：抽成 vs 門路。
+ * reach 是「往上一層」能看到幾個候選聯賽（不是把能力門檻談掉 —— 那會讓換一次經紀人
+ * 就把五大登陸率推高 4 個百分點）；cut 每季從薪水扣；fee 影響談出來的身價。
+ * **抽成低的一定門路少**，不然就是假選擇。
+ */
+export const AGENTS = {
+  none:   { n: '沒有經紀人',   cut: 0,    reach: -1, fee: 0.85, s: '談判自己來，不抽成，但沒有人幫你敲門' },
+  family: { n: '家人代理',     cut: 0.02, reach: -1, fee: 0.92, s: '抽 2%，錢幾乎都是你的，門路也幾乎沒有' },
+  local:  { n: '在地經紀人',   cut: 0.06, reach: 0,  fee: 1.00, s: '抽 6%，本地與鄰近聯賽的門路' },
+  vet:    { n: '老練經紀人',   cut: 0.10, reach: 1,  fee: 1.12, s: '抽 10%，多一條往上的門路，條件談得更好' },
+  firm:   { n: '跨國經紀公司', cut: 0.18, reach: 2,  fee: 1.28, s: '抽 18%，門路最多，但你只是名單上的一個名字' },
+};
+export const AGENT_ORDER = ['none', 'family', 'local', 'vet', 'firm'];
+
+/** 這個經紀人願不願意接你（門路越廣的越挑客戶） */
+export function agentAvailable(key, s, leagueTier) {
+  if (key === 'vet') return leagueTier >= 3 || s.career.fanRep >= 55;
+  if (key === 'firm') return leagueTier >= 5 || s.career.fanRep >= 65;
+  return true;
+}
 
 /* ---------------- 其他常數 ---------------- */
 export const CONF = {
