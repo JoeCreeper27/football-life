@@ -1,5 +1,5 @@
 import { clamp } from './rng.js';
-import { LV, TIER, SQUAD, POS_WEIGHT, POS_OUTPUT, DPOS, CONF, ARCHETYPE, DECLINE, TECHNICAL, PHYSICAL, OVER_CAP_PULL, MAX_ABIL } from './data.js';
+import { LV, TIER, SQUAD, POS_WEIGHT, POS_OUTPUT, DPOS, CONF, ARCHETYPE, DECLINE, TECHNICAL, PHYSICAL, OVER_CAP_PULL, MAX_ABIL, TRANSFER, AGENTS } from './data.js';
 import { ovr, squadGap, defaultPos, bestPos, isAbroad } from './state.js';
 
 /* ---------------- 陣中地位與出場時間 ---------------- */
@@ -119,6 +119,60 @@ export function annualSalary(s) {
   const fanCoef = s.career.fanRep >= 75 ? 1.1 : s.career.fanRep <= 25 ? 0.9 : 1;
   const raw = (L.base + Math.max(-3, d) * (L.coef / 1.35)) * posCoef * tierCoef * fanCoef;
   return Math.max(Math.round(L.base * 0.5), Math.round(raw));
+}
+
+
+/* ---------------- 身價與轉會費 ---------------- */
+
+/**
+ * 身價（不含合約折扣）。所有係數都掛在年薪上，能力尺度一改會自動跟著走。
+ * 這個數字**不進玩家口袋**，它的意義是：簽字費的基數，以及新東家的期待值。
+ */
+export function playerValue(s) {
+  const c = s.club, L = LV[c.lv], p = s.player;
+  if (c.stage !== 'PRO' || !L.base) return 0;
+  const sal = annualSalary(s);
+  const ageCoef = TRANSFER.age.find(([a]) => p.age <= a)[1];
+
+  // 上季狀態：評分是主軸，出場率是折扣（一年只踢 5 場的人沒有市場）
+  const last = s.career.seasons[s.career.seasons.length - 1];
+  const form = last && last.apps > 0
+    ? clamp(0.6 + (last.rating - 6.0) * 0.667, TRANSFER.formLo, TRANSFER.formHi)
+      * clamp(0.75 + (last.minutes / 100) * 0.35, 0.75, 1.1)
+    : 0.65;
+
+  const rep = clamp(TRANSFER.repLo + (s.career.fanRep - 20) * 0.005, TRANSFER.repLo, TRANSFER.repHi);
+  const agent = AGENTS[s.career.agent]?.fee ?? 1;
+  const trait = (p.traits.glass ? 0.85 : 1) * (p.traits.cancer ? 0.80 : 1)
+    * (p.traits.onetool ? 0.85 : 1) * (p.traits.puppet ? 0.88 : 1)
+    * (p.traits.captain ? 1.08 : 1);
+
+  return Math.max(0, Math.round(sal * TRANSFER.mul * ageCoef * form * rep * agent * trait));
+}
+
+/** 剩餘合約年限的折扣：到期＝自由身＝0，沒有人需要付錢 */
+export function contractCoef(s) {
+  const y = clamp(Math.round(s.club.contract?.years ?? 0), 0, TRANSFER.ct.length - 1);
+  return TRANSFER.ct[y];
+}
+
+/** 這一次轉會的估計轉會費（kind = up / side / down / home） */
+export function transferFee(s, kind) {
+  const mul = kind === 'up' ? TRANSFER.upFee : kind === 'down' || kind === 'home'
+    ? TRANSFER.downFee : TRANSFER.sideFee;
+  return Math.round(playerValue(s) * contractCoef(s) * mul);
+}
+
+/** 買家的合理預算。超出的部分變成期待壓力，壓在轉會後第一年的 squadGap 上 */
+export function buyerBudget(lvId, clubTier) {
+  const L = LV[lvId];
+  return Math.max(1, Math.round((L.base || 1) * TIER[clubTier].sal * TRANSFER.budgetMul));
+}
+
+export function feePressure(fee, lvId, clubTier) {
+  if (fee <= 0) return 0;
+  const ratio = fee / buyerBudget(lvId, clubTier);
+  return +clamp((ratio - 1) * TRANSFER.pressurePer, 0, TRANSFER.pressureMax).toFixed(1);
 }
 
 /* ---------------- 衰退 ---------------- */
