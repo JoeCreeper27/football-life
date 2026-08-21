@@ -6,7 +6,7 @@ import {
   growthPhase, PHYSICAL, PHYSICAL_HARD_AGE, POT_MIN, POT_MAX, POT_STA_MIN, PAC_LOCK_AGE,
 } from './data.js';
 
-export const SCHEMA_VERSION = '0.4.0';
+export const SCHEMA_VERSION = '0.5.0';
 
 /**
  * 建立一局新生涯。所有隨機都吃 rng，因此同種子同設定必得同一個開局。
@@ -120,6 +120,11 @@ export function createState(seed, { name, number, group, nation = 'TW', origin =
         six: 0, bold: 0, boldWin: 0, benchStreak: 0, ironStreak: 0,
         clutch: 0, goodRating: 0, cleanSeasons: 0, struggle: 0,
       },
+      // 生涯巔峰：每年衰退之前記一次高水位。結算分享圖畫的是這一份，
+      // 不是引退當下那份被歲月啃過的能力。
+      peakAb: { ...ab },
+      peakOvr: 0,
+      peakAge: CONF.startAge,
     },
   };
 }
@@ -182,6 +187,22 @@ export function ageWindow(p, lvId) {
  * 三層修正：能力現值 → 生涯階段（巔峰期 ×1.5、維持期 ×2）→ 原型（主修 ×0.7、非主修 ×1.3）。
  * 階段乘數是「總量控制在 24 歲前」的主要手段，改這裡等於改整條成長曲線。
  */
+/**
+ * 記一次生涯高水位。在每年衰退之前呼叫，所以拿到的是那一季練完、事件也結算完的值。
+ * **不走 rng，所以加這個不會讓舊種子漂移**（但 state 形狀變了，SCHEMA_VERSION 要跟著跳）。
+ * 逐項的峰值與 peakOvr 不必然同一個瞬間 —— 前者是「這輩子最好的那個能力」，
+ * 後者是「這輩子最好的那個自己」，兩個都是玩家想看的數字。
+ */
+export function trackPeak(s) {
+  const p = s.player, c = s.career;
+  if (!c.peakAb) { c.peakAb = { ...p.ab }; c.peakOvr = 0; c.peakAge = p.age; }
+  for (const k of Object.keys(p.ab)) {
+    if (!(k in c.peakAb) || p.ab[k] > c.peakAb[k]) c.peakAb[k] = p.ab[k];
+  }
+  const o = ovr(p);
+  if (o > c.peakOvr) { c.peakOvr = o; c.peakAge = p.age; }
+}
+
 export function abCost(p, k) {
   const cur = p.ab[k], cap = p.pot[k] ?? 62, gk = p.group === 'GK';
   const arch = ARCHETYPE[p.arch];
