@@ -3,6 +3,7 @@ import {
 } from './engine/data.js';
 import { bestPos } from './engine/state.js';
 import { fmtMoney } from './engine/sim.js';
+import { VERSION } from './version.js';
 
 /* ---------------- 分享圖 ---------------- */
 /* 生涯結束後把整段人生畫成一張直式長圖。純 canvas，不依賴任何外部函式庫，
@@ -42,6 +43,10 @@ export function buildShareCanvas(S) {
   const p = S.player, r = S.result, T = shareTheme();
   const PAD = 44, INNER = SHARE_W - PAD * 2;
   const isGK = p.group === 'GK';
+  // 畫的是生涯巔峰，不是引退當下 —— 沒人想看自己被歲月啃完的樣子。
+  // 舊存檔沒有 peakAb，退回現值。
+  const peak = S.career?.peakAb || p.ab;
+  const peakOvr = Math.round(S.career?.peakOvr || 0);
 
   // 先用一張暫時的 canvas 量文字，決定最終高度 —— 榮譽列數是變動的
   const m = document.createElement('canvas').getContext('2d');
@@ -95,6 +100,8 @@ export function buildShareCanvas(S) {
 
   let y = 56;
   text('FOOTBALL LIFE ⚽', PAD, y, { size: 15, weight: 700, color: T.dim });
+  c.font = shFont(700, 15);
+  text(`v${VERSION}`, PAD + c.measureText('FOOTBALL LIFE ⚽').width + 10, y, { size: 12, color: T.dim });
   text(`SEED ${S.seed}`, SHARE_W - PAD, y, { size: 15, color: T.dim, align: 'right' });
 
   y += 62;
@@ -108,7 +115,8 @@ export function buildShareCanvas(S) {
 
   y += 32;
   const pos = DPOS[p.dpos || bestPos(p)]?.n || '';
-  text(`${r.nation}出身・${r.origin}｜${pos}${r.arch ? `・${r.archEvolved || r.arch}` : ''}`,
+  text(`${r.nation}出身・${r.origin}｜${pos}${r.arch ? `・${r.archEvolved || r.arch}` : ''}`
+    + (peakOvr ? `｜${S.career?.peakAge ?? p.age} 歲達到巔峰` : ''),
     PAD, y, { size: 19, color: T.dim });
 
   // 名次橫幅
@@ -118,7 +126,7 @@ export function buildShareCanvas(S) {
   // roundRect 是比較新的 API，舊瀏覽器退回直角
   if (c.roundRect) c.roundRect(PAD, y, INNER, 78, 12); else c.rect(PAD, y, INNER, 78);
   c.fill(); c.stroke();
-  // 三欄：名次｜傳奇評分｜生涯薪資 —— 只放名次的話右半邊會空得很尷尬
+  // 三欄：名次｜傳奇評分｜生涯薪資
   const SEP1 = PAD + 276, SEP2 = PAD + 440;
   c.strokeStyle = T.line; c.lineWidth = 1;
   [SEP1, SEP2].forEach(x => {
@@ -130,7 +138,7 @@ export function buildShareCanvas(S) {
     text(label, right, y + 30, { size: 13, color: T.dim, align: 'right' });
     text(val, right, y + 58, { size: fit(val, right - left - 24, 26), weight: 700, color, align: 'right' });
   };
-  col('傳奇評分', String(r.legacy), SEP1, SEP2 - 20, T.amber);
+  col('傳奇評分', String(r.legacy), SEP1, SEP2 - 20, T.gold);
   col('生涯薪資', fmtMoney(r.salary), SEP2, SHARE_W - PAD - 22, T.gold);
 
   // 數據與雷達圖並排。左邊四列數據、右邊雷達圖，與遊戲中的狀態列同一個節奏
@@ -157,7 +165,7 @@ export function buildShareCanvas(S) {
   });
   c.beginPath();
   keys.forEach((k, i) => {
-    const [x, yy] = pt(i, RADAR_R * p.ab[k] / MAX_ABIL);
+    const [x, yy] = pt(i, RADAR_R * (peak[k] ?? p.ab[k]) / MAX_ABIL);
     i ? c.lineTo(x, yy) : c.moveTo(x, yy);
   });
   c.closePath();
@@ -169,8 +177,19 @@ export function buildShareCanvas(S) {
     const [x, yy] = pt(i, RADAR_R + 24);
     const on = counted[k] !== undefined;
     text(ABIL_SHORT[k] || ABIL[k], x, yy - 3, { size: 14, color: on ? T.amber : T.dim, align: 'center' });
-    text(String(p.ab[k]), x, yy + 16, { size: 18, weight: 700, color: on ? T.ink : T.dim, align: 'center' });
+    text(String(peak[k] ?? p.ab[k]), x, yy + 16, { size: 18, weight: 700, color: on ? T.ink : T.dim, align: 'center' });
   });
+
+  // 圓心壓上巔峰綜合。半透明底盤，能力很低的人多邊形還看得見一點輪廓。
+  if (peakOvr) {
+    c.globalAlpha = 0.84; c.fillStyle = T.bg;
+    c.beginPath(); c.arc(CX, CY, 30, 0, Math.PI * 2); c.fill();
+    c.globalAlpha = 1;
+    c.strokeStyle = T.amber; c.lineWidth = 1;
+    c.beginPath(); c.arc(CX, CY, 30, 0, Math.PI * 2); c.stroke();
+    text('巔峰', CX, CY - 6, { size: 11, color: T.dim, align: 'center' });
+    text(String(peakOvr), CX, CY + 18, { size: 22, weight: 700, color: T.amber, align: 'center' });
+  }
 
   // 左邊：四列數據
   const stats = [

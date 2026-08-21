@@ -9,7 +9,7 @@ import {
 } from './data.js';
 import {
   rngOf, syncCursor, addAb, subAb, abCost, ovr, defaultPos, posQualified, squadGap,
-  nationOf, regionOf, isHomeLeague, isAbroad, ageWindow, isGrowable, addFanRep, ovrAt, bestPos,
+  nationOf, regionOf, isHomeLeague, isAbroad, ageWindow, isGrowable, addFanRep, ovrAt, bestPos, trackPeak,
 } from './state.js';
 import {
   rollMinutes, simSeason, injuryRisk, accrueLoad, loadCap,
@@ -103,6 +103,7 @@ STEPS.PRE_DECLINE = (s, ctx) => {
     card(ctx, 'bad', '復健年', '整季在復健室度過。這一年沒有比賽，只有無數次的重訓與跑步機。');
   }
 
+  trackPeak(s);          // 衰退之前先記高水位
   const ch = applyDecline(s);
   if (ch && Object.keys(ch).length) {
     const txt = Object.entries(ch).map(([k, v]) => `${ABIL[k]} ${dn(v)}`).join('、');
@@ -1462,6 +1463,7 @@ function retire(s, ctx, reason) {
 
   if (legacy < GATE[2] && Object.values(p.pot).reduce((a, b) => a + b, 0) < 640) unlock(s, ctx, 'grinder');
 
+  trackPeak(s);          // 最後一年沒有下一次 YEAR_START，收尾補記一次
   s.done = true;
   s.pending = null;
   s.result = {

@@ -174,8 +174,12 @@ function mockState() {
     ? Array.from({ length: nH }, (_, i) => (i % 2 ? LONG_HONOR : HONORS[i % HONORS.length]))
     : HONORS.slice(0, nH);
 
+  const peakAb = {};
+  keys.forEach(k => { peakAb[k] = Math.min(99, ab[k] + 3 + Math.round(rnd() * 6)); });
+
   return {
     seed: 'prev1234',
+    career: { peakAb, peakOvr: power + 4, peakAge: 27 },
     player: {
       name: $('name').value || '無名氏',
       number: 10, group, dpos: DPOS_OF[group], age: 34, ab, pot,

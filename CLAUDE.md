@@ -26,6 +26,9 @@ python3 -m http.server 8000                 # 免安裝直接跑（純 ES module
 
 - `src/engine/**` 零 DOM 相依，必須能在 Node 裡跑。這是 `tools/balance-sim.js`（以及未來的 Kotlin 移植、server 端 seed 重放驗證排行榜）能成立的前提。**不要在 engine 裡碰 `document`、`localStorage`、`window`。**
 - `src/main.js` 只認得 `{tone, title, html}` 卡片與 `pending.type`（`choice` / `train` / `alloc`），完全不知道遊戲規則。
+- `src/version.js` 只有一個 `VERSION` 常數，**改的時候要和 `package.json` 的 version 一起改**。
+  刻意不 import package.json —— 瀏覽器原生不吃沒有 import assertion 的 JSON module，
+  一 import 就會斷掉「免安裝直接開 index.html」那條路。
 - `src/share.js` 是另一個碰 DOM 的檔案：生涯結算的分享長圖（純 canvas 手繪）。
   它只吃一份 `state`（`buildShareCanvas(S)`），**不讀 `document` 以外的全域狀態**，
   所以 `share-preview.html` 可以餵假資料進去單獨看排版 —— 改排版一律在那頁上改，
@@ -65,6 +68,16 @@ STEPS.FOO = (s, ctx, input) => {
 `input` 只餵給 loop 的第一個步驟，之後的步驟拿到 `undefined`。跨步驟的暫存值放在 `s._` 開頭的欄位（如 `s._ev` 剩餘事件卡數、`s._card` 當前卡名），用完要設回 `undefined` —— 這些會被序列化進存檔，所以不能塞函式或 DOM 節點。
 
 輸出用 `card(ctx, tone, title, html)`；tone 可用 `''` / `good` / `bad` / `gold` / `info`。分隔線用 `ctx.cards.push({ divider })`。
+
+### 生涯巔峰紀錄
+
+`career.peakAb` / `peakOvr` / `peakAge` 由 `state.js:trackPeak(s)` 維護，
+呼叫點是每年 `YEAR_START` 的**衰退之前**與 `retire()` 收尾。分享圖畫的是這一份，
+不是引退當下（實測平均差 8.5 分 ovr，最多 28 分 —— 直接拿引退值當戰績並不公平）。
+
+`trackPeak` 不走 `rng`，所以加它不會讓舊種子漂移；但 **state 形狀變了就要跳
+`SCHEMA_VERSION`**，否則舊存檔載進來會少欄位。逐項巔峰與 `peakOvr` 不必然同一個瞬間，
+這是刻意的，不要「修」成同一幀。
 
 ### 決定論（最重要的不變量）
 

@@ -9,6 +9,7 @@ import {
 } from './engine/data.js';
 import { fmtMoney } from './engine/sim.js';
 import { openShareImage } from './share.js';
+import { VERSION } from './version.js';
 
 const $ = id => document.getElementById(id);
 const SAVE_KEY = 'fl-save';
@@ -19,6 +20,8 @@ let curYearBody = null;
 const MAX_YEARS = 40;
 
 /* ---------------- 開場 ---------------- */
+$('ver').textContent = `v${VERSION}`;
+
 const SEED = new URLSearchParams(location.search).get('seed') || randomSeed();
 let pickedGroup = 'FW';
 let pickedNation = 'TW';
