@@ -52,16 +52,17 @@ export function buildShareCanvas(S) {
   m.font = shFont(400, 17);
   const traitLines = r.traits.length ? wrapLines(m, `特性　${r.traits.join('、')}`, INNER).length : 0;
 
-  const RADAR_R = 128;
-  const H = 300                                   // 抬頭 + 名次橫幅
-    + RADAR_R * 2 + 78                            // 雷達圖
-    + 4 * 74 + 24                                 // 四列數據
+  // 雷達圖與四列數據並排成一塊（跟遊戲裡的狀態列一樣），左數據右雷達
+  const RADAR_R = 96;
+  const STAT_W = 320, BLOCK_GAP = 16, BLOCK_H = 288;
+  const H = 294                                   // 抬頭 + 名次橫幅 + 間距
+    + BLOCK_H                                     // 數據 ＋ 雷達圖
     + (r.worldCups.length ? 40 : 0)
     + (r.shirtRetired ? 40 : 0)
     + (honorLines ? 34 + honorLines * 30 : 0)
     + (moreHonors > 0 ? 26 : 0)
     + (traitLines ? 18 + traitLines * 26 : 0)
-    + 96;                                         // 頁尾
+    + 120;                                        // 頁尾
 
   const cv = document.createElement('canvas');
   cv.width = SHARE_W * SHARE_SCALE;
@@ -76,6 +77,15 @@ export function buildShareCanvas(S) {
   c.fillStyle = g; c.fillRect(0, 0, SHARE_W, H);
   c.fillStyle = T.gold; c.fillRect(0, 0, SHARE_W, 5);
 
+  /** 量過再決定字級：塞不下就一路縮，回傳實際用的大小 */
+  const fit = (str, maxW, size, weight = 700) => {
+    c.font = shFont(weight, size);
+    while (c.measureText(str).width > maxW && size > 12) {
+      size -= 1; c.font = shFont(weight, size);
+    }
+    return size;
+  };
+
   const text = (str, x, y, o = {}) => {
     c.font = shFont(o.weight || 400, o.size || 18);
     c.fillStyle = o.color || T.ink;
@@ -89,11 +99,8 @@ export function buildShareCanvas(S) {
 
   y += 62;
   // 名字可能很長，量過之後才決定字級，不然會撞到右邊的背號
-  let nameSize = 46;
+  const nameSize = fit(p.name, INNER - 80, 46);
   c.font = shFont(700, nameSize);
-  while (c.measureText(p.name).width > INNER - 80 && nameSize > 24) {
-    nameSize -= 2; c.font = shFont(700, nameSize);
-  }
   c.textAlign = 'left'; c.fillStyle = T.ink;
   c.fillText(p.name, PAD, y);
   const nameW = c.measureText(p.name).width;
@@ -111,13 +118,29 @@ export function buildShareCanvas(S) {
   // roundRect 是比較新的 API，舊瀏覽器退回直角
   if (c.roundRect) c.roundRect(PAD, y, INNER, 78, 12); else c.rect(PAD, y, INNER, 78);
   c.fill(); c.stroke();
-  text(r.rank, PAD + 22, y + 50, { size: 34, weight: 700, color: T.gold });
-  text('傳奇評分', SHARE_W - PAD - 22, y + 30, { size: 14, color: T.dim, align: 'right' });
-  text(String(r.legacy), SHARE_W - PAD - 22, y + 58, { size: 28, weight: 700, color: T.amber, align: 'right' });
+  // 三欄：名次｜傳奇評分｜生涯薪資 —— 只放名次的話右半邊會空得很尷尬
+  const SEP1 = PAD + 276, SEP2 = PAD + 440;
+  c.strokeStyle = T.line; c.lineWidth = 1;
+  [SEP1, SEP2].forEach(x => {
+    c.beginPath(); c.moveTo(x, y + 16); c.lineTo(x, y + 62); c.stroke();
+  });
+  text(r.rank, PAD + 22, y + 51, { size: fit(r.rank, SEP1 - PAD - 46, 34), weight: 700, color: T.gold });
+
+  const col = (label, val, left, right, color) => {
+    text(label, right, y + 30, { size: 13, color: T.dim, align: 'right' });
+    text(val, right, y + 58, { size: fit(val, right - left - 24, 26), weight: 700, color, align: 'right' });
+  };
+  col('傳奇評分', String(r.legacy), SEP1, SEP2 - 20, T.amber);
+  col('生涯薪資', fmtMoney(r.salary), SEP2, SHARE_W - PAD - 22, T.gold);
+
+  // 數據與雷達圖並排。左邊四列數據、右邊雷達圖，與遊戲中的狀態列同一個節奏
+  y += 78 + 40;
+  const BLOCK_TOP = y;
+  const RADAR_ZONE = INNER - STAT_W - BLOCK_GAP;
 
   // 雷達圖：與遊戲中的同一份畫法，金色軸 = 計入綜合評價的能力
-  y += 78 + 52 + RADAR_R;
-  const keys = GROUP_ABIL[p.group], n = keys.length, CX = SHARE_W / 2, CY = y;
+  const keys = GROUP_ABIL[p.group], n = keys.length;
+  const CX = PAD + STAT_W + BLOCK_GAP + RADAR_ZONE / 2, CY = BLOCK_TOP + 144;
   const pt = (i, rr) => {
     const a = (i / n) * Math.PI * 2 - Math.PI / 2;
     return [CX + Math.cos(a) * rr, CY + Math.sin(a) * rr];
@@ -143,32 +166,28 @@ export function buildShareCanvas(S) {
 
   const counted = POS_WEIGHT[p.dpos || bestPos(p)] || {};
   keys.forEach((k, i) => {
-    const [x, yy] = pt(i, RADAR_R + 30);
+    const [x, yy] = pt(i, RADAR_R + 24);
     const on = counted[k] !== undefined;
-    text(ABIL_SHORT[k] || ABIL[k], x, yy - 4, { size: 17, color: on ? T.amber : T.dim, align: 'center' });
-    text(String(p.ab[k]), x, yy + 18, { size: 21, weight: 700, color: on ? T.ink : T.dim, align: 'center' });
+    text(ABIL_SHORT[k] || ABIL[k], x, yy - 3, { size: 14, color: on ? T.amber : T.dim, align: 'center' });
+    text(String(p.ab[k]), x, yy + 16, { size: 18, weight: 700, color: on ? T.ink : T.dim, align: 'center' });
   });
 
-  // 數據方格
-  y += RADAR_R + 48;
+  // 左邊：四列數據
   const stats = [
     ['生涯賽季', `${r.seasons} 季`], ['最高層級', TOP_LV_NAME[r.topLv] || '—'],
     ['出場', `${r.sum.apps} 場`], [isGK ? '零封' : '進球', String(isGK ? r.sum.cs : r.sum.goals)],
     ['助攻', String(r.sum.assists)], ['旅外', r.abroadSeasons ? `${r.abroadSeasons} 季` : '從未旅外'],
     [`國家隊・${r.natlTeam}`, `${r.caps} 場・${r.intlGoals} 球`], ['球迷聲望', String(r.fanRep)],
   ];
-  const colW = INNER / 2;
+  const colW = STAT_W / 2;
   stats.forEach(([label, val], i) => {
-    const x = PAD + (i % 2) * colW, ry = y + Math.floor(i / 2) * 74;
+    const x = PAD + (i % 2) * colW, ry = BLOCK_TOP + 40 + Math.floor(i / 2) * 66;
     c.strokeStyle = T.line; c.lineWidth = 1;
     c.beginPath(); c.moveTo(x, ry - 14); c.lineTo(x + colW - 14, ry - 14); c.stroke();
-    text(label, x, ry + 10, { size: 14, color: T.dim });
-    text(val, x, ry + 40, { size: 25, weight: 700 });
+    text(label, x, ry + 10, { size: fit(label, colW - 14, 13, 400), color: T.dim });
+    text(val, x, ry + 38, { size: fit(val, colW - 14, 24), weight: 700 });
   });
-  y += 4 * 74 + 4;
-
-  text(`生涯薪資　${fmtMoney(r.salary)}`, PAD, y, { size: 20, weight: 700, color: T.amber });
-  y += 20;
+  y = BLOCK_TOP + BLOCK_H;
 
   if (r.worldCups.length) {
     y += 40;
