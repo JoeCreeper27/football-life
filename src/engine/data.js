@@ -1458,6 +1458,10 @@ export const CONF = {
   retireAge: 42,
   // declineAge 已由 DECLINE 表取代
   baseInjury: 5,
+  // 巔峰期（GROWTH 第三段，到 31 歲）之後身體開始還債：每多一歲固定加。
+  // 舊版是 33 歲一次 +10 的階梯，35 歲跟 42 歲一樣安全，很不像話。
+  agingInjuryFrom: 31,
+  agingInjury: 2.5,
   eventCards: 3,
   aclCap: 120,
   abilScale: 1.35,   // 事件卡與衰退的能力增減換算到 1–99 尺度

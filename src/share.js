@@ -13,15 +13,34 @@ export const SHARE_W = 720;                    // 邏輯寬度；實際輸出再
 const SHARE_SCALE = 2;                  // 2 倍點陣，貼到社群才不會糊
 const TOP_LV_NAME = { BIG5: '五大聯賽', EUR2: '五大次級', TOP: '洲際頂級', HOME: '國內聯賽' };
 
-/** 取目前階段的配色 —— 分享圖跟著結局的地區走，同一張圖一看就知道人生落在哪 */
-function shareTheme() {
-  const cs = getComputedStyle(document.body);
+/** 分享圖可以換的底色，就是遊戲裡各階段那幾組（定義在 index.html 的 body[data-stage]）*/
+export const STAGE_THEMES = [
+  ['PRO_EUR', '歐洲夜藍'], ['PRO_ASIA', '亞洲墨綠'], ['PRO_SAM', '南美土金'],
+  ['PRO_NAM', '北美暗紫'], ['HS', '高中草綠'], ['ACADEMY', '足校深紫'],
+  ['JHS', '國中靛藍'], ['UNI', '大學琥珀'],
+];
+
+/**
+ * 取配色。不給 stage 就是「跟著結局的地區走」，給了就借用那一組。
+ * 借用的做法是暫時改 body 的 data-stage 再讀回 CSS 變數 —— 調色盤只寫在 CSS 裡，
+ * 這樣就不必在 JS 裡複製一份、也不會有兩邊對不上的問題。整個過程沒有換頁繪製，
+ * 使用者不會看到底下的 UI 閃一下。
+ */
+function shareTheme(stage) {
+  const b = document.body;
+  const prev = b.dataset.stage;
+  if (stage) b.dataset.stage = stage;
+  const cs = getComputedStyle(b);
   const v = (k, d) => (cs.getPropertyValue(k) || '').trim() || d;
-  return {
-    bg: v('--bg', '#0b1a10'), panel: v('--panel', '#12281a'), line: v('--line', '#1e4029'),
-    ink: v('--ink', '#e8f0e6'), dim: v('--dim', '#8fae95'),
+  const t = {
+    bg: v('--bg', '#0b151a'), panel: v('--panel', '#121d28'), line: v('--line', '#1e3c40'),
+    ink: v('--ink', '#e8f0e6'), dim: v('--dim', '#8fa9ae'),
     amber: v('--amber', '#f5c451'), gold: v('--gold', '#f0d078'),
   };
+  if (stage) {
+    if (prev === undefined) delete b.dataset.stage; else b.dataset.stage = prev;
+  }
+  return t;
 }
 
 const SHARE_FONT = '"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif';
@@ -39,8 +58,8 @@ function wrapLines(ctx, str, max) {
   return out;
 }
 
-export function buildShareCanvas(S) {
-  const p = S.player, r = S.result, T = shareTheme();
+export function buildShareCanvas(S, stage) {
+  const p = S.player, r = S.result, T = shareTheme(stage);
   const PAD = 44, INNER = SHARE_W - PAD * 2;
   const isGK = p.group === 'GK';
   // 畫的是生涯巔峰，不是引退當下 —— 沒人想看自己被歲月啃完的樣子。
@@ -288,21 +307,24 @@ export function buildShareCanvas(S) {
 
 /** 產圖 → 自動塞剪貼簿 → 開浮層讓玩家預覽（行動裝置可長按存圖，也給一個下載鈕） */
 export function openShareImage(S) {
-  const cv = buildShareCanvas(S);
   const box = document.getElementById('share-ov');
   const fileName = `football-life-${S.player.name}-${S.seed}.png`;
   box.hidden = false;
   box.innerHTML = '';
 
+  // 預設就是結局所在地區那一組，之後才輪著換
+  const here = document.body.dataset.stage;
+  let ti = Math.max(0, STAGE_THEMES.findIndex(([k]) => k === here));
+
   const img = document.createElement('img');
   img.alt = '生涯結算圖';
-  img.src = cv.toDataURL('image/png');
   const tip = document.createElement('div');
   tip.className = 'tip';
-  tip.textContent = '產生中…';
   const row = document.createElement('div');
   row.className = 'row';
 
+  const skin = document.createElement('button');
+  skin.className = 'btn';
   const dl = document.createElement('button');
   dl.className = 'btn';
   dl.textContent = '下載圖片';
@@ -310,22 +332,33 @@ export function openShareImage(S) {
   close.className = 'btn';
   close.textContent = '關閉';
   close.onclick = () => { box.hidden = true; box.innerHTML = ''; };
-  row.append(dl, close);
+  row.append(skin, dl, close);
   box.append(img, tip, row);
 
-  cv.toBlob(async blob => {
-    dl.onclick = () => {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = fileName; a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-    };
-    // 剪貼簿寫圖需要安全來源，Safari 又只認同步建立的 ClipboardItem —— 失敗就退回下載
-    try {
-      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-      tip.textContent = '已複製到剪貼簿 ✓　直接貼到聊天室或社群即可';
-    } catch (e) {
-      tip.textContent = '這個瀏覽器不給程式複製圖片，請用下載或長按存圖';
-    }
-  }, 'image/png');
+  /** 重畫 → 換圖 → 重新塞剪貼簿。換底色等於換一張圖，剪貼簿也要跟著換 */
+  const paint = () => {
+    const [stage, name] = STAGE_THEMES[ti];
+    skin.textContent = `換底色 ▸ ${name}`;
+    tip.textContent = '產生中…';
+    const cv = buildShareCanvas(S, stage);
+    img.src = cv.toDataURL('image/png');
+    cv.toBlob(async blob => {
+      dl.onclick = () => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = fileName; a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      };
+      // 剪貼簿寫圖需要安全來源，Safari 又只認同步建立的 ClipboardItem —— 失敗就退回下載
+      try {
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+        tip.textContent = '已複製到剪貼簿 ✓　直接貼到聊天室或社群即可';
+      } catch (e) {
+        tip.textContent = '這個瀏覽器不給程式複製圖片，請用下載或長按存圖';
+      }
+    }, 'image/png');
+  };
+
+  skin.onclick = () => { ti = (ti + 1) % STAGE_THEMES.length; paint(); };
+  paint();
 }

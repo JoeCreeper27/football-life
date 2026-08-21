@@ -449,7 +449,7 @@ function settlement() {
   const pic = document.createElement('button');
   pic.className = 'btn main';
   pic.style.textAlign = 'center';
-  pic.textContent = '產生分享圖片（自動複製）';
+  pic.textContent = '產生分享圖片';
   pic.onclick = () => openShareImage(S);
   const share = document.createElement('button');
   share.className = 'btn';

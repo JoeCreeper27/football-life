@@ -188,7 +188,22 @@ for (let i = 0; i < N; i++) {
   if (tops.has('BIG5')) { bump('登上五大聯賽'); byNation[nat].big5++; }
   if (tops.has('BIG5') || tops.has('EUR2') || tops.has('TOP')) bump('登上洲際頂級以上');
   if (pro.length && !pro.some(x => x.abroad)) bump('一輩子沒旅外');
-  if (s.career.honors.some(h => h.includes('世界足球先生'))) bump('世界足球先生');
+  // 個人獎項：五大登陸率之外，玩家最在意的就是「這輩子拿過什麼」
+  const H = s.career.honors;
+  const anyH = re => H.some(h => re.test(h));
+  const BIG5_N = Object.values(LV).filter(l => l.top === 'BIG5').map(l => l.n);
+  const inBig5 = suffix => H.some(h => BIG5_N.some(n => h.includes(n + suffix)));
+  if (anyH(/世界足球先生/)) bump('世界足球先生');
+  if (anyH(/年度最佳球員/)) bump('年度最佳球員');
+  if (anyH(/金靴/)) bump('金靴');
+  if (anyH(/年度最佳陣容/)) bump('年度最佳陣容');
+  if (anyH(/冠軍/)) bump('任一冠軍');
+  if (anyH(/歐洲冠軍賽冠軍|亞洲冠軍賽冠軍/)) bump('洲際冠軍賽冠軍');
+  if (inBig5('金靴')) bump('五大聯賽金靴');
+  if (inBig5('年度最佳球員')) bump('五大聯賽年度最佳球員');
+  if (s.player.group === 'GK') { bump('_gk'); if (anyH(/金手套/)) bump('_gkGlove'); }
+  // 金靴只有前場位置搶得到，跟門將的金手套要放在同一個分母上才比得出來
+  if (['ST', 'W', 'AM'].includes(s.player.dpos)) { bump('_fwd'); if (anyH(/金靴/)) bump('_fwdBoot'); }
   if (s.career.worldCups.length) bump('踢進世界盃');
   if (s.player.age < 25) bump('25 歲前退出');
   if (s.player.injury.bigCount + s.player.injury.aclCount > 0) bump('生涯至少一次重傷');
@@ -221,5 +236,17 @@ if (!NATION) {
     .join('  ');
   console.log(`各國登上五大聯賽比例：${line}`);
 }
+console.log('-'.repeat(58));
+console.log('個人獎項（生涯至少拿過一次）');
+for (const k of ['任一冠軍', '年度最佳陣容', '金靴', '年度最佳球員',
+                 '洲際冠軍賽冠軍', '五大聯賽金靴', '五大聯賽年度最佳球員', '世界足球先生']) {
+  console.log('  ' + k.padEnd(22), (pct(k).toFixed(2) + '%').padStart(8));
+}
+const gk = acc._gk || 0, fwd = acc._fwd || 0;
+console.log('  ' + '門將金手套（佔門將）'.padEnd(18),
+  ((gk ? (acc._gkGlove || 0) / gk * 100 : 0).toFixed(2) + '%').padStart(8));
+console.log('  ' + '金靴（佔 ST/W/AM）'.padEnd(19),
+  ((fwd ? (acc._fwdBoot || 0) / fwd * 100 : 0).toFixed(2) + '%').padStart(8));
+
 if (acc['未正常結束']) console.log(`⚠ 未正常結束：${acc['未正常結束']} 局`);
 console.log();
