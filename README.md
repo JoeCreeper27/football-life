@@ -25,6 +25,9 @@ npm run dev      # 開發伺服器
 npm run build    # 產出 dist/index.html（單檔，可直接丟 GitHub Pages）
 npm run sim      # 跑 2000 局平衡模擬（隨機國家）
 
+# 分享圖排版工作台（改 src/share.js 存檔即重繪，不必重跑生涯）
+# → http://localhost:5173/share-preview.html
+
 # 單一國家對表（國家碼見下方階梯表）
 node tools/balance-sim.js 600 balanced TW
 ```
@@ -45,6 +48,7 @@ src/
 │  ├─ sim.js          出場時間、賽季數據、傷病、薪資、衰退
 │  └─ flow.js         年度流程狀態機
 ├─ main.js            UI：記錄流 + 選項按鈕 + 狀態列 + 能力雷達圖
+├─ share.js           UI：生涯結算分享長圖（純 canvas，可用 share-preview.html 單獨預覽）
 tools/balance-sim.js  蒙地卡羅平衡模擬
 docs/SPEC.md          完整開發規格書
 ```

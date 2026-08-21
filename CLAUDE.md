@@ -13,6 +13,7 @@ npm run sim                                 # 平衡模擬 2000 局（balanced �
 node tools/balance-sim.js 500 aggressive    # 局數與策略：balanced | safe | aggressive
 node tools/balance-sim.js 600 balanced TW   # 第三個參數鎖定出身國家
 python3 -m http.server 8000                 # 免安裝直接跑（純 ES modules，index.html 直接 import src/main.js）
+# http://localhost:5173/share-preview.html   # 分享圖排版工作台（改 src/share.js 存檔即重繪）
 ```
 
 沒有測試框架、沒有 linter。**平衡模擬就是這個專案的測試**：任何改動數值或規則的 PR，都應該跑 `npm run sim` 並把結果與 README「目前的平衡狀況」表格對照。模擬會印出各指標的實際值 vs 目標區間，以及 `未正常結束` 的局數（>0 代表流程有 bug，例如狀態機卡住或 `pending` 沒有對應的 bot 分支）。
@@ -21,10 +22,14 @@ python3 -m http.server 8000                 # 免安裝直接跑（純 ES module
 
 ## 架構
 
-三層，**嚴格單向相依**：`data.js`（純資料）← `state.js` / `sim.js`（純計算）← `flow.js`（狀態機）← `main.js`（DOM）。
+三層，**嚴格單向相依**：`data.js`（純資料）← `state.js` / `sim.js`（純計算）← `flow.js`（狀態機）← `main.js` / `share.js`（DOM）。
 
 - `src/engine/**` 零 DOM 相依，必須能在 Node 裡跑。這是 `tools/balance-sim.js`（以及未來的 Kotlin 移植、server 端 seed 重放驗證排行榜）能成立的前提。**不要在 engine 裡碰 `document`、`localStorage`、`window`。**
-- `src/main.js` 是唯一碰 DOM 的檔案，只認得 `{tone, title, html}` 卡片與 `pending.type`（`choice` / `train` / `alloc`），完全不知道遊戲規則。
+- `src/main.js` 只認得 `{tone, title, html}` 卡片與 `pending.type`（`choice` / `train` / `alloc`），完全不知道遊戲規則。
+- `src/share.js` 是另一個碰 DOM 的檔案：生涯結算的分享長圖（純 canvas 手繪）。
+  它只吃一份 `state`（`buildShareCanvas(S)`），**不讀 `document` 以外的全域狀態**，
+  所以 `share-preview.html` 可以餵假資料進去單獨看排版 —— 改排版一律在那頁上改，
+  不要為了看一眼而真的打完一輪生涯。正式 `vite build` 只吃 `index.html`，預覽頁不會被包進去。
 - 用 `hidden` 控制顯示的元素，若作者樣式給了 `display`（例如浮層的 `display:flex`），一定要補 `[hidden]{display:none}` —— 作者樣式優先度高過瀏覽器預設的 `[hidden]`，否則元素永遠關不掉。
 - 任何「點開才看得到」的面板都要用 `position:fixed` 浮層。`main.js` 每張卡片都會呼叫 `scrollBottom()`，放在文件流裡的面板在長生涯中一定會被捲出畫面（能力細項就踩過這個坑）。
 - 配色靠 `body[data-stage]`（由 `board()` 設定：養成階段用 `club.stage`，職業期用 `PRO_<地區>`）切換 CSS 變數。**底色只能掛在 `body`**，`html` 一旦有底色就會蓋掉整頁的階段配色。

@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>分享圖排版預覽 — FootballLife</title>
+<!--
+  只給開發用的排版工作台：改 src/share.js 存檔後 Vite 會自動整頁重載，
+  左邊立刻看到新版分享圖。正式 build（vite build）只吃 index.html，不會包進去。
+  開法：npm run dev → http://localhost:5173/share-preview.html
+-->
+<style>
+:root{
+  --bg:#0b1a10; --panel:#12281a; --line:#1e4029; --ink:#e8f0e6; --dim:#8fae95;
+  --amber:#f5c451; --up:#67d98a; --dn:#e8746a; --gold:#f0d078;
+}
+body[data-stage="JHS"]     {--bg:#0d1524;--panel:#142033;--line:#25344d;--dim:#8fa0c0}
+body[data-stage="HS"]      {--bg:#0b1a10;--panel:#12281a;--line:#1e4029;--dim:#8fae95}
+body[data-stage="ACADEMY"] {--bg:#150f1e;--panel:#211832;--line:#372654;--dim:#a794c4}
+body[data-stage="UNI"]     {--bg:#1a1408;--panel:#261d0e;--line:#3f3119;--dim:#bda882}
+body[data-stage="PRO_ASIA"]{--bg:#08140b;--panel:#0f2214;--line:#1c3b26;--dim:#87b394}
+body[data-stage="PRO_EUR"] {--bg:#0a1520;--panel:#10222f;--line:#1d3b4f;--dim:#8bacc4}
+body[data-stage="PRO_SAM"] {--bg:#1a1206;--panel:#27200c;--line:#42351a;--dim:#c2ab7c}
+body[data-stage="PRO_NAM"] {--bg:#130d1c;--panel:#1d1630;--line:#34264e;--dim:#a396c6}
+
+*{box-sizing:border-box}
+body{margin:0;background:#0a0a0a;color:var(--ink);
+  font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  display:flex;gap:20px;padding:20px;align-items:flex-start}
+
+/* 左：畫布 */
+#stage{position:relative;flex:none}
+#stage canvas{display:block;border:1px solid #333;box-shadow:0 8px 40px rgba(0,0,0,.7)}
+/* 格線疊在畫布上，用來對齊左右邊界與各區塊的高度 */
+#grid{position:absolute;inset:0;pointer-events:none;display:none}
+#grid.on{display:block}
+#grid .v{position:absolute;top:0;bottom:0;width:1px;background:rgba(255,80,80,.55)}
+#grid .h{position:absolute;left:0;right:0;height:1px;background:rgba(80,160,255,.35)}
+#grid .h.major{background:rgba(80,160,255,.7)}
+#grid .lbl{position:absolute;left:2px;font-size:9px;color:#7ab6ff;background:rgba(0,0,0,.6);padding:0 2px}
+
+/* 右：控制台 */
+#panel{flex:1;min-width:300px;max-width:420px;position:sticky;top:20px;
+  background:#141414;border:1px solid #2a2a2a;border-radius:10px;padding:14px;font-size:13px}
+#panel h1{margin:0 0 4px;font-size:15px;color:var(--amber)}
+#panel .note{color:#888;font-size:11px;line-height:1.6;margin-bottom:12px}
+#panel label{display:block;margin:9px 0 3px;color:#aaa;font-size:11px}
+#panel select,#panel input[type=text],#panel input[type=number]{
+  width:100%;background:#1e1e1e;color:#eee;border:1px solid #333;border-radius:6px;padding:5px 7px;font:inherit;font-size:12px}
+#panel input[type=range]{width:100%}
+#panel .chk{display:flex;align-items:center;gap:6px;margin:6px 0;color:#ccc;font-size:12px}
+#panel .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#panel button{width:100%;margin-top:10px;background:#222;color:#eee;border:1px solid #3a3a3a;
+  border-radius:6px;padding:7px;font:inherit;font-size:12px;cursor:pointer}
+#panel button:hover{background:#2c2c2c}
+#meta{margin-top:12px;padding-top:10px;border-top:1px solid #2a2a2a;color:#7ab6ff;
+  font-size:11px;line-height:1.7;font-family:ui-monospace,monospace;white-space:pre-wrap}
+#err{color:#ff8a80;font-size:11px;white-space:pre-wrap;margin-top:8px;font-family:ui-monospace,monospace}
+</style>
+</head>
+<body data-stage="PRO_EUR">
+
+<div id="stage"><div id="grid"></div></div>
+
+<div id="panel">
+  <h1>分享圖排版預覽</h1>
+  <div class="note">
+    改 <b>src/share.js</b> 存檔 → 這頁自動重載。<br>
+    這是假資料，只為了看排版；不會動到引擎也不會進 build。
+  </div>
+
+  <div class="row2">
+    <div>
+      <label>位置大類</label>
+      <select id="group">
+        <option value="FW">前鋒 ST</option>
+        <option value="MF">中場 CM</option>
+        <option value="DF">後衛 CB</option>
+        <option value="GK">門將 GK</option>
+      </select>
+    </div>
+    <div>
+      <label>階段配色</label>
+      <select id="stageSel">
+        <option>PRO_EUR</option><option>PRO_ASIA</option><option>PRO_SAM</option>
+        <option>PRO_NAM</option><option>HS</option><option>ACADEMY</option>
+        <option>JHS</option><option>UNI</option>
+      </select>
+    </div>
+  </div>
+
+  <label>球員名字（測長名字用）</label>
+  <input type="text" id="name" value="王小明">
+
+  <div class="row2">
+    <div>
+      <label>名次</label>
+      <select id="rank">
+        <option>世界級傳奇</option><option>洲際級名將</option>
+        <option>聯賽級主力</option><option>職業球員</option><option>半職業</option>
+      </select>
+    </div>
+    <div>
+      <label>最高層級</label>
+      <select id="topLv">
+        <option value="BIG5">五大聯賽</option><option value="EUR2">五大次級</option>
+        <option value="TOP">洲際頂級</option><option value="HOME">國內聯賽</option>
+      </select>
+    </div>
+  </div>
+
+  <label>榮譽數量 <b id="honorsN">6</b> 項（畫最多 7 項）</label>
+  <input type="range" id="honors" min="0" max="14" value="6">
+
+  <label>特性數量 <b id="traitsN">3</b> 項</label>
+  <input type="range" id="traits" min="0" max="8" value="3">
+
+  <label>能力水準 <b id="powerN">78</b></label>
+  <input type="range" id="power" min="30" max="95" value="78">
+
+  <div class="chk"><input type="checkbox" id="wc" checked><span>踢進世界盃</span></div>
+  <div class="chk"><input type="checkbox" id="shirt"><span>球衣退休</span></div>
+  <div class="chk"><input type="checkbox" id="abroad" checked><span>有旅外</span></div>
+  <div class="chk"><input type="checkbox" id="arch" checked><span>有原型</span></div>
+  <div class="chk"><input type="checkbox" id="longHonor"><span>用超長榮譽名（測換行）</span></div>
+  <div class="chk"><input type="checkbox" id="gridOn"><span>顯示格線（紅=左右留白，藍=每 100px）</span></div>
+
+  <label>顯示縮放</label>
+  <select id="zoom">
+    <option value="0.5">50%</option><option value="0.75">75%</option>
+    <option value="1" selected>100%（等於實際邏輯尺寸）</option>
+  </select>
+
+  <button id="reroll">重骰能力值</button>
+  <button id="dl">下載目前這張 PNG</button>
+
+  <div id="meta"></div>
+  <div id="err"></div>
+</div>
+
+<script type="module">
+import { buildShareCanvas, SHARE_W } from './src/share.js';
+import { GROUP_ABIL } from './src/engine/data.js';
+
+const $ = id => document.getElementById(id);
+const DPOS_OF = { GK: 'GK', DF: 'CB', MF: 'CM', FW: 'ST' };
+
+const HONORS = [
+  '英格蘭超級聯賽 冠軍', '歐洲冠軍賽 冠軍', '年度最佳陣容', '聯賽金靴',
+  '年度最佳球員', '世界足球先生', '亞洲冠軍賽 冠軍', '國內盃賽 冠軍',
+  '年度最佳陣容', '聯賽金靴', '世界盃會內賽 最佳陣容', '年度最佳球員',
+  '歐洲冠軍賽 冠軍', '英格蘭超級聯賽 冠軍',
+];
+const LONG_HONOR = '南美解放者盃暨洲際俱樂部錦標賽 最佳陣容、賽事最有價值球員兼最佳射手';
+const TRAITS = ['玻璃體質', '大心臟', '更衣室領袖', '媒體寵兒', '慢熱', '鐵人', '任意球專家', '暴躁'];
+
+let abSeed = 1;
+/* 只給預覽用的簡易亂數；引擎的決定論跟這裡無關 */
+const rnd = () => (abSeed = (abSeed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+
+function mockState() {
+  const group = $('group').value;
+  const power = +$('power').value;
+  const keys = GROUP_ABIL[group];
+  const ab = {}, pot = {};
+  abSeed = 1;
+  keys.forEach(k => {
+    ab[k] = Math.max(20, Math.min(99, Math.round(power + (rnd() - 0.5) * 26)));
+    pot[k] = Math.min(99, ab[k] + Math.round(rnd() * 8));
+  });
+
+  const nH = +$('honors').value;
+  const honors = $('longHonor').checked
+    ? Array.from({ length: nH }, (_, i) => (i % 2 ? LONG_HONOR : HONORS[i % HONORS.length]))
+    : HONORS.slice(0, nH);
+
+  return {
+    seed: 'prev1234',
+    player: {
+      name: $('name').value || '無名氏',
+      number: 10, group, dpos: DPOS_OF[group], age: 34, ab, pot,
+    },
+    result: {
+      rank: $('rank').value,
+      legacy: 5231,
+      topLv: $('topLv').value,
+      nation: '巴西', origin: '混血',
+      arch: $('arch').checked ? '古典前腰' : null,
+      archEvolved: null,
+      natlTeam: '巴西代表隊',
+      fanRep: 88,
+      seasons: 21,
+      caps: 96, intlGoals: 34,
+      abroadSeasons: $('abroad').checked ? 14 : 0,
+      worldCups: $('wc').checked ? ['2030 八強', '2034 亞軍'] : [],
+      shirtRetired: $('shirt').checked,
+      salary: 486000000,
+      sum: { apps: 612, goals: 188, assists: 143, cs: 91 },
+      honors,
+      traits: TRAITS.slice(0, +$('traits').value),
+    },
+  };
+}
+
+function drawGrid(H, zoom) {
+  const g = $('grid');
+  g.classList.toggle('on', $('gridOn').checked);
+  const PAD = 44;
+  let html = `<div class="v" style="left:${PAD * zoom}px"></div>`
+           + `<div class="v" style="left:${(SHARE_W - PAD) * zoom}px"></div>`
+           + `<div class="v" style="left:${SHARE_W / 2 * zoom}px;background:rgba(255,80,80,.25)"></div>`;
+  for (let y = 100; y < H; y += 100) {
+    const major = y % 500 === 0;
+    html += `<div class="h${major ? ' major' : ''}" style="top:${y * zoom}px"></div>`;
+    if (major) html += `<div class="lbl" style="top:${y * zoom + 2}px">${y}</div>`;
+  }
+  g.innerHTML = html;
+}
+
+let lastCanvas = null;
+
+function render() {
+  $('honorsN').textContent = $('honors').value;
+  $('traitsN').textContent = $('traits').value;
+  $('powerN').textContent = $('power').value;
+  document.body.dataset.stage = $('stageSel').value;
+
+  const stage = $('stage');
+  [...stage.querySelectorAll('canvas')].forEach(c => c.remove());
+  $('err').textContent = '';
+
+  let cv;
+  try {
+    cv = buildShareCanvas(mockState());
+  } catch (e) {
+    $('err').textContent = e.stack || String(e);
+    return;
+  }
+  lastCanvas = cv;
+
+  const zoom = +$('zoom').value;
+  const H = cv.height / (cv.width / SHARE_W);        // 還原成邏輯高度
+  cv.style.width = SHARE_W * zoom + 'px';
+  cv.style.height = H * zoom + 'px';
+  stage.prepend(cv);
+  drawGrid(H, zoom);
+
+  $('meta').textContent =
+    `輸出   ${cv.width} × ${cv.height} px\n` +
+    `邏輯   ${SHARE_W} × ${Math.round(H)}\n` +
+    `比例   1 : ${(H / SHARE_W).toFixed(2)}（IG 限制約 1:1.91 ~ 4:5）`;
+}
+
+$('dl').onclick = () => {
+  if (!lastCanvas) return;
+  const a = document.createElement('a');
+  a.href = lastCanvas.toDataURL('image/png');
+  a.download = 'share-preview.png';
+  a.click();
+};
+$('reroll').onclick = () => { $('power').value = 40 + Math.round(Math.random() * 50); render(); };
+
+document.querySelectorAll('#panel input, #panel select').forEach(el => {
+  el.addEventListener('input', render);
+  el.addEventListener('change', render);
+});
+render();
+</script>
+</body>
+</html>
