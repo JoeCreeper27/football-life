@@ -83,7 +83,9 @@ export function injuryRisk(s) {
   const p = s.player, c = s.club;
   let risk = CONF.baseInjury + p.injury.nextRisk + (s._extraRisk || 0);
   risk += c.minutes * 6;
-  if (p.age >= 33) risk += 10; else if (p.age >= 30) risk += 5;
+  // 巔峰期過後逐年加重，不是階梯 —— 老將加練的代價也就跟著一起漲
+  if (p.age >= 30) risk += 5;
+  if (p.age > CONF.agingInjuryFrom) risk += (p.age - CONF.agingInjuryFrom) * CONF.agingInjury;
   if (p.style === '全場壓迫') risk += 9;
   if (p.traits.glass) risk = Math.max(risk, 40);
   if (p.traits.iron) risk = Math.min(risk, 10);

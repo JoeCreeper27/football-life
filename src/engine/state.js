@@ -3,7 +3,7 @@ import {
   GROUP_ABIL, YOUTH_CLUBS, CONF, DPOS, POS_WEIGHT, LV, TIER,
   NATIONS, NATION_ORDER, ORIGINS, ARCHETYPE, SYNERGY, SYNERGY_GK, MAX_ABIL,
   BUILD, BUILD_ROLL, BUILD_ADJ,
-  growthPhase, PHYSICAL, PHYSICAL_HARD_AGE, POT_MIN, POT_MAX, POT_STA_MIN, PAC_LOCK_AGE,
+  growthPhase, PHYSICAL, PHYS_POT_KEYS, PHYSICAL_HARD_AGE, POT_MIN, POT_MAX, POT_STA_MIN, PAC_LOCK_AGE,
 } from './data.js';
 
 export const SCHEMA_VERSION = '0.5.0';
@@ -12,15 +12,23 @@ export const SCHEMA_VERSION = '0.5.0';
  * 建立一局新生涯。所有隨機都吃 rng，因此同種子同設定必得同一個開局。
  * setup: { name, number, group, nation, origin }
  */
+/** 這個出身在這個國家出得來嗎（移民、原住民都只有部分國家有）*/
+export function originAllowed(origin, nat) {
+  const org = ORIGINS[origin];
+  if (!org) return false;
+  return !org.only || !!nat[org.only];
+}
+
 export function createState(seed, { name, number, group, nation = 'TW', origin = 'local' }) {
   const rng = new Rng(seed);
   const keys = GROUP_ABIL[group];
   const nat = NATIONS[nation] || NATIONS.TW;
-  // 有些國家沒有移民這條路，防呆一律落回本地
-  if (origin === 'immigrant' && nat.noImmigrant) origin = 'local';
+  // 出身背景有國家限制（移民、原住民），選了不適用的一律防呆落回本地
+  if (!originAllowed(origin, nat)) origin = 'local';
   const org = ORIGINS[origin] || ORIGINS.local;
-  // 該國本地／混血出身的潛力加成
-  const natPot = nat.potBonus && origin !== 'immigrant' ? nat.potBonus : 0;
+  // 體能類潛力上限加成：出身自帶的（原住民／移民）＋ 該國純本地自帶的（非洲）
+  const physPot = (org.potPhys || 0) + (origin === 'local' ? (nat.localPhysPot || 0) : 0);
+  const physKeys = group === 'GK' ? PHYS_POT_KEYS.GK : PHYS_POT_KEYS.OUT;
 
   // 體型開局隨機，影響初始值與潛力上限（不是玩家選的）
   const build = rng.pick(BUILD_ROLL);
@@ -55,8 +63,8 @@ export function createState(seed, { name, number, group, nation = 'TW', origin =
   const pot = {};
   shuffled.forEach((k, i) => {
     const [lo, hi] = BAND[Math.min(i, BAND.length - 1)];
-    pot[k] = clamp(Math.round(rng.int(lo, hi) + talent * 6 + nat.dev + natPot + buildPot(k)),
-      POT_MIN, POT_MAX);
+    pot[k] = clamp(Math.round(rng.int(lo, hi) + talent * 6 + nat.dev + buildPot(k)
+      + (physKeys.includes(k) ? physPot : 0)), POT_MIN, POT_MAX);
   });
   pot[shuffled[0]] = clamp(pot[shuffled[0]] + org.potTop, POT_MIN, POT_MAX);
   // 體能是「能不能一直踢下去」的底線，不讓它天生就爛到沒得救
