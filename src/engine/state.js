@@ -6,7 +6,7 @@ import {
   growthPhase, PHYSICAL, PHYS_POT_KEYS, PHYSICAL_HARD_AGE, POT_MIN, POT_MAX, POT_STA_MIN, PAC_LOCK_AGE,
 } from './data.js';
 
-export const SCHEMA_VERSION = '0.6.0';
+export const SCHEMA_VERSION = '0.7.0';
 
 /**
  * 建立一局新生涯。所有隨機都吃 rng，因此同種子同設定必得同一個開局。
@@ -129,6 +129,7 @@ export function createState(seed, { name, number, group, nation = 'TW', origin =
       coach: null,
       fanRep: CONF.fanRepStart,
       seenEvents: [],
+      recent: {},        // 事件卡冷卻：卡名 → 最後一次抽到的年份
       clubHistory: [],
       legends: [],
       counters: {
