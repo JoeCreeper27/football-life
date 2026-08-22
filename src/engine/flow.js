@@ -379,7 +379,7 @@ function fxApi(s, ctx) {
 function drawEvent(s, rng) {
   const p = s.player;
   const seen = s.career.seenEvents || [];
-  const pool = EVENTS.filter(e => {
+  const base = EVENTS.filter(e => {
     if (e.once && seen.includes(e.n)) return false;
     const forOk = e.for === '*' ||
       (e.for === 'GK' && p.group === 'GK') ||
@@ -389,6 +389,12 @@ function drawEvent(s, rng) {
     if (!forOk) return false;
     return e.cond ? !!e.cond(s) : true;
   });
+  // 冷卻期：抽過的卡幾年內不再進池。沒有這條的話同一張卡一局生涯平均會出現 5 次、
+  // 最高 9 次 —— 那是「玩到後面都是同一個流程」的主因。
+  // 全部都在冷卻中就放寬（低層級聯賽的候選池本來就小，不放寬會整季抽不到卡）。
+  const recent = s.career.recent || {};
+  const fresh = base.filter(e => s.career.year - (recent[e.n] ?? -99) >= CONF.eventCooldown);
+  const pool = fresh.length ? fresh : base;
   if (!pool.length) return null;
   const total = pool.reduce((a, e) => a + (e.weight ?? 1), 0);
   let roll = rng.next() * total;
@@ -447,7 +453,11 @@ function raisePot(s, ctx, table, mag) {
 function applyEffects(s, ctx, table, mag, win) {
   const p = s.player, parts = [];
   for (const [k, v] of Object.entries(table)) {
-    const amt = Math.max(1, Math.round(Math.abs(v) * (mag / 2) * (k === 'fanRep' || k === 'inj' ? 1 : CONF.abilScale)));
+    // 能力增減吃 evScale（張數減半，單張要更有感）；
+    // **聲望與受傷率不吃** —— 那兩個是累積型的，乘上去只會讓重傷率從 62% 漲到 68%、
+    // 並且把一整排掛在 fanRep 門檻上的機制一起推歪。
+    const soft = k === 'fanRep' || k === 'inj';
+    const amt = Math.max(1, Math.round(Math.abs(v) * (mag / 2) * (soft ? 1 : CONF.abilScale * CONF.evScale)));
     if (k === 'inj') {
       p.injury.nextRisk += v > 0 ? amt : -amt;
       parts.push(`受傷率 ${v > 0 ? up(amt) : dn(-amt)}`);
@@ -494,6 +504,10 @@ STEPS.MID_EVENTS = (s, ctx, input) => {
     if (!ev) { s._ev = 0; return; }
     s._card = ev.n;
     if (ev.once) (s.career.seenEvents = s.career.seenEvents || []).push(ev.n);
+    // 記下抽到的年份供冷卻用；過期的直接刪掉，免得存檔越滾越大
+    const rec = (s.career.recent = s.career.recent || {});
+    for (const k in rec) if (s.career.year - rec[k] >= CONF.eventCooldown) delete rec[k];
+    rec[ev.n] = s.career.year;
 
     // 分岔型卡片：不賭成功率，直接在兩條路之間選
     if (ev.opts) {
@@ -536,6 +550,8 @@ STEPS.MID_EVENTS = (s, ctx, input) => {
   const parts = applyEffects(s, ctx, win ? ev.g : ev.b, mag, win);
   card(ctx, win ? 'good' : 'bad', `${ev.n}｜${win ? '成功' : '失敗'}`,
     `${win ? ev.gt : ev.bt}<br>${parts.join('、') || '沒有明顯影響'}`);
+  // gpot（傳奇指導抬高天賦上限）**不吃 evScale**：那是單向且永久的，
+  // 乘上去會讓 P95 峰值從 87 衝到 91、五大登陸率飆到 28%。
   if (win && ev.gpot) raisePot(s, ctx, ev.gpot, mag);
   if (ev.fx) ev.fx(s, win, api);
 

@@ -1,6 +1,6 @@
 {
   "name": "football-life",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "description": "足球人生模擬器 — 種子化的足球員生涯模擬",
   "type": "module",
   "scripts": {

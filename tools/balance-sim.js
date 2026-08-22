@@ -185,6 +185,7 @@ function playOne(seed) {
 const acc = {};
 const bump = k => (acc[k] = (acc[k] || 0) + 1);
 const legacies = [];
+const peaks = [];    // 生涯峰值 ovr
 const values = [];   // 生涯最高身價
 const fees = [];     // 生涯累計轉會費
 const byNation = {};
@@ -230,6 +231,7 @@ for (let i = 0; i < N; i++) {
   if (s.career.transfers?.some(x => x.fee === 0)) bump('以自由身轉會過');
   if ((s.career.counters.agentSwitch || 0) > 0) bump('換過經紀人');
   values.push(s.career.peakValue || 0);
+  peaks.push(s.career.peakOvr || 0);
   fees.push(s.career.feeTotal || 0);
   bump('_total');
 }
@@ -238,6 +240,7 @@ const total = acc._total || 1;
 const pct = k => ((acc[k] || 0) / total * 100);
 legacies.sort((a, b) => a - b);
 const q = p => legacies[Math.floor(legacies.length * p)] ?? 0;
+peaks.sort((a, b) => a - b);
 values.sort((a, b) => a - b);
 fees.sort((a, b) => a - b);
 const qv = (arr, p) => arr[Math.floor(arr.length * p)] ?? 0;
@@ -253,6 +256,8 @@ for (const [k, [lo, hi]] of Object.entries(TARGETS)) {
 }
 console.log('-'.repeat(58));
 console.log(`傳奇評分 P25/P50/P75/P95：${q(.25)} / ${q(.5)} / ${q(.75)} / ${q(.95)}`);
+console.log(`峰值 ovr 平均 ${(peaks.reduce((a, b) => a + b, 0) / peaks.length).toFixed(1)}`
+  + `　P50/P90/P95/最高：${qv(peaks, .5)} / ${qv(peaks, .9)} / ${qv(peaks, .95)} / ${peaks[peaks.length - 1]}`);
 const money = v => (v >= 10000 ? (v / 10000).toFixed(2) + ' 億' : Math.round(v) + ' 萬');
 console.log(`生涯最高身價 P25/P50/P75/P95：${[.25, .5, .75, .95].map(x => money(qv(values, x))).join(' / ')}`);
 console.log(`生涯累計轉會費 P50/P95：${money(qv(fees, .5))} / ${money(qv(fees, .95))}`
